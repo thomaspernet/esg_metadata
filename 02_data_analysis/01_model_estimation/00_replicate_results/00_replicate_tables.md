@@ -256,8 +256,12 @@ path = "../../../utils/latex/table_golatex.R"
 source(path)
 ```
 
+```sos kernel="SoS"
+#!conda install -c conda-forge r-mlogit -y
+```
+
 ```sos kernel="R"
-#library(mlogit)
+library(mlogit)
 ```
 
 ```sos kernel="R"
@@ -421,6 +425,33 @@ stargazer(t_0,
           coef=list(t_0.rrr),
           p.auto=FALSE,
           omit = "nr")
+```
+
+<!-- #region kernel="R" -->
+# Mutlinomial probit
+<!-- #endregion -->
+
+```sos kernel="R"
+#Mo <- dfidx(df_final, choice = "sign_of_effect", varying = 2:9)
+```
+
+```sos kernel="R"
+#p1 <- mlogit(sign_of_effect ~ 
+                #number_of_observations + 
+#                publication_year + 
+                #publication_type +
+#                study_focused_on_social_environmental_behaviour +
+#                evaluation_method_of_the_link_between_csr_and_cfp +
+#                developed_new + 
+#                nr,
+#                data=df_final,
+#             seed = 20, 
+#             R = 100,
+#             probit = TRUE)
+```
+
+```sos kernel="R"
+
 ```
 
 ```sos kernel="SoS"
