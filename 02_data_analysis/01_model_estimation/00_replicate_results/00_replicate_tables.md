@@ -257,6 +257,10 @@ source(path)
 ```
 
 ```sos kernel="R"
+#library(mlogit)
+```
+
+```sos kernel="R"
 %get df_path
 df_final <- read_csv(df_path) %>%
 mutate_if(is.character, as.factor) %>%
