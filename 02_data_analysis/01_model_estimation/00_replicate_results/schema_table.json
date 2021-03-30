@@ -1,0 +1,1 @@
+{"to_rename": [{"old": "working\\_capital\\_i", "new": "\\text{working capital}_i"}, {"old": "periodTRUE", "new": "\\text{period}"}, {"old": "tso2\\_mandate\\_c", "new": "\\text{policy mandate}_"}], "to_remove": []}
