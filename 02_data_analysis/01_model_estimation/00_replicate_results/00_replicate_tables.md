@@ -261,7 +261,7 @@ source(path)
 ```
 
 ```sos kernel="R"
-library(mlogit)
+#library(mlogit)
 ```
 
 ```sos kernel="R"
@@ -299,6 +299,7 @@ More about multinomial logit:
 
 - https://dynalist.io/d/BP0wtNmNu-p8iF_bzH0OKX6i
 - https://www.princeton.edu/~otorres/LogitR101.pdf
+- https://www.stata.com/manuals/cmcmmprobit.pdf
 <!-- #endregion -->
 
 ```sos kernel="R"
@@ -375,6 +376,28 @@ table(df_final$sign_of_effect, df_final$econometric_method)
 
 <!-- #region kernel="R" -->
 The model controls for the paper's title but is not reported in the table
+<!-- #endregion -->
+
+```sos kernel="R"
+dim(df_final %>% 
+    filter(
+        sign_of_effect !=is.na(sign_of_effect)
+        &
+         publication_year !=is.na(publication_year)
+        &
+         study_focused_on_social_environmental_behaviour !=is.na(study_focused_on_social_environmental_behaviour)
+        &
+         evaluation_method_of_the_link_between_csr_and_cfp !=is.na(evaluation_method_of_the_link_between_csr_and_cfp)
+        &
+         developed_new !=is.na(developed_new)
+        &
+         nr !=is.na(nr)
+    )
+   )
+```
+
+<!-- #region kernel="R" -->
+nb of observations: 1213
 <!-- #endregion -->
 
 ```sos kernel="R"
