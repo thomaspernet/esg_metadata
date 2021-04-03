@@ -141,7 +141,6 @@ var = (
             'U.S.': 'US',
             'USA.': 'US',
             'United Kingdom': 'UK',
-
         }
     },
     )
