@@ -208,77 +208,69 @@ pd.set_option('display.max_colwidth', None)
 var.head()
 var.shape
 
-#sorted(list(var['Regions_of_selected_firms'].unique()))
+sorted(list(var['Effect_Coeffient_Estimator_Beta'].unique()))
 # SAVE LOCALLY
 input_path = os.path.join(parent_path, "00_data_catalog",
                           "temporary_local_data",  FILENAME_SPREADSHEET + ".csv")
 var.to_csv(input_path, index=False)
 
-# for i in var.columns:
+#for i in var.columns:
 #    if i in to_numeric:
 #        type = 'float'
 #    else:
 #        type = 'string'
-#    print({"Name":i, "Type":type, "Comment":""})
+#    print({"Name":i.lower(), "Type":type, "Comment":""})
 # SAVE S3
-var.dtypes
+#var.dtypes
 s3.upload_file(input_path, PATH_S3)
 os.remove(input_path)
 # ADD SHCEMA
 schema = [
-    {'Name': 'Nr_', 'Type': 'string', 'Comment': ''},
-    {'Name': 'Title', 'Type': 'string', 'Comment': ''},
-    {'Name': 'First_author', 'Type': 'string', 'Comment': ''},
-    {'Name': 'Second_author', 'Type': 'string', 'Comment': ''},
-    {'Name': 'Third_author', 'Type': 'string', 'Comment': ''},
-    {'Name': 'Publication_year', 'Type': 'string', 'Comment': ''},
-    {'Name': 'Publication_type', 'Type': 'string', 'Comment': ''},
-    {'Name': 'Publication_name', 'Type': 'string', 'Comment': ''},
-    {'Name': 'CNRS_Ranking', 'Type': 'string', 'Comment': ''},
-    {'Name': 'ranking', 'Type': 'int', 'Comment': ''},
-    {'Name': 'Peer_reviewed', 'Type': 'string', 'Comment': ''},
-    {'Name': 'Study_focused_on_social_environmental_behaviour',
-        'Type': 'string', 'Comment': ''},
-    {'Name': 'Comments_on_sample', 'Type': 'string', 'Comment': ''},
-    {'Name': 'Type_of_data', 'Type': 'string', 'Comment': ''},
-    {'Name': 'Sample_size_number_of_companies', 'Type': 'float', 'Comment': ''},
-    {'Name': 'First_date_of_observations', 'Type': 'float', 'Comment': ''},
-    {'Name': 'Last_date_of_observations', 'Type': 'float', 'Comment': ''},
-    {'Name': 'Number_of_observations', 'Type': 'float', 'Comment': ''},
-    {'Name': 'Regions_of_selected_firms', 'Type': 'string', 'Comment': ''},
-    {'Name': 'Study_focusing_on_developing_or_developed_countries',
-        'Type': 'string', 'Comment': ''},
-    {'Name': 'Measure_of_Corporate_Social_Responsibility_CRP',
-        'Type': 'string', 'Comment': ''},
-    {'Name': 'CSR_7_Categories', 'Type': 'string', 'Comment': ''},
-    {'Name': 'CSR_20_Categories', 'Type': 'string', 'Comment': ''},
-    {'Name': 'Unit_for_measure_of_Environmental_Behaviour',
-        'Type': 'string', 'Comment': ''},
-    {'Name': 'Measure_of_Financial_Performance', 'Type': 'string', 'Comment': ''},
-    {'Name': 'CFP_26_Categories', 'Type': 'string', 'Comment': ''},
-    {'Name': 'Unit_for_measure_of_Financial_Performance',
-        'Type': 'string', 'Comment': ''},
-    {'Name': 'CFP_4_categories', 'Type': 'string', 'Comment': ''},
-    {'Name': 'Lagged_CSR_explanatory_variable', 'Type': 'string', 'Comment': ''},
-    {'Name': 'Evaluation_method_of_the_link_between_CSR_and_CFP',
-        'Type': 'string', 'Comment': ''},
-    {'Name': 'developed_new', 'Type': 'string', 'Comment': ''},
-    {'Name': 'Definition_of_CFP_as_dependent_variable',
-        'Type': 'string', 'Comment': ''},
-    {'Name': 'Comments', 'Type': 'string', 'Comment': ''},
-    {'Name': 'CFP_Regrouping', 'Type': 'string', 'Comment': ''},
-    {'Name': 'Level_of_significancy', 'Type': 'float', 'Comment': ''},
-    {'Name': 'Sign_of_effect', 'Type': 'string', 'Comment': ''},
-    {'Name': 'Standard_Error_', 'Type': 'float', 'Comment': ''},
-    {'Name': 'tstatistic_calculated_with_formula', 'Type': 'float', 'Comment': ''},
-    {'Name': 'pvalue_calculated_with_formula', 'Type': 'float', 'Comment': ''},
-    {'Name': 'Effect_Coeffient_Estimator_Beta', 'Type': 'float', 'Comment': ''},
-    {'Name': 'Adjusted_coefficient_of_determination', 'Type': 'float', 'Comment': ''},
-    {'Name': 'Econometric_method', 'Type': 'string', 'Comment': ''},
-    {'Name': 'kyoto_db', 'Type': 'string',
-        'Comment': 'if first yeaar observations equals to 1997, then yes'},
-    {'Name': 'crisis_db', 'Type': 'string',
-        'Comment': 'if first yeaar observations equals to 2009, then yes'},
+    {'Name': 'nr', 'Type': 'string', 'Comment': ''},
+{'Name': 'title', 'Type': 'string', 'Comment': ''},
+{'Name': 'first_author', 'Type': 'string', 'Comment': ''},
+{'Name': 'second_author', 'Type': 'string', 'Comment': ''},
+{'Name': 'third_author', 'Type': 'string', 'Comment': ''},
+{'Name': 'publication_year', 'Type': 'float', 'Comment': ''},
+{'Name': 'publication_type', 'Type': 'string', 'Comment': ''},
+{'Name': 'publication_name', 'Type': 'string', 'Comment': ''},
+{'Name': 'cnrs_ranking', 'Type': 'string', 'Comment': ''},
+{'Name': 'ranking', 'Type': 'float', 'Comment': ''},
+{'Name': 'peer_reviewed', 'Type': 'string', 'Comment': ''},
+{'Name': 'study_focused_on_social_environmental_behaviour', 'Type': 'string', 'Comment': ''},
+{'Name': 'comments_on_sample', 'Type': 'string', 'Comment': ''},
+{'Name': 'type_of_data', 'Type': 'string', 'Comment': ''},
+{'Name': 'sample_size_number_of_companies', 'Type': 'float', 'Comment': ''},
+{'Name': 'first_date_of_observations', 'Type': 'float', 'Comment': ''},
+{'Name': 'last_date_of_observations', 'Type': 'float', 'Comment': ''},
+{'Name': 'number_of_observations', 'Type': 'float', 'Comment': ''},
+{'Name': 'regions_of_selected_firms', 'Type': 'string', 'Comment': ''},
+{'Name': 'study_focusing_on_developing_or_developed_countries', 'Type': 'string', 'Comment': ''},
+{'Name': 'measure_of_corporate_social_responsibility_crp', 'Type': 'string', 'Comment': ''},
+{'Name': 'csr_7_categories', 'Type': 'string', 'Comment': ''},
+{'Name': 'csr_20_categories', 'Type': 'string', 'Comment': ''},
+{'Name': 'unit_for_measure_of_environmental_behaviour', 'Type': 'string', 'Comment': ''},
+{'Name': 'measure_of_financial_performance', 'Type': 'string', 'Comment': ''},
+{'Name': 'cfp_26_categories', 'Type': 'string', 'Comment': ''},
+{'Name': 'unit_for_measure_of_financial_performance', 'Type': 'string', 'Comment': ''},
+{'Name': 'cfp_4_categories', 'Type': 'string', 'Comment': ''},
+{'Name': 'lagged_csr_explanatory_variable', 'Type': 'string', 'Comment': ''},
+{'Name': 'evaluation_method_of_the_link_between_csr_and_cfp', 'Type': 'string', 'Comment': ''},
+{'Name': 'developed_new', 'Type': 'string', 'Comment': ''},
+{'Name': 'definition_of_cfp_as_dependent_variable', 'Type': 'string', 'Comment': ''},
+{'Name': 'comments', 'Type': 'string', 'Comment': ''},
+{'Name': 'cfp_regrouping', 'Type': 'string', 'Comment': ''},
+{'Name': 'level_of_significancy', 'Type': 'float', 'Comment': ''},
+{'Name': 'sign_of_effect', 'Type': 'string', 'Comment': ''},
+{'Name': 'standard_error', 'Type': 'float', 'Comment': ''},
+{'Name': 'tstatistic_calculated_with_formula', 'Type': 'float', 'Comment': ''},
+{'Name': 'pvalue_calculated_with_formula', 'Type': 'float', 'Comment': ''},
+{'Name': 'effect_coeffient_estimator_beta', 'Type': 'float', 'Comment': ''},
+{'Name': 'adjusted_coefficient_of_determination', 'Type': 'float', 'Comment': ''},
+{'Name': 'econometric_method', 'Type': 'string', 'Comment': ''},
+{'Name': 'kyoto_db', 'Type': 'string', 'Comment': ''},
+{'Name': 'crisis_db', 'Type': 'string', 'Comment': ''}
+
 ]
 
 # ADD DESCRIPTION
