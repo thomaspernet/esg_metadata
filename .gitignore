@@ -160,3 +160,4 @@ dmypy.json
 # Pyre type checker
 .pyre/
 *.zip
+utils/summary_stat.py
