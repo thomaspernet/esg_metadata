@@ -160,14 +160,19 @@ var = (
                 x['crisis_db']
             )
     )
-    .loc[lambda x: ~x['Econometric_method'].isin(['Correlation Matrix'])]
+    .loc[lambda x:
+    (~x['Econometric_method'].isin(['Correlation Matrix']))
+    ]
+    .loc[lambda x:
+    (~x['Econometric_method'].isin([None]))
+    ]
 )
-
 var['Econometric_method'].unique()
 
 pd.set_option('display.max_columns', None)
 pd.set_option('display.max_colwidth', None)
 var.head()
+var.shape
 
 # SAVE LOCALLY
 input_path = os.path.join(parent_path, "00_data_catalog",
