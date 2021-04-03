@@ -77,7 +77,9 @@ to_numeric = [
     'tstatistic_calculated_with_formula',
     'pvalue_calculated_with_formula',
     'Effect_Coeffient_Estimator_Beta',
-    'Adjusted_coefficient_of_determination'
+    'Adjusted_coefficient_of_determination',
+    "Publication_year",
+    "Sample_size_number_of_companies"
 ]
 
 for n in to_numeric:
@@ -87,14 +89,15 @@ sorted(list(var.columns))
 
 # To int
 var = var.assign(
-    ranking=lambda x: pd.to_numeric(x['ranking']),
+    #ranking=lambda x: pd.to_numeric(x['ranking']),
     First_date_of_observations=lambda x: pd.to_numeric(
         x['First_date_of_observations']),
     Last_date_of_observations=lambda x: pd.to_numeric(
         x['Last_date_of_observations']),
     Number_of_observations=lambda x: pd.to_numeric(
         x['Number_of_observations']),
-    #Sample_size_number_of_companies = lambda x: x['Sample_size_number_of_companies'].astype('Int64'),
+    Sample_size_number_of_companies=lambda x: pd.to_numeric(
+        x['Sample_size_number_of_companies']),
 )
 
 # Remove coma
@@ -102,14 +105,14 @@ var = var.replace(',', '', regex=True)
 
 var = (
     var.replace({
-        "CNRS_Ranking": {'1eg':'1', '1g':'1', '?': np.nan},
+        "CNRS_Ranking": {'1eg': '1', '1g': '1', '?': np.nan},
         'Study_focused_on_social_environmental_behaviour': {
             'Environmental Social': 'Environmental and Social',
             'Social and environmental': 'Environmental and Social',
         },
         'Type_of_data': {'Cross-sectional data': 'Cross-section', 'Cross-section data': 'Cross-section',
                          'Longitudinal study': 'Panel data', 'Longitudinal data': 'Panel data'},
-        #'Econometric_method': {'2sls': np.nan,
+        # 'Econometric_method': {'2sls': np.nan,
         #                       'AR': np.nan,
         #                       'Correlation Matrix': np.nan,
         #                       'Fixed effects': np.nan,
@@ -134,10 +137,10 @@ var = (
             'Yes 2 lags': 'Yes',
             'Yes 4 lags': 'Yes',
         },
-        "Regions_of_selected_firms":{
-        'U.S.':'US',
-        'USA.':'US',
-        'United Kingdom':'UK',
+        "Regions_of_selected_firms": {
+            'U.S.': 'US',
+            'USA.': 'US',
+            'United Kingdom': 'UK',
 
         }
     },
@@ -153,31 +156,58 @@ var = (
             "Yes",
             'No'
         )
-        )
+    )
     .assign(
-            kyoto_db=lambda x: np.where(
-                x['First_date_of_observations'].isna(),
-                np.nan,
-                x['kyoto_db']
-            ),
-            crisis_db=lambda x: np.where(
-                x['First_date_of_observations'].isna(),
-                np.nan,
-                x['crisis_db']
-            )
+        kyoto_db=lambda x: np.where(
+            x['First_date_of_observations'].isna(),
+            np.nan,
+            x['kyoto_db']
+        ),
+        crisis_db=lambda x: np.where(
+            x['First_date_of_observations'].isna(),
+            np.nan,
+            x['crisis_db']
+        )
     )
     .loc[lambda x:
-    (~x['Econometric_method'].isin(['Correlation Matrix']))
-    ]
+         (~x['Econometric_method'].isin(['Correlation Matrix']))
+         ]
     .loc[lambda x:
-    (~x['Econometric_method'].isin([None]))
-    ]
+         (~x['Econometric_method'].isin([None]))
+         ]
+    .loc[lambda x:
+         ~x['Sample_size_number_of_companies'].isin([np.nan])
+         ]
+    .loc[lambda x:
+         ~x['First_date_of_observations'].isin([np.nan])
+         ]
+    .loc[lambda x:
+         ~x['Last_date_of_observations'].isin([np.nan])
+         ]
+    .loc[lambda x:
+         ~x['Number_of_observations'].isin([np.nan])
+         ]
+    .loc[lambda x:
+         ~x['Type_of_data'].isin([np.nan])
+         ]
+    .loc[lambda x:
+         ~x['CNRS_Ranking'].isin([np.nan])
+         ]
+    .loc[lambda x:
+         ~x['Study_focusing_on_developing_or_developed_countries'].isin([
+                                                                        np.nan])
+         ]
+    .loc[lambda x:
+         ~x['developed_new'].isin([np.nan])
+         ]
 )
+
 
 pd.set_option('display.max_columns', None)
 pd.set_option('display.max_colwidth', None)
 var.head()
 var.shape
+
 
 # SAVE LOCALLY
 input_path = os.path.join(parent_path, "00_data_catalog",
@@ -244,8 +274,10 @@ schema = [
     {'Name': 'Effect_Coeffient_Estimator_Beta', 'Type': 'float', 'Comment': ''},
     {'Name': 'Adjusted_coefficient_of_determination', 'Type': 'float', 'Comment': ''},
     {'Name': 'Econometric_method', 'Type': 'string', 'Comment': ''},
-    {'Name': 'kyoto_db', 'Type': 'string', 'Comment': 'if first yeaar observations equals to 1997, then yes'},
-    {'Name': 'crisis_db', 'Type': 'string', 'Comment': 'if first yeaar observations equals to 2009, then yes'},
+    {'Name': 'kyoto_db', 'Type': 'string',
+        'Comment': 'if first yeaar observations equals to 1997, then yes'},
+    {'Name': 'crisis_db', 'Type': 'string',
+        'Comment': 'if first yeaar observations equals to 2009, then yes'},
 ]
 
 # ADD DESCRIPTION
