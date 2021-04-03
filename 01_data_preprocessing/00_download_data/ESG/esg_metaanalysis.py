@@ -160,10 +160,10 @@ var = (
                 x['crisis_db']
             )
     )
+    .loc[lambda x: ~x['Econometric_method'].isin(['Correlation Matrix'])]
 )
 
-
-var['CNRS_Ranking'].unique()
+var['Econometric_method'].unique()
 
 pd.set_option('display.max_columns', None)
 pd.set_option('display.max_colwidth', None)
