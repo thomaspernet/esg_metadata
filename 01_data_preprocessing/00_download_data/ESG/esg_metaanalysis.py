@@ -140,6 +140,7 @@ var = (
         "Regions_of_selected_firms": {
             'U.S.': 'US',
             'USA.': 'US',
+            'USA': 'US',
             'United Kingdom': 'UK',
         }
     },
@@ -207,7 +208,7 @@ pd.set_option('display.max_colwidth', None)
 var.head()
 var.shape
 
-
+#sorted(list(var['Regions_of_selected_firms'].unique()))
 # SAVE LOCALLY
 input_path = os.path.join(parent_path, "00_data_catalog",
                           "temporary_local_data",  FILENAME_SPREADSHEET + ".csv")
