@@ -133,6 +133,12 @@ var = (
             'Yes 2 day lag': 'Yes',
             'Yes 2 lags': 'Yes',
             'Yes 4 lags': 'Yes',
+        },
+        "Regions_of_selected_firms":{
+        'U.S.':'US',
+        'USA.':'US',
+        'United Kingdom':'UK',
+
         }
     },
     )
@@ -167,7 +173,6 @@ var = (
     (~x['Econometric_method'].isin([None]))
     ]
 )
-var['Econometric_method'].unique()
 
 pd.set_option('display.max_columns', None)
 pd.set_option('display.max_colwidth', None)
