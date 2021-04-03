@@ -221,6 +221,7 @@ var.to_csv(input_path, index=False)
 #        type = 'string'
 #    print({"Name":i, "Type":type, "Comment":""})
 # SAVE S3
+var.dtypes
 s3.upload_file(input_path, PATH_S3)
 os.remove(input_path)
 # ADD SHCEMA
@@ -240,10 +241,10 @@ schema = [
         'Type': 'string', 'Comment': ''},
     {'Name': 'Comments_on_sample', 'Type': 'string', 'Comment': ''},
     {'Name': 'Type_of_data', 'Type': 'string', 'Comment': ''},
-    {'Name': 'Sample_size_number_of_companies', 'Type': 'string', 'Comment': ''},
-    {'Name': 'First_date_of_observations', 'Type': 'int', 'Comment': ''},
-    {'Name': 'Last_date_of_observations', 'Type': 'int', 'Comment': ''},
-    {'Name': 'Number_of_observations', 'Type': 'int', 'Comment': ''},
+    {'Name': 'Sample_size_number_of_companies', 'Type': 'float', 'Comment': ''},
+    {'Name': 'First_date_of_observations', 'Type': 'float', 'Comment': ''},
+    {'Name': 'Last_date_of_observations', 'Type': 'float', 'Comment': ''},
+    {'Name': 'Number_of_observations', 'Type': 'float', 'Comment': ''},
     {'Name': 'Regions_of_selected_firms', 'Type': 'string', 'Comment': ''},
     {'Name': 'Study_focusing_on_developing_or_developed_countries',
         'Type': 'string', 'Comment': ''},
