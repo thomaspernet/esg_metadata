@@ -39,7 +39,10 @@ pd.read_csv('journals_scimago.csv',sep=';', low_memory=False)
 )
 var.columns = (var.columns
                .str.strip()
-               .str.replace(' ', '_')
+               .str.replace(' ', '_', regex = True)
+               .str.replace('\.', '', regex = True)
+               .str.replace('_/_', '_', regex = True)
+               .str.replace('\(|\)', '', regex = True)
                .str.lower()
                )
 
@@ -76,13 +79,13 @@ schema = [
 {'Name': 'sjr', 'Type': 'float', 'Comment': 'SCImago Journal Rank'},
 {'Name': 'sjr_best_quartile', 'Type': 'string', 'Comment': 'SCImago Journal Rank rank by quartile'},
 {'Name': 'h_index', 'Type': 'float', 'Comment': 'h-index is an author-level metric that measures both the productivity and citation impact of the publications of a scientist or scholar'},
-{'Name': 'total_docs._(2020)', 'Type': 'float', 'Comment': 'total doc in 2020'},
-{'Name': 'total_docs._(3years)', 'Type': 'float', 'Comment': 'total doc past 3 years'},
-{'Name': 'total_refs.', 'Type': 'float', 'Comment': 'total references'},
-{'Name': 'total_cites_(3years)', 'Type': 'float', 'Comment': 'total cited last 3 years'},
-{'Name': 'citable_docs._(3years)', 'Type': 'float', 'Comment': 'citable doc'},
-{'Name': 'cites_/_doc._(2years)', 'Type': 'float', 'Comment': 'citation per doc over the last 3 years'},
-{'Name': 'ref._/_doc.', 'Type': 'float', 'Comment': 'number of reference per doc'},
+{'Name': 'total_docs', 'Type': 'float', 'Comment': 'total doc in 2020'},
+{'Name': 'total_docs_3years', 'Type': 'float', 'Comment': 'total doc past 3 years'},
+{'Name': 'total_refs', 'Type': 'float', 'Comment': 'total references'},
+{'Name': 'total_cites_3years', 'Type': 'float', 'Comment': 'total cited last 3 years'},
+{'Name': 'citable_docs_3years', 'Type': 'float', 'Comment': 'citable doc'},
+{'Name': 'cites_doc_2years', 'Type': 'float', 'Comment': 'citation per doc over the last 3 years'},
+{'Name': 'ref_doc', 'Type': 'float', 'Comment': 'number of reference per doc'},
 {'Name': 'country', 'Type': 'string', 'Comment': 'country of origin'},
 {'Name': 'region', 'Type': 'string', 'Comment': 'region of origin'},
 {'Name': 'publisher', 'Type': 'string', 'Comment': 'publisher'},
