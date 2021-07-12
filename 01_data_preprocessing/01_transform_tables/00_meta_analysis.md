@@ -162,7 +162,8 @@ WITH merge AS (
     adjusted_dependent, 
     adjusted_independent, 
     adjusted_model, 
-    significant 
+    significant,
+    to_check_final
   FROM 
     esg.papers_meta_analysis_new 
     LEFT JOIN (
@@ -231,12 +232,14 @@ Missing journals:
 output.loc[lambda x: x['title'].isin([np.nan])]['publication_name'].unique()
 ```
 
+Currently, the missing values come from the rows to check in [METADATA_TABLES_COLLECTION](https://docs.google.com/spreadsheets/d/1d66_CVtWni7wmKlIMcpaoanvT2ghmjbXARiHgnLWvUw/edit#gid=899172650)
+
 ```python
-output.loc[lambda x: x['true_standard_error'].isin([np.nan])]#['publication_name'].unique()
+output.loc[lambda x: x['true_standard_error'].isin([np.nan])].head(5)
 ```
 
 ```python
-output.isna().sum().loc[lambda x: x> 0]
+output.isna().sum().loc[lambda x: x> 0].sort_values()
 ```
 
 Journal withouts critical information
