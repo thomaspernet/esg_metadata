@@ -51,8 +51,8 @@ var = (
     .replace('#N/A|#VALUE!|\?\?\?', np.nan, regex=True)
     .replace('', np.nan)
     .replace('\n', ' ', regex=True)
+    .replace('\"', ' ', regex=True)
 )
-
 # Clean column name
 var.columns = (var.columns
                .str.strip()
@@ -62,9 +62,8 @@ var.columns = (var.columns
                )
 
 # READ DATA
-var.head()
-
-sorted(var.columns)
+#var.loc[lambda x: x['Nr'].isin(["44"])]
+#var.to_excel('test.xlsx')
 to_numeric = [
     # 'CNRS_Ranking',
     'ranking',
@@ -84,8 +83,6 @@ to_numeric = [
 
 for n in to_numeric:
     var[n] = var[n].apply(pd.to_numeric, errors='coerce')
-
-sorted(list(var.columns))
 
 # To int
 var = var.assign(
@@ -169,46 +166,8 @@ var = (
             x['crisis_db']
         )
     )
-    .loc[lambda x:
-         (~x['Econometric_method'].isin(['Correlation Matrix']))
-         ]
-    .loc[lambda x:
-         (~x['Econometric_method'].isin([None]))
-         ]
-    .loc[lambda x:
-         ~x['Sample_size_number_of_companies'].isin([np.nan])
-         ]
-    .loc[lambda x:
-         ~x['First_date_of_observations'].isin([np.nan])
-         ]
-    .loc[lambda x:
-         ~x['Last_date_of_observations'].isin([np.nan])
-         ]
-    .loc[lambda x:
-         ~x['Number_of_observations'].isin([np.nan])
-         ]
-    .loc[lambda x:
-         ~x['Type_of_data'].isin([np.nan])
-         ]
-    .loc[lambda x:
-         ~x['CNRS_Ranking'].isin([np.nan])
-         ]
-    .loc[lambda x:
-         ~x['Study_focusing_on_developing_or_developed_countries'].isin([
-                                                                        np.nan])
-         ]
-    .loc[lambda x:
-         ~x['developed_new'].isin([np.nan])
-         ]
 )
 
-
-pd.set_option('display.max_columns', None)
-pd.set_option('display.max_colwidth', None)
-var.head()
-var.shape
-
-sorted(list(var['Effect_Coeffient_Estimator_Beta'].unique()))
 # SAVE LOCALLY
 input_path = os.path.join(parent_path, "00_data_catalog",
                           "temporary_local_data",  FILENAME_SPREADSHEET + ".csv")
