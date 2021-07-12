@@ -60,7 +60,11 @@ var = (
         .loc[lambda x: ~x["table_refer"].isin([np.nan])]
         .drop(columns = ['image', 'ID2'])
         .replace(',', '', regex=True)
+        .replace('\"', ' ', regex=True)
+        .replace('\n', ' ', regex=True)
+        .replace('#N/A|#VALUE!|\?\?\?', np.nan, regex=True)
 )
+
 # READ DATA
 # SAVE LOCALLY
 input_path = os.path.join(parent_path, "00_data_catalog",
