@@ -87,7 +87,7 @@ for i in range(0, len(var_dtype)):
     print("{},".format({"Name": row.name, "Type": type, "Comment": ""}))
 
 schema = [
-{'Name': 'id', 'Type': 'float', 'Comment': 'paper ID'},
+{'Name': 'id', 'Type': 'string', 'Comment': 'paper ID'},
 {'Name': 'paper_name', 'Type': 'string', 'Comment': 'Paper name'},
 {'Name': 'dependent', 'Type': 'string', 'Comment': 'dependent variable'},
 {'Name': 'independent', 'Type': 'string', 'Comment': 'independent variables'},
