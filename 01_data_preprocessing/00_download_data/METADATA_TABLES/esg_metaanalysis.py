@@ -53,6 +53,9 @@ var = (
         n = lambda x: x['n'].apply(pd.to_numeric, errors='coerce'),
         sr = lambda x: x['sr'].apply(pd.to_numeric, errors='coerce'),
         beta = lambda x: x['beta'].apply(pd.to_numeric, errors='coerce'),
+        critical_99 = lambda x: x['critical_99'].apply(pd.to_numeric, errors='coerce'),
+        critical_95 = lambda x: x['critical_95'].apply(pd.to_numeric, errors='coerce'),
+        critical_90 = lambda x: x['critical_90'].apply(pd.to_numeric, errors='coerce'),
         true_standard_error = lambda x: x['true_standard_error'].apply(pd.to_numeric, errors='coerce'),
         true_t_value = lambda x: x['true_t_value'].apply(pd.to_numeric, errors='coerce'),
         true_critical = lambda x: x['beta']/x['true_standard_error']
@@ -67,14 +70,14 @@ var = (
 )
 
 # using true critical value
-var.loc[var['true_critical'] >=2.58, 'true_stars'] = "1_PERCENT"
-var.loc[(var['true_critical'] >=1.96) & (var['true_critical'] <2.58), 'true_stars'] = "5_PERCENT"
-var.loc[(var['true_critical'] >=1.645) & (var['true_critical'] <1.96), 'true_stars'] = "10_PERCENT"
+var.loc[var['true_critical'] >=var['critical_99'], 'true_stars'] = "1_PERCENT"
+var.loc[(var['true_critical'] >=var['critical_95']) & (var['true_critical'] <var['critical_99']), 'true_stars'] = "5_PERCENT"
+var.loc[(var['true_critical'] >=var['critical_90']) & (var['true_critical'] <var['critical_95']), 'true_stars'] = "10_PERCENT"
 
 # using true t-value
-var.loc[(var['true_t_value'] >=2.58) & (~var['true_stars'].isin(['1_PERCENT','5_PERCENT','10_PERCENT'])), 'true_stars'] = "1_PERCENT"
-var.loc[(var['true_t_value'] >=1.96) & (var['true_t_value'] <2.58) & (~var['true_stars'].isin(['1_PERCENT','5_PERCENT','10_PERCENT'])), 'true_stars'] = "5_PERCENT"
-var.loc[(var['true_t_value'] >=1.645) & (var['true_t_value'] <1.96) & (var['true_stars'].isin(['1_PERCENT','5_PERCENT','10_PERCENT'])), 'true_stars'] = "10_PERCENT"
+var.loc[(var['true_t_value'] >=var['critical_99']) & (~var['true_stars'].isin(['1_PERCENT','5_PERCENT','10_PERCENT'])), 'true_stars'] = "1_PERCENT"
+var.loc[(var['true_t_value'] >=var['critical_95']) & (var['true_t_value'] <var['critical_99']) & (~var['true_stars'].isin(['1_PERCENT','5_PERCENT','10_PERCENT'])), 'true_stars'] = "5_PERCENT"
+var.loc[(var['true_t_value'] >=var['critical_90']) & (var['true_t_value'] <var['critical_95']) & (var['true_stars'].isin(['1_PERCENT','5_PERCENT','10_PERCENT'])), 'true_stars'] = "10_PERCENT"
 
 
 var = var.assign(
