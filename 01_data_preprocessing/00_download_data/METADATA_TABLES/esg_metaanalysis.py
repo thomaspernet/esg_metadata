@@ -15,8 +15,8 @@ from tqdm import tqdm
 path = os.getcwd()
 parent_path = str(Path(path).parent.parent.parent)
 name_credential = 'financial_dep_SO2_accessKeys.csv'
-region = 'eu-west-3'
-bucket = 'datalake-datascience'
+region = 'eu-west-2'
+bucket = 'datalake-london'
 path_cred = "{0}/creds/{1}".format(parent_path, name_credential)
 
 # AWS
@@ -67,6 +67,7 @@ var = (
         .replace('\"', ' ', regex=True)
         .replace('\n', ' ', regex=True)
         .replace('#N/A|#VALUE!|\?\?\?|#DIV/0!', np.nan, regex=True)
+        .drop(columns = ['image_equation'])
 )
 
 # using true critical value
@@ -93,7 +94,10 @@ significant = lambda x: np.where(x['true_stars'].isin(['1_PERCENT','5_PERCENT','
 # SAVE LOCALLY
 input_path = os.path.join(parent_path, "00_data_catalog",
                           "temporary_local_data",  FILENAME_SPREADSHEET + ".csv")
+
+
 # preprocess data
+var.dtypes
 var.to_csv(input_path, index=False)
 # SAVE S3
 s3.upload_file(input_path, PATH_S3)
@@ -101,18 +105,18 @@ s3.upload_file(input_path, PATH_S3)
 
 # ADD SHCEMA
 # ADD SHCEMA
-var_dtype = (
-    pd.DataFrame(var.dtypes, columns=['type']).assign(
-        type=lambda x: x['type'].astype('str'))
-)
-for i in range(0, len(var_dtype)):
-    row = var_dtype.iloc[i, :]
-    if row.values[0] not in ['string', "object"]:
-        print(row)
-        type = 'float'
-    else:
-        type = 'string'
-    print("{},".format({"Name": row.name, "Type": type, "Comment": ""}))
+#var_dtype = (
+#    pd.DataFrame(var.dtypes, columns=['type']).assign(
+#        type=lambda x: x['type'].astype('str'))
+#)
+#for i in range(0, len(var_dtype)):
+#    row = var_dtype.iloc[i, :]
+#    if row.values[0] not in ['string', "object"]:
+#        print(row)
+#        type = 'float'
+#    else:
+#        type = 'string'
+#    print("{},".format({"Name": row.name, "Type": type, "Comment": ""}))
 
 schema = [
 {'Name': 'id', 'Type': 'string', 'Comment': 'paper ID'},
@@ -131,7 +135,9 @@ schema = [
 {'Name': 'p_value', 'Type': 'float', 'Comment': 'p value'},
 {'Name': 't_value', 'Type': 'float', 'Comment': 'student value'},
 {'Name': 'table_refer', 'Type': 'string', 'Comment': 'table number in the paper'},
-{'Name': 'model_name', 'Type': 'string', 'Comment': 'Model name'},
+{'Name': 'model_name', 'Type': 'string', 'Comment': 'Model name from Susie'},
+{'Name': 'updated_model_name', 'Type': 'string', 'Comment': 'Model name adjusted by Thomas'},
+{'Name': 'adjusted_model_name', 'Type': 'string', 'Comment': 'Model name normalised'},
 {'Name': 'doi', 'Type': 'string', 'Comment': 'DOI'},
 {'Name': 'drive_url', 'Type': 'string', 'Comment': 'paper link in Google Drive'},
 {'Name': 'test_standard_error', 'Type': 'string', 'Comment': 'check if sr really standard error by comparing beta divided by sr and critical values'},
@@ -156,7 +162,7 @@ description = 'upload new values for papers in Drive'
 
 glue = service_glue.connect_glue(client=client)
 
-target_S3URI = os.path.join("s3://datalake-datascience", PATH_S3)
+target_S3URI = os.path.join("s3://",bucket, PATH_S3)
 name_crawler = "crawl-industry-name"
 Role = 'arn:aws:iam::468786073381:role/AWSGlueServiceRole-crawler-datalake'
 DatabaseName = "esg"
