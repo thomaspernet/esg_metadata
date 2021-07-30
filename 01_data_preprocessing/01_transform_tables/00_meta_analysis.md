@@ -86,8 +86,8 @@ parent_path = str(Path(path).parent.parent)
 
 
 name_credential = 'financial_dep_SO2_accessKeys.csv'
-region = 'eu-west-3'
-bucket = 'datalake-datascience'
+region = 'eu-west-2'
+bucket = 'datalake-london'
 path_cred = "{0}/creds/{1}".format(parent_path, name_credential)
 ```
 
@@ -146,6 +146,8 @@ WITH merge AS (
     study_focused_on_social_environmental_behaviour, 
     type_of_data, 
     study_focusing_on_developing_or_developed_countries, 
+    first_date_of_observations,
+    last_date_of_observations,
     dependent, 
     independent, 
     lag, 
@@ -174,15 +176,23 @@ WITH merge AS (
         publication_type, 
         publication_name, 
         cnrs_ranking, 
-        -- ranking, 
         peer_reviewed, 
         study_focused_on_social_environmental_behaviour, 
         type_of_data, 
-        study_focusing_on_developing_or_developed_countries 
+        study_focusing_on_developing_or_developed_countries
       FROM 
         esg.papers_meta_analysis
     ) as old on papers_meta_analysis_new.id = old.nr
-    WHERE to_remove = 'TO_KEEP'
+    -- WHERE to_remove = 'TO_KEEP'
+LEFT JOIN (
+SELECT 
+        nr,
+        CAST(MIN(first_date_of_observations) as int) as first_date_of_observations,
+        CAST(MAX(last_date_of_observations)as int) as last_date_of_observations
+      FROM 
+        esg.papers_meta_analysis
+        GROUP BY nr
+) as date_pub on papers_meta_analysis_new.id = date_pub.nr
 ) 
 SELECT 
   * 
@@ -212,6 +222,7 @@ FROM
       country 
     FROM 
       "scimago"."journals_scimago"
+    WHERE sourceid not in (16400154787)
   ) as journal on merge.publication_name = journal.title
 """
 output = (
@@ -219,14 +230,32 @@ output = (
     query=query,
     database=DatabaseName,
     s3_output=s3_output_example,
-    filename='example_1'
+    filename='example_1',
+        dtype = {'publication_year':'string'}
 )
+    .sort_values(by = ['id', 'first_date_of_observations'])
+    .drop_duplicates()
+    .assign(weight = lambda x: x.groupby(['id'])['id'].transform('size'))
 )
 output.head()
 ```
 
-Missing journals:
+```python
+output.shape
+```
 
+```python
+output.describe()
+```
+
+```python
+#output[output.duplicated(subset = ['id', 'beta',
+#                                   'true_standard_error', 'critical_value', 'lag', 'independent',
+#                                  'true_t_value', 'true_stars', 'adjusted_model'
+#                                  ])].head()
+```
+
+Missing journals
 
 ```python
 output.loc[lambda x: x['title'].isin([np.nan])]['publication_name'].unique()
@@ -235,7 +264,7 @@ output.loc[lambda x: x['title'].isin([np.nan])]['publication_name'].unique()
 Currently, the missing values come from the rows to check in [METADATA_TABLES_COLLECTION](https://docs.google.com/spreadsheets/d/1d66_CVtWni7wmKlIMcpaoanvT2ghmjbXARiHgnLWvUw/edit#gid=899172650)
 
 ```python
-output.loc[lambda x: x['true_standard_error'].isin([np.nan])].head(5)
+#output.loc[lambda x: x['true_standard_error'].isin([np.nan])].head(5)
 ```
 
 ```python
@@ -245,7 +274,7 @@ output.isna().sum().loc[lambda x: x> 0].sort_values()
 Journal withouts critical information
 
 
-# Table `XX`
+# Table `meta_analysis_esg_cfp`
 
 Since the table to create has missing value, please use the following at the top of the query
 
@@ -257,8 +286,8 @@ CREATE TABLE database.table_name WITH (format = 'PARQUET') AS
 Choose a location in S3 to save the CSV. It is recommended to save in it the `datalake-datascience` bucket. Locate an appropriate folder in the bucket, and make sure all output have the same format
 
 ```python
-s3_output = ''
-table_name = ''
+s3_output = 'DATA/FINANCE/ESG/ESG_CFP'
+table_name = 'meta_analysis_esg_cfp'
 ```
 
 First, we need to delete the table (if exist)
@@ -284,7 +313,105 @@ s3.remove_all_bucket(path_remove = s3_output)
 %%time
 query = """
 CREATE TABLE {0}.{1} WITH (format = 'PARQUET') AS
-
+WITH merge AS (
+  SELECT 
+    id, 
+    paper_name, 
+    publication_year, 
+    publication_type, 
+    regexp_replace(
+      regexp_replace(
+        lower(publication_name), 
+        '\&', 
+        'and'
+      ), 
+      '\-', 
+      ' '
+    ) as publication_name, 
+    cnrs_ranking, 
+    -- ranking, 
+    peer_reviewed, 
+    study_focused_on_social_environmental_behaviour, 
+    type_of_data, 
+    study_focusing_on_developing_or_developed_countries, 
+    first_date_of_observations,
+    last_date_of_observations,
+    dependent, 
+    independent, 
+    lag, 
+    interaction_term, 
+    quadratic_term, 
+    n, 
+    r2, 
+    beta, 
+    to_remove, 
+    critical_value, 
+    true_standard_error, 
+    true_t_value, 
+    true_stars, 
+    adjusted_dependent, 
+    adjusted_independent, 
+    adjusted_model, 
+    significant,
+    to_check_final
+  FROM 
+    esg.papers_meta_analysis_new 
+    LEFT JOIN (
+      SELECT 
+        DISTINCT(title), 
+        nr, 
+        publication_year, 
+        publication_type, 
+        publication_name, 
+        cnrs_ranking, 
+        peer_reviewed, 
+        study_focused_on_social_environmental_behaviour, 
+        type_of_data, 
+        study_focusing_on_developing_or_developed_countries
+      FROM 
+        esg.papers_meta_analysis
+    ) as old on papers_meta_analysis_new.id = old.nr
+    -- WHERE to_remove = 'TO_KEEP'
+LEFT JOIN (
+SELECT 
+        nr,
+        CAST(MIN(first_date_of_observations) as int) as first_date_of_observations,
+        CAST(MAX(last_date_of_observations)as int) as last_date_of_observations
+      FROM 
+        esg.papers_meta_analysis
+        GROUP BY nr
+) as date_pub on papers_meta_analysis_new.id = date_pub.nr
+) 
+SELECT 
+  * 
+FROM 
+  merge 
+  LEFT JOIN (
+    SELECT 
+      rank, 
+      regexp_replace(
+        regexp_replace(
+          lower(title), 
+          '\&', 
+          'and'
+        ), 
+        '\-', 
+        ' '
+      ) as title, 
+      sjr, 
+      sjr_best_quartile, 
+      h_index, 
+      total_docs_2020, 
+      total_docs_3years, 
+      total_refs, 
+      total_cites_3years, 
+      citable_docs_3years, 
+      cites_doc_2years, 
+      country 
+    FROM 
+      "scimago"."journals_scimago"
+    WHERE sourceid not in (16400154787)
+  ) as journal on merge.publication_name = journal.title
 """.format(DatabaseName, table_name)
 output = s3.run_query(
                     query=query,
@@ -326,7 +453,16 @@ To validate the query, please fillin the json below. Don't forget to change the 
 Bear in mind that CSV SerDe (OpenCSVSerDe) does not support empty fields in columns defined as a numeric data type. All columns with missing values should be saved as string. 
 
 ```python
-glue.get_table_information(
+comments = [
+    glue.get_table_information(
+    database = j,
+    table = i)['Table']['StorageDescriptor']['Columns']
+    for i, j in [('journals_scimago', "scimago"), ('papers_meta_analysis',"esg"), ('papers_meta_analysis_new', "esg")]
+]
+```
+
+```python
+schema = glue.get_table_information(
     database = DatabaseName,
     table = table_name)['Table']['StorageDescriptor']['Columns']
 ```
