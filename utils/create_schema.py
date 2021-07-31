@@ -13,12 +13,12 @@ from diagrams.aws.storage import S3
 
 #create_schema(path_json = path_json)
 #path_save_image = os.getcwd()
-path = os.getcwd()
 def make_data_schema_github(name_json):
     """
     path: current cwd
     parameters: json path to parameters_ETL_PROJECT.json
     """
+    path = os.getcwd()
     path_json = os.path.join(str(Path(path).parent.parent), 'utils',name_json)
     with open(path_json) as json_file:
         parameters = json.load(json_file)
@@ -385,6 +385,7 @@ def organise_table_md(data, dic_final, output):
     return md
 
 def create_schema(name_json, path_save_image):
+    path = os.getcwd()
     path_json = os.path.join(str(Path(path).parent.parent), 'utils',name_json)
     with open(path_json) as json_file:
         data = json.load(json_file)
