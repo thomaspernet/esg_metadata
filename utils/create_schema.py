@@ -1,7 +1,7 @@
 import json
 import re, os
 from pathlib import Path
-
+import pandas as pd
 from diagrams import Cluster, Diagram
 from diagrams.aws.compute import ECS
 from diagrams.aws.database import Redshift, RDS
