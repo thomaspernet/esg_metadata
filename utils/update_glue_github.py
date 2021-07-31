@@ -175,6 +175,8 @@ def find_duplicates(client, bucket, name_json,partition_keys, TableName):
     with open(path_json) as json_file:
         parameters = json.load(json_file)
 
+    glue = service_glue.connect_glue(client = client)
+    tables= glue.get_tables(full_output = True)
     DatabaseName = next((item for item in tables if item["Name"] == TableName), None)['DatabaseName']
 
     ### COUNT DUPLICATES
