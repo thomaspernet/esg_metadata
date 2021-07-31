@@ -192,3 +192,48 @@ def find_duplicates(client, bucket, name_json,partition_keys, TableName):
                                     s3_output="SQL_OUTPUT_ATHENA",
                                     filename="duplicates_{}".format(TableName))
     return display(dup)
+
+def count_missing(client, name_json, TableName):
+    #from datetime import date
+    #today = date.today().strftime('%Y%M%d')
+    path_json = os.path.join(str(Path(path).parent.parent), 'utils',name_json)
+    with open(path_json) as json_file:
+        parameters = json.load(json_file)
+
+    s3 = service_s3.connect_S3(client = client,
+                      bucket = bucket, verbose = True)
+
+    glue = service_glue.connect_glue(client = client)
+    tables= glue.get_tables(full_output = True)
+    DatabaseName = next((item for item in tables if item["Name"] == TableName), None)['DatabaseName']
+    table_top = parameters["ANALYSIS"]["COUNT_MISSING"]["top"]
+    table_middle = ""
+    table_bottom = parameters["ANALYSIS"]["COUNT_MISSING"]["bottom"].format(
+        DatabaseName, TableName
+    )
+
+    for key, value in enumerate(schema["StorageDescriptor"]["Columns"]):
+        if key == len(schema["StorageDescriptor"]["Columns"]) - 1:
+
+            table_middle += "{} ".format(
+                parameters["ANALYSIS"]["COUNT_MISSING"]["middle"].format(value["Name"])
+            )
+        else:
+            table_middle += "{} ,".format(
+                parameters["ANALYSIS"]["COUNT_MISSING"]["middle"].format(value["Name"])
+            )
+    query = table_top + table_middle + table_bottom
+    output = s3.run_query(
+        query=query,
+        database=DatabaseName,
+        s3_output="SQL_OUTPUT_ATHENA",
+        filename="count_missing",  ## Add filename to print dataframe
+        destination_key=None,  ### Add destination key if need to copy output
+    )
+    display(
+        output.T.rename(columns={0: "total_missing"})
+        .assign(total_missing_pct=lambda x: x["total_missing"] / x.iloc[0, 0])
+        .sort_values(by=["total_missing"], ascending=False)
+        .style.format("{0:,.2%}", subset=["total_missing_pct"])
+        .bar(subset="total_missing_pct", color=["#d65f5f"])
+    )
