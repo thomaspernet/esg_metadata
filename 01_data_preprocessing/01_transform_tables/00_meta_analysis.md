@@ -128,6 +128,7 @@ query = """
 WITH merge AS (
   SELECT 
     id, 
+    incremental_id,
     paper_name, 
     publication_year, 
     publication_type, 
@@ -274,6 +275,61 @@ output.isna().sum().loc[lambda x: x> 0].sort_values()
 Journal withouts critical information
 
 
+### Save data to Google Spreadsheet for sharing
+
+```python
+#!pip install --upgrade git+git://github.com/thomaspernet/GoogleDrive-python
+```
+
+```python
+from GoogleDrivePy.google_drive import connect_drive
+from GoogleDrivePy.google_authorization import authorization_service
+```
+
+```python
+try:
+    os.mkdir("creds")
+except:
+    pass
+```
+
+```python
+s3.download_file(key = "CREDS/Financial_dependency_pollution/creds/token.pickle", path_local = "creds")
+```
+
+```python
+auth = authorization_service.get_authorization(
+    #path_credential_gcp=os.path.join(parent_path, "creds", "service.json"),
+    path_credential_drive=os.path.join(path, "creds"),
+    verbose=False,
+    scope=['https://www.googleapis.com/auth/spreadsheets.readonly',
+           "https://www.googleapis.com/auth/drive"]
+)
+gd_auth = auth.authorization_drive(path_secret=os.path.join(
+    path, "creds", "credentials.json"))
+drive = connect_drive.drive_operations(gd_auth)
+```
+
+```python
+import shutil
+shutil.rmtree(os.path.join(path,"creds"))
+
+```
+
+```python
+FILENAME_SPREADSHEET = "METADATA_MODEL"
+spreadsheet_id = drive.find_file_id(FILENAME_SPREADSHEET, to_print=False)
+```
+
+```python
+drive.add_data_to_spreadsheet(
+    data =output.fillna(""),
+    sheetID =spreadsheet_id,
+    sheetName = "MODEL_DATA",
+    detectRange = True,
+    rangeData = None)
+```
+
 # Table `meta_analysis_esg_cfp`
 
 Since the table to create has missing value, please use the following at the top of the query
@@ -316,6 +372,7 @@ CREATE TABLE {0}.{1} WITH (format = 'PARQUET') AS
 WITH merge AS (
   SELECT 
     id, 
+    incremental_id,
     paper_name, 
     publication_year, 
     publication_type, 
@@ -435,172 +492,33 @@ output = s3.run_query(
 output
 ```
 
-# Validate query
+# Update Glue catalogue and Github
 
-This step is mandatory to validate the query in the ETL. If you are not sure about the quality of the query, go to the next step.
-
-
-To validate the query, please fillin the json below. Don't forget to change the schema so that the crawler can use it.
-
-1. Change the schema if needed. It is highly recommanded to add comment to the fields
-2. Add a partition key:
-    - Inform if there is group in the table so that, the parser can compute duplicate
-3. Provide a description -> detail the steps 
+This step is mandatory to validate the query in the ETL.
 
 
-1. Change the schema
+## Create or update the data catalog
 
-Bear in mind that CSV SerDe (OpenCSVSerDe) does not support empty fields in columns defined as a numeric data type. All columns with missing values should be saved as string. 
+The query is saved in the S3 (bucket `datalake-london`), but the comments are not available. Use the functions below to update the catalogue and Github
 
-```python
-comments = [
-    glue.get_table_information(
-    database = j,
-    table = i)['Table']['StorageDescriptor']['Columns']
-    for i, j in [('journals_scimago', "scimago"), ('papers_meta_analysis',"esg"), ('papers_meta_analysis_new', "esg")]
-]
-```
 
-```python
-schema = glue.get_table_information(
-    database = DatabaseName,
-    table = table_name)['Table']['StorageDescriptor']['Columns']
-```
 
-```python
-schema = [
-    {
-        "Name": "VAR1",
-        "Type": "",
-        "Comment": ""
-    },
-    {
-        "Name": "VAR2",
-        "Type": "",
-        "Comment": ""
-    }
-]
-```
-
-2. Provide a description
-
-```python
-description = """
-
-"""
-```
-
-3. provide metadata
+Update the dictionary
 
 - DatabaseName:
-- TablePrefix:
+- TableName:
+- ~TablePrefix:~
 - input: 
 - filename: Name of the notebook or Python script: to indicate
 - Task ID: from Coda
 - index_final_table: a list to indicate if the current table is used to prepare the final table(s). If more than one, pass the index. Start at 0
 - if_final: A boolean. Indicates if the current table is the final table -> the one the model will be used to be trained
+- schema: glue schema with comment
+- description: details query objective
 
-```python
-name_json = 'parameters_ETL_TEMPLATE.json'
-path_json = os.path.join(str(Path(path).parent.parent), 'utils',name_json)
-```
+**Update schema**
 
-```python
-with open(path_json) as json_file:
-    parameters = json.load(json_file)
-```
-
-```python
-partition_keys = [""]
-notebookname =  "XX.ipynb"
-index_final_table = [0]
-if_final = 'False'
-```
-
-```python
-github_url = os.path.join(
-    "https://github.com/",
-    parameters['GLOBAL']['GITHUB']['owner'],
-    parameters['GLOBAL']['GITHUB']['repo_name'],
-    "blob/master",
-    re.sub(parameters['GLOBAL']['GITHUB']['repo_name'],
-           '', re.sub(
-               r".*(?={})".format(parameters['GLOBAL']['GITHUB']['repo_name'])
-               , '', path))[1:],
-    re.sub('.ipynb','.md',notebookname)
-)
-```
-
-Grab the input name from query
-
-```python
-list_input = []
-tables = glue.get_tables(full_output = False)
-regex_matches = re.findall(r'(?=\.).*?(?=\s)|(?=\.\").*?(?=\")', query)
-for i in regex_matches:
-    cleaning = i.lstrip().rstrip().replace('.', '').replace('"', '')
-    if cleaning in tables and cleaning != table_name:
-        list_input.append(cleaning)
-```
-
-```python
-json_etl = {
-    'description': description,
-    'query': query,
-    'schema': schema,
-    'partition_keys': partition_keys,
-    'metadata': {
-        'DatabaseName': DatabaseName,
-        'TableName': table_name,
-        'input': list_input,
-        'target_S3URI': os.path.join('s3://', bucket, s3_output),
-        'from_athena': 'True',
-        'filename': notebookname,
-        'index_final_table' : index_final_table,
-        'if_final': if_final,
-         'github_url':github_url
-    }
-}
-json_etl['metadata']
-```
-
-**Chose carefully PREPARATION or TRANSFORMATION**
-
-```python
-index_to_remove = next(
-                (
-                    index
-                    for (index, d) in enumerate(parameters['TABLES']['TRANSFORMATION']['STEPS'])
-                    if d['metadata']['TableName'] == table_name
-                ),
-                None,
-            )
-if index_to_remove != None:
-    parameters['TABLES']['TRANSFORMATION']['STEPS'].pop(index_to_remove)
-parameters['TABLES']['PREPARATION']['STEPS'].append(json_etl)
-```
-
-```python
-print("Currently, the ETL has {} tables".format(len(parameters['TABLES']['TRANSFORMATION']['STEPS'])))
-```
-
-Save JSON
-
-```python
-with open(path_json, "w") as json_file:
-    json.dump(parameters, json_file)
-```
-
-# Create or update the data catalog
-
-The query is saved in the S3 (bucket `datalake-datascience`) but the table is not available yet in the Data Catalog. Use the function `create_table_glue` to generate the table and update the catalog.
-
-Few parameters are required:
-
-- name_crawler: Name of the crawler
-- Role: Role to temporary provide an access tho the service
-- DatabaseName: Name of the database to create the table
-- TablePrefix: Prefix of the table. Full name of the table will be `TablePrefix` + folder name
+If `automatic = False` in `automatic_update`, then the function returns only the variables to update the comments. Manually add the comment, **then**, pass the new schema (only the missing comment) to the argument `new_schema`. 
 
 To update the schema, please use the following structure
 
@@ -620,10 +538,56 @@ schema = [
 ```
 
 ```python
-glue.update_schema_table(
-    database = DatabaseName,
-    table = table_name,
-    schema= schema)
+%load_ext autoreload
+%autoreload 2
+import sys
+sys.path.append(os.path.join(parent_path, 'utils'))
+import make_toc
+import create_schema
+import create_report
+import update_glue_github
+```
+
+The function below manages everything automatically. If the final table comes from more than one query, then pass a list of table in `list_tables` instead of `automatic`
+
+```python
+list_input,  schema = update_glue_github.automatic_update(
+    list_tables = 'automatic',
+    automatic= True,
+    new_schema = None, ### override schema
+    client = client,
+    TableName = table_name,
+    query = query)
+```
+
+```python
+description = """
+Create table with journal information, papers and coefficients for the meta analysis
+"""
+name_json = 'parameters_ETL_esg_metadata.json'
+partition_keys = ["id", 'incremental_id']
+notebookname = "00_meta_analysis.ipynb"
+dic_information = {
+    "client":client,
+    'bucket':bucket,
+    's3_output':s3_output,
+    'DatabaseName':DatabaseName,
+    'TableName':table_name,
+    'name_json':name_json,
+    'partition_keys':partition_keys,
+    'notebookname':notebookname,
+    'index_final_table':[0],
+    'if_final': 'True',
+    'schema':schema,
+    'description':description,
+    'query':query,
+    "list_input":list_input,
+    'list_input_automatic':True
+}
+```
+
+```python
+update_glue_github.update_glue_github(client = client,dic_information = dic_information)
 ```
 
 ## Check Duplicates
@@ -633,76 +597,19 @@ One of the most important step when creating a table is to check if the table co
 You are required to define the group(s) that Athena will use to compute the duplicate. For instance, your table can be grouped by COL1 and COL2 (need to be string or varchar), then pass the list ['COL1', 'COL2'] 
 
 ```python
-#partition_keys = []
-
-with open(path_json) as json_file:
-    parameters = json.load(json_file)
-```
-
-```python
-### COUNT DUPLICATES
-if len(partition_keys) > 0:
-    groups = ' , '.join(partition_keys)
-
-    query_duplicates = parameters["ANALYSIS"]['COUNT_DUPLICATES']['query'].format(
-                                DatabaseName,table_name,groups
-                                )
-    dup = s3.run_query(
-                                query=query_duplicates,
-                                database=DatabaseName,
-                                s3_output="SQL_OUTPUT_ATHENA",
-                                filename="duplicates_{}".format(table_name))
-    display(dup)
-
+update_glue_github.find_duplicates(
+    client = client,
+    bucket = bucket,
+    name_json = name_json,
+    partition_keys = partition_keys,
+    TableName= table_name
+)
 ```
 
 ## Count missing values
 
 ```python
-#table = 'XX'
-schema = glue.get_table_information(
-    database = DatabaseName,
-    table = table_name
-)['Table']
-```
-
-```python
-from datetime import date
-today = date.today().strftime('%Y%M%d')
-```
-
-```python
-table_top = parameters["ANALYSIS"]["COUNT_MISSING"]["top"]
-table_middle = ""
-table_bottom = parameters["ANALYSIS"]["COUNT_MISSING"]["bottom"].format(
-    DatabaseName, table_name
-)
-
-for key, value in enumerate(schema["StorageDescriptor"]["Columns"]):
-    if key == len(schema["StorageDescriptor"]["Columns"]) - 1:
-
-        table_middle += "{} ".format(
-            parameters["ANALYSIS"]["COUNT_MISSING"]["middle"].format(value["Name"])
-        )
-    else:
-        table_middle += "{} ,".format(
-            parameters["ANALYSIS"]["COUNT_MISSING"]["middle"].format(value["Name"])
-        )
-query = table_top + table_middle + table_bottom
-output = s3.run_query(
-    query=query,
-    database=DatabaseName,
-    s3_output="SQL_OUTPUT_ATHENA",
-    filename="count_missing",  ## Add filename to print dataframe
-    destination_key=None,  ### Add destination key if need to copy output
-)
-display(
-    output.T.rename(columns={0: "total_missing"})
-    .assign(total_missing_pct=lambda x: x["total_missing"] / x.iloc[0, 0])
-    .sort_values(by=["total_missing"], ascending=False)
-    .style.format("{0:,.2%}", subset=["total_missing_pct"])
-    .bar(subset="total_missing_pct", color=["#d65f5f"])
-)
+update_glue_github.count_missing(client = client, name_json = name_json, bucket = bucket,TableName = table_name)
 ```
 
 # Update Github Data catalog
@@ -712,15 +619,7 @@ The data catalog is available in Glue. Although, we might want to get a quick ac
 Bear in mind the code will erase the previous README. 
 
 ```python
-import sys
-sys.path.append(os.path.join(parent_path, 'utils'))
-import make_toc
-import create_schema
-import create_report
-```
-
-```python
-create_schema.make_data_schema_github(path = path,parameters = parameters)
+create_schema.make_data_schema_github(name_json = name_json)
 ```
 
 # Analytics
@@ -822,7 +721,7 @@ create_report.create_report(extension = "html", keep_code = True, notebookname =
 ```
 
 ```python
-create_schema.create_schema(path_json, path_save_image = os.path.join(parent_path, 'utils'))
+create_schema.create_schema(name_json, path_save_image = os.path.join(parent_path, 'utils'))
 ```
 
 ```python
