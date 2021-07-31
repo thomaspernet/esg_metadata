@@ -120,6 +120,7 @@ s3.upload_file(input_path, PATH_S3)
 
 schema = [
 {'Name': 'id', 'Type': 'string', 'Comment': 'paper ID'},
+{'Name': 'incremental_id', 'Type': 'string', 'Comment': 'row id'},
 {'Name': 'paper_name', 'Type': 'string', 'Comment': 'Paper name'},
 {'Name': 'dependent', 'Type': 'string', 'Comment': 'dependent variable'},
 {'Name': 'independent', 'Type': 'string', 'Comment': 'independent variables'},
