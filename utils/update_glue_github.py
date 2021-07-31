@@ -194,7 +194,7 @@ def find_duplicates(client, bucket, name_json,partition_keys, TableName):
                                     filename="duplicates_{}".format(TableName))
     return display(dup)
 
-def count_missing(client, name_json, TableName):
+def count_missing(client, name_json, bucket,TableName):
     #from datetime import date
     #today = date.today().strftime('%Y%M%d')
     path_json = os.path.join(str(Path(path).parent.parent), 'utils',name_json)
