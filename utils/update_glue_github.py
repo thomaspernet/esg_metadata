@@ -39,6 +39,7 @@ list_tables = 'automatic',
     if list_tables == 'automatic':
         list_tables = find_input_from_query(client = client, TableName = TableName,query = query)
     ### find database
+    glue = service_glue.connect_glue(client = client)
     tables= glue.get_tables(full_output = True)
     list_to_search = []
     for table in list_tables:
