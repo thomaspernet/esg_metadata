@@ -4,7 +4,7 @@ from awsPy.aws_glue import service_glue
 import os
 from pathlib import Path
 path = os.getcwd()
-parent_path = str(Path(path).parent)
+parent_path = str(Path(path).parent.parent)
 
 def update_glue_github(dic_information):
     """
