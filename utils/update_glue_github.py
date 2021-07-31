@@ -213,6 +213,11 @@ def count_missing(client, name_json, bucket,TableName):
         DatabaseName, TableName
     )
 
+    schema = glue.get_table_information(
+    database = DatabaseName,
+    table = TableName
+)['Table']
+
     for key, value in enumerate(schema["StorageDescriptor"]["Columns"]):
         if key == len(schema["StorageDescriptor"]["Columns"]) - 1:
 
