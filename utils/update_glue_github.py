@@ -72,7 +72,7 @@ list_tables = 'automatic',
     if automatic == True:
         for i in to_update:
             i['Comment'] = i['Name'].replace("_", " ")
-        return list_input, schema
+        return list_to_search, schema
     if new_schema != None:
         for name in new_schema:
             com = next((i for i, item in enumerate(schema) if item["Name"] == name['Name']), None)
@@ -80,7 +80,7 @@ list_tables = 'automatic',
                 schema[com]['Comment'] = name['Comment']
             else:
                 schema[com]['Comment'] = name['Name'].replace("_", " ")
-        return list_input,  schema
+        return list_to_search,  schema
     else:
         return to_update
 
