@@ -6,17 +6,17 @@ import os, shutil, json, re
 path = os.getcwd()
 parent_path = str(Path(path).parent.parent)
 
-def find_input_from_query(client, query):
+def find_input_from_query(client, TableName,query):
     """
     """
     ### connect AWS
     glue = service_glue.connect_glue(client = client)
     list_input = []
     tables = glue.get_tables(full_output = False)
-    regex_matches = re.findall(r'(?=\.).*?(?=\s)|(?=\.\").*?(?=\")', dic_information['query'])
+    regex_matches = re.findall(r'(?=\.).*?(?=\s)|(?=\.\").*?(?=\")', query)
     for i in regex_matches:
         cleaning = i.lstrip().rstrip().replace('.', '').replace('"', '')
-        if cleaning in tables and cleaning != dic_information['TableName']:
+        if cleaning in tables and cleaning != TableName:
             list_input.append(cleaning)
 
     return list_input
