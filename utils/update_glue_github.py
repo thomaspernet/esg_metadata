@@ -176,15 +176,15 @@ def find_duplicates(client, name_json):
         parameters = json.load(json_file)
 
     ### COUNT DUPLICATES
-if len(partition_keys) > 0:
-    groups = ' , '.join(partition_keys)
+    if len(partition_keys) > 0:
+        groups = ' , '.join(partition_keys)
 
-    query_duplicates = parameters["ANALYSIS"]['COUNT_DUPLICATES']['query'].format(
-                                DatabaseName,table_name,groups
-                                )
-    dup = s3.run_query(
-                                query=query_duplicates,
-                                database=DatabaseName,
-                                s3_output="SQL_OUTPUT_ATHENA",
-                                filename="duplicates_{}".format(table_name))
+        query_duplicates = parameters["ANALYSIS"]['COUNT_DUPLICATES']['query'].format(
+                                    DatabaseName,table_name,groups
+                                    )
+        dup = s3.run_query(
+                                    query=query_duplicates,
+                                    database=DatabaseName,
+                                    s3_output="SQL_OUTPUT_ATHENA",
+                                    filename="duplicates_{}".format(table_name))
     return display(dup)
