@@ -384,7 +384,8 @@ def organise_table_md(data, dic_final, output):
     md.extend(md_creation)
     return md
 
-def create_schema(path_json, path_save_image):
+def create_schema(name_json, path_save_image):
+    path_json = os.path.join(str(Path(path).parent.parent), 'utils',name_json)
     with open(path_json) as json_file:
         data = json.load(json_file)
 
