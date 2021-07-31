@@ -60,7 +60,7 @@ list_tables = 'automatic',
     ### get schema new table
     schema = glue.get_table_information(
     database = db_new,
-    table = table_name)['Table']['StorageDescriptor']['Columns']
+    table = TableName)['Table']['StorageDescriptor']['Columns']
     ### Match known comments
     for name in schema:
         com = next((item for item in comments if item["Name"] == name['Name']), None)
