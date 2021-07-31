@@ -21,6 +21,65 @@ def find_input_from_query(client, TableName,query):
 
     return list(dict.fromkeys(list_input))
 
+def automatic_update(
+list_tables = 'automatic',
+ automatic= True,
+  new_schema = None,
+   client = None,
+   TableName = None,
+   query = None):
+    """
+    list_tables-> tupple: table, database
+    [
+        ('journals_scimago', "scimago"),
+        ('papers_meta_analysis',"esg"),
+        ('papers_meta_analysis_new', "esg")]
+]
+    """
+    if list_tables == 'automatic':
+        list_tables = find_input_from_query(client = client, TableName = TableName,query = query)
+    ### find database
+    tables= glue.get_tables(full_output = True)
+    list_to_search = []
+    for table in list_tables:
+        db = next((item for item in tables if item["Name"] == table), None)['DatabaseName']
+        list_to_search.append((table, db))
+
+    ### Fetch previous variables information
+    comments = [
+    glue.get_table_information(
+    database = j,
+    table = i)['Table']['StorageDescriptor']['Columns']
+    for i, j in list_to_search
+]
+
+    comments = [item for sublist in comments for item in sublist]
+    ### get schema new table
+    schema = glue.get_table_information(
+    database = DatabaseName,
+    table = table_name)['Table']['StorageDescriptor']['Columns']
+    ### Match known comments
+    for name in schema:
+        com = next((item for item in comments if item["Name"] == name['Name']), None)
+        try:
+            name['Comment'] = com['Comment']
+        except:
+            pass
+    to_update = [i for i in schema if i['Comment'] == '']
+    if automatic == True:
+        for i in to_update:
+            i['Comment'] = i['Name'].replace("_", " ")
+        return schema
+    if new_schema != None:
+        for name in new_schema:
+            com = next((i for i, item in enumerate(schema) if item["Name"] == name['Name']), None)
+            if name['Comment'] != '':
+                schema[com]['Comment'] = name['Comment']
+            else:
+                schema[com]['Comment'] = name['Name'].replace("_", " ")
+        return schema
+    else:
+        return to_update
 
 def update_glue_github(client, dic_information):
     """
