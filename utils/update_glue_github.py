@@ -164,3 +164,27 @@ def update_glue_github(client, dic_information):
     print("Currently, the ETL has {} tables".format(len(parameters['TABLES']['TRANSFORMATION']['STEPS'])))
     with open(path_json, "w") as json_file:
         json.dump(parameters, json_file)
+
+
+def find_duplicates(client, name_json):
+    """
+    """
+    s3 = service_s3.connect_S3(client = client,
+                      bucket = bucket, verbose = True)
+    path_json = os.path.join(str(Path(path).parent.parent), 'utils',name_json)
+    with open(path_json) as json_file:
+        parameters = json.load(json_file)
+
+    ### COUNT DUPLICATES
+if len(partition_keys) > 0:
+    groups = ' , '.join(partition_keys)
+
+    query_duplicates = parameters["ANALYSIS"]['COUNT_DUPLICATES']['query'].format(
+                                DatabaseName,table_name,groups
+                                )
+    dup = s3.run_query(
+                                query=query_duplicates,
+                                database=DatabaseName,
+                                s3_output="SQL_OUTPUT_ATHENA",
+                                filename="duplicates_{}".format(table_name))
+    return display(dup)
