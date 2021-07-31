@@ -46,6 +46,8 @@ list_tables = 'automatic',
         db = next((item for item in tables if item["Name"] == table), None)['DatabaseName']
         list_to_search.append((table, db))
 
+    ### find db new table
+    db_new = next((item for item in tables if item["Name"] == TableName), None)['DatabaseName']
     ### Fetch previous variables information
     comments = [
     glue.get_table_information(
@@ -57,7 +59,7 @@ list_tables = 'automatic',
     comments = [item for sublist in comments for item in sublist]
     ### get schema new table
     schema = glue.get_table_information(
-    database = DatabaseName,
+    database = db_new,
     table = table_name)['Table']['StorageDescriptor']['Columns']
     ### Match known comments
     for name in schema:
@@ -70,7 +72,7 @@ list_tables = 'automatic',
     if automatic == True:
         for i in to_update:
             i['Comment'] = i['Name'].replace("_", " ")
-        return schema
+        return list_input, schema
     if new_schema != None:
         for name in new_schema:
             com = next((i for i, item in enumerate(schema) if item["Name"] == name['Name']), None)
@@ -78,7 +80,7 @@ list_tables = 'automatic',
                 schema[com]['Comment'] = name['Comment']
             else:
                 schema[com]['Comment'] = name['Name'].replace("_", " ")
-        return schema
+        return list_input,  schema
     else:
         return to_update
 
