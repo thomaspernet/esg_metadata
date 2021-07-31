@@ -11,6 +11,8 @@ The relationship between corporate social responsibility (CSR) and corporate fin
    - [README.md](https://github.com/thomaspernet/esg_metadata/tree/master/00_data_catalog/README.md)
    - **HTML_ANALYSIS/**
      - [README.md](https://github.com/thomaspernet/esg_metadata/tree/master/00_data_catalog/HTML_ANALYSIS/README.md)
+     - [esg metadata - Tasks - Task title-- Analyse sign of effect and p value.html](https://htmlpreview.github.io/?https://github.com/thomaspernet/esg_metadata/blob/master/00_data_catalog/HTML_ANALYSIS/esg metadata - Tasks - Task title-- Analyse sign of effect and p value.html)
+     - [papers_meta_analysis.html](https://htmlpreview.github.io/?https://github.com/thomaspernet/esg_metadata/blob/master/00_data_catalog/HTML_ANALYSIS/papers_meta_analysis.html)
    - **temporary_local_data/**
      - [README.md](https://github.com/thomaspernet/esg_metadata/tree/master/00_data_catalog/temporary_local_data/README.md)
  - **01_data_preprocessing/**
@@ -18,9 +20,21 @@ The relationship between corporate social responsibility (CSR) and corporate fin
    - **00_download_data/**
      - [README.md](https://github.com/thomaspernet/esg_metadata/tree/master/01_data_preprocessing/00_download_data/README.md)
      - **ESG/**
-       - [esg_metaanalysis.py](https://github.com/thomaspernet/esg_metadata/tree/master/01_data_preprocessing/00_download_data/ESG/esg_metaanalysis.py)
+       - [esg_paper_information.py](https://github.com/thomaspernet/esg_metadata/tree/master/01_data_preprocessing/00_download_data/ESG/esg_paper_information.py)
+     - **METADATA_TABLES/**
+       - [esg_metaanalysis.py](https://github.com/thomaspernet/esg_metadata/tree/master/01_data_preprocessing/00_download_data/METADATA_TABLES/esg_metaanalysis.py)
+     - **SCIMAGO/**
+       - [scimagojr.py](https://github.com/thomaspernet/esg_metadata/tree/master/01_data_preprocessing/00_download_data/SCIMAGO/scimagojr.py)
+   - **01_transform_tables/**
+     - [00_meta_analysis.md](https://github.com/thomaspernet/esg_metadata/tree/master/01_data_preprocessing/01_transform_tables/00_meta_analysis.md)
+     - [README.md](https://github.com/thomaspernet/esg_metadata/tree/master/01_data_preprocessing/01_transform_tables/README.md)
+     - **Reports/**
+       - [00_meta_analysis.html](https://htmlpreview.github.io/?https://github.com/thomaspernet/esg_metadata/blob/master/01_data_preprocessing/01_transform_tables/Reports/00_meta_analysis.html)
+       - [README.md](https://github.com/thomaspernet/esg_metadata/tree/master/01_data_preprocessing/01_transform_tables/Reports/README.md)
  - **02_data_analysis/**
    - [README.md](https://github.com/thomaspernet/esg_metadata/tree/master/02_data_analysis/README.md)
+   - **00_statistical_exploration/**
+     - [README.md](https://github.com/thomaspernet/esg_metadata/tree/master/02_data_analysis/00_statistical_exploration/README.md)
    - **01_model_estimation/**
      - [README.md](https://github.com/thomaspernet/esg_metadata/tree/master/02_data_analysis/01_model_estimation/README.md)
      - **00_replicate_results/**
@@ -30,8 +44,12 @@ The relationship between corporate social responsibility (CSR) and corporate fin
          - [00_replicate_tables.html](https://htmlpreview.github.io/?https://github.com/thomaspernet/esg_metadata/blob/master/02_data_analysis/01_model_estimation/00_replicate_results/Reports/00_replicate_tables.html)
  - **utils/**
    - [README.md](https://github.com/thomaspernet/esg_metadata/tree/master/utils/README.md)
+   - [create_report.py](https://github.com/thomaspernet/esg_metadata/tree/master/utils/create_report.py)
    - [create_schema.py](https://github.com/thomaspernet/esg_metadata/tree/master/utils/create_schema.py)
    - [make_toc.py](https://github.com/thomaspernet/esg_metadata/tree/master/utils/make_toc.py)
    - [prepare_catalog.py](https://github.com/thomaspernet/esg_metadata/tree/master/utils/prepare_catalog.py)
+   - [update_glue_github.py](https://github.com/thomaspernet/esg_metadata/tree/master/utils/update_glue_github.py)
+   - **IMAGES/**
+     - [script_diagram_meta_analysis_esg_cfp.py](https://github.com/thomaspernet/esg_metadata/tree/master/utils/IMAGES/script_diagram_meta_analysis_esg_cfp.py)
    - **latex/**
      - [latex_beautify.py](https://github.com/thomaspernet/esg_metadata/tree/master/utils/latex/latex_beautify.py)
