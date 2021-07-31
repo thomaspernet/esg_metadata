@@ -19,7 +19,7 @@ def find_input_from_query(client, TableName,query):
         if cleaning in tables and cleaning != TableName:
             list_input.append(cleaning)
 
-    return list_input
+    return list(dict.fromkeys(list_input))
 
 
 def update_glue_github(client, dic_information):
