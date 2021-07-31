@@ -184,11 +184,11 @@ def find_duplicates(client, bucket, name_json,partition_keys, TableName):
         groups = ' , '.join(partition_keys)
 
         query_duplicates = parameters["ANALYSIS"]['COUNT_DUPLICATES']['query'].format(
-                                    DatabaseName,table_name,groups
+                                    DatabaseName,TableName,groups
                                     )
         dup = s3.run_query(
                                     query=query_duplicates,
                                     database=DatabaseName,
                                     s3_output="SQL_OUTPUT_ATHENA",
-                                    filename="duplicates_{}".format(table_name))
+                                    filename="duplicates_{}".format(TableName))
     return display(dup)
