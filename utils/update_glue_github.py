@@ -166,7 +166,7 @@ def update_glue_github(client, dic_information):
         json.dump(parameters, json_file)
 
 
-def find_duplicates(client, name_json):
+def find_duplicates(client, bucket, name_json):
     """
     """
     s3 = service_s3.connect_S3(client = client,
