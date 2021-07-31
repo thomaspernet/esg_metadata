@@ -166,7 +166,7 @@ def update_glue_github(client, dic_information):
         json.dump(parameters, json_file)
 
 
-def find_duplicates(client, bucket, name_json):
+def find_duplicates(client, bucket, name_json,partition_keys, TableName):
     """
     """
     s3 = service_s3.connect_S3(client = client,
@@ -174,6 +174,8 @@ def find_duplicates(client, bucket, name_json):
     path_json = os.path.join(str(Path(path).parent.parent), 'utils',name_json)
     with open(path_json) as json_file:
         parameters = json.load(json_file)
+
+    DatabaseName = next((item for item in tables if item["Name"] == TableName), None)['DatabaseName']
 
     ### COUNT DUPLICATES
     if len(partition_keys) > 0:
