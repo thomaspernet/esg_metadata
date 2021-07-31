@@ -3,6 +3,7 @@ from awsPy.aws_s3 import service_s3
 from awsPy.aws_glue import service_glue
 from pathlib import Path
 import os, shutil, json, re
+import pandas as pd
 path = os.getcwd()
 parent_path = str(Path(path).parent.parent)
 
