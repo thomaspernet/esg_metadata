@@ -6,7 +6,23 @@ import os, shutil, json, re
 path = os.getcwd()
 parent_path = str(Path(path).parent.parent)
 
-def update_glue_github(dic_information):
+def find_input_from_query(client, query):
+    """
+    """
+    ### connect AWS
+    glue = service_glue.connect_glue(client = client)
+    list_input = []
+    tables = glue.get_tables(full_output = False)
+    regex_matches = re.findall(r'(?=\.).*?(?=\s)|(?=\.\").*?(?=\")', dic_information['query'])
+    for i in regex_matches:
+        cleaning = i.lstrip().rstrip().replace('.', '').replace('"', '')
+        if cleaning in tables and cleaning != dic_information['TableName']:
+            list_input.append(cleaning)
+
+    return list_input
+
+
+def update_glue_github(client, dic_information):
     """
     - DatabaseName:
     - TablePrefix:
@@ -30,12 +46,6 @@ def update_glue_github(dic_information):
 }
     """
     ### connect AWS
-    name_credential= dic_information['name_credential']
-    path_cred = "{0}/creds/{1}".format(parent_path, name_credential)
-    region = dic_information['region']
-    con = aws_connector.aws_instantiate(credential = path_cred,
-                                           region = region)
-    client= con.client_boto()
     glue = service_glue.connect_glue(client = client)
     ### update schema
     glue.update_schema_table(
@@ -59,13 +69,18 @@ def update_glue_github(dic_information):
                    , '', path))[1:],
         re.sub('.ipynb','.md',dic_information['notebookname'])
     )
-    list_input = []
-    tables = glue.get_tables(full_output = False)
-    regex_matches = re.findall(r'(?=\.).*?(?=\s)|(?=\.\").*?(?=\")', query)
-    for i in regex_matches:
-        cleaning = i.lstrip().rstrip().replace('.', '').replace('"', '')
-        if cleaning in tables and cleaning != dic_information['TableName']:
-            list_input.append(cleaning)
+
+    ###
+    if dic_information['list_input_automatic']:
+        list_input = []
+        tables = glue.get_tables(full_output = False)
+        regex_matches = re.findall(r'(?=\.).*?(?=\s)|(?=\.\").*?(?=\")', dic_information['query'])
+        for i in regex_matches:
+            cleaning = i.lstrip().rstrip().replace('.', '').replace('"', '')
+            if cleaning in tables and cleaning != dic_information['TableName']:
+                list_input.append(cleaning)
+    else:
+        list_input = dic_information['list_input_automatic']
 
     json_etl = {
         'description': dic_information['description'],
