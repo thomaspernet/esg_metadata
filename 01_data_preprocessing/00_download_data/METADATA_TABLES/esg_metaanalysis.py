@@ -67,7 +67,7 @@ var = (
         .replace('\"', ' ', regex=True)
         .replace('\n', ' ', regex=True)
         .replace('#N/A|#VALUE!|\?\?\?|#DIV/0!', np.nan, regex=True)
-        .drop(columns = ['image_equation', 'ID2'])
+        .drop(columns = ['ID2'])
 )
 
 # using true critical value
