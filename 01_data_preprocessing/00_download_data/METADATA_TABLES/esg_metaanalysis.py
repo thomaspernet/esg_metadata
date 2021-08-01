@@ -62,12 +62,12 @@ var = (
         #significant = lambda x: np.where(x['true_stars'].isin(['1_PERCENT','5_PERCENT','10_PERCENT']), "YES", "NO")
         )
         .loc[lambda x: ~x["table_refer"].isin([np.nan])]
-        .drop(columns = ['image', 'ID2'])
+        .drop(columns = [])
         .replace(',', '', regex=True)
         .replace('\"', ' ', regex=True)
         .replace('\n', ' ', regex=True)
         .replace('#N/A|#VALUE!|\?\?\?|#DIV/0!', np.nan, regex=True)
-        .drop(columns = ['image_equation'])
+        .drop(columns = ['image_equation', 'ID2'])
 )
 
 # using true critical value
@@ -84,7 +84,6 @@ var.loc[(var['true_t_value'] >=var['critical_90']) & (var['true_t_value'] <var['
 var = var.assign(
 significant = lambda x: np.where(x['true_stars'].isin(['1_PERCENT','5_PERCENT','10_PERCENT']), "YES", "NO")
 )
-
 
 #var.loc[lambda x:
 #(x['to_remove'].isin(['TO_KEEP'])) & (x['to_check_final'].isin(['NO']))
@@ -135,6 +134,7 @@ schema = [
 {'Name': 'sr', 'Type': 'float', 'Comment': 'standard error'},
 {'Name': 'p_value', 'Type': 'float', 'Comment': 'p value'},
 {'Name': 't_value', 'Type': 'float', 'Comment': 'student value'},
+{'Name': 'image', 'Type': 'string', 'Comment': 'Link row data image'},
 {'Name': 'table_refer', 'Type': 'string', 'Comment': 'table number in the paper'},
 {'Name': 'model_name', 'Type': 'string', 'Comment': 'Model name from Susie'},
 {'Name': 'updated_model_name', 'Type': 'string', 'Comment': 'Model name adjusted by Thomas'},
