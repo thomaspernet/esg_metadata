@@ -198,7 +198,50 @@ SELECT
 ) as date_pub on papers_meta_analysis_new.id = date_pub.nr
 ) 
 SELECT 
-  * 
+  id, 
+    image,
+    table_refer,
+    incremental_id,
+    paper_name,
+    publication_name,
+    rank,
+    sjr, 
+    sjr_best_quartile, 
+    h_index, 
+    total_docs_2020, 
+    total_docs_3years, 
+    total_refs, 
+    total_cites_3years, 
+    citable_docs_3years, 
+    cites_doc_2years, 
+    country ,
+    publication_year, 
+    publication_type, 
+    cnrs_ranking, 
+    peer_reviewed, 
+    study_focused_on_social_environmental_behaviour, 
+    type_of_data, 
+    study_focusing_on_developing_or_developed_countries, 
+    first_date_of_observations,
+    last_date_of_observations,
+    dependent, 
+    independent, 
+    lag, 
+    interaction_term, 
+    quadratic_term, 
+    n, 
+    r2, 
+    beta, 
+    to_remove, 
+    critical_value, 
+    true_standard_error, 
+    true_t_value, 
+    true_stars, 
+    adjusted_dependent, 
+    adjusted_independent, 
+    adjusted_model, 
+    significant,
+    to_check_final 
 FROM 
   merge 
   LEFT JOIN (
@@ -265,7 +308,7 @@ output['weight'].describe()
 Missing journals
 
 ```python
-output.loc[lambda x: x['title'].isin([np.nan])]['publication_name'].unique()
+output.loc[lambda x: x['rank'].isin([np.nan])]['publication_name'].unique()
 ```
 
 Currently, the missing values come from the rows to check in [METADATA_TABLES_COLLECTION](https://docs.google.com/spreadsheets/d/1d66_CVtWni7wmKlIMcpaoanvT2ghmjbXARiHgnLWvUw/edit#gid=899172650)
@@ -448,7 +491,50 @@ SELECT
 ) as date_pub on papers_meta_analysis_new.id = date_pub.nr
 ) 
 SELECT 
-  * 
+  id, 
+    image,
+    table_refer,
+    incremental_id,
+    paper_name,
+    publication_name,
+    rank,
+    sjr, 
+    sjr_best_quartile, 
+    h_index, 
+    total_docs_2020, 
+    total_docs_3years, 
+    total_refs, 
+    total_cites_3years, 
+    citable_docs_3years, 
+    cites_doc_2years, 
+    country ,
+    publication_year, 
+    publication_type, 
+    cnrs_ranking, 
+    peer_reviewed, 
+    study_focused_on_social_environmental_behaviour, 
+    type_of_data, 
+    study_focusing_on_developing_or_developed_countries, 
+    first_date_of_observations,
+    last_date_of_observations,
+    dependent, 
+    independent, 
+    lag, 
+    interaction_term, 
+    quadratic_term, 
+    n, 
+    r2, 
+    beta, 
+    to_remove, 
+    critical_value, 
+    true_standard_error, 
+    true_t_value, 
+    true_stars, 
+    adjusted_dependent, 
+    adjusted_independent, 
+    adjusted_model, 
+    significant,
+    to_check_final  
 FROM 
   merge 
   LEFT JOIN (
