@@ -128,6 +128,8 @@ query = """
 WITH merge AS (
   SELECT 
     id, 
+    image,
+    table_refer,
     incremental_id,
     paper_name, 
     publication_year, 
@@ -247,6 +249,10 @@ output.shape
 
 ```python
 output.describe()
+```
+
+```python
+output['weight'].describe()
 ```
 
 ```python
@@ -372,6 +378,8 @@ CREATE TABLE {0}.{1} WITH (format = 'PARQUET') AS
 WITH merge AS (
   SELECT 
     id, 
+    image,
+    table_refer,
     incremental_id,
     paper_name, 
     publication_year, 
