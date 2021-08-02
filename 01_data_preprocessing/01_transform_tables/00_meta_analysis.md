@@ -129,7 +129,9 @@ WITH merge AS (
   SELECT 
     id, 
     image,
+    row_id_excel,
     table_refer,
+    row_id_google_spreadsheet,
     incremental_id,
     paper_name, 
     publication_year, 
@@ -168,6 +170,7 @@ WITH merge AS (
     to_remove, 
     critical_value, 
     true_standard_error, 
+    final_standard_error,
     true_t_value, 
     true_stars,  
     significant,
@@ -176,7 +179,7 @@ WITH merge AS (
     esg.papers_meta_analysis_new 
     LEFT JOIN (
       SELECT 
-        DISTINCT(title), 
+        DISTINCT(title),
         nr, 
         publication_year, 
         publication_type, 
@@ -194,7 +197,8 @@ LEFT JOIN (
 SELECT 
         nr,
         CAST(MIN(first_date_of_observations) as int) as first_date_of_observations,
-        CAST(MAX(last_date_of_observations)as int) as last_date_of_observations
+        CAST(MAX(last_date_of_observations)as int) as last_date_of_observations,
+        min(row_id_excel) as row_id_excel
       FROM 
         esg.papers_meta_analysis
         GROUP BY nr
@@ -204,6 +208,8 @@ SELECT
     to_remove, 
     id, 
     image,
+    row_id_excel,
+    row_id_google_spreadsheet,
     table_refer,
     incremental_id,
     paper_name,
@@ -244,10 +250,11 @@ SELECT
     beta, 
     sign_of_effect,
     significant,
-    critical_value, 
-    true_standard_error, 
-    true_t_value, 
-    true_stars, 
+    -- critical_value, 
+    final_standard_error,
+    --true_standard_error, 
+    --true_t_value, 
+    --true_stars, 
     to_check_final 
 FROM 
   merge 
@@ -321,15 +328,93 @@ output.loc[lambda x: x['rank'].isin([np.nan])]['publication_name'].unique()
 Currently, the missing values come from the rows to check in [METADATA_TABLES_COLLECTION](https://docs.google.com/spreadsheets/d/1d66_CVtWni7wmKlIMcpaoanvT2ghmjbXARiHgnLWvUw/edit#gid=899172650)
 
 ```python
-#output.loc[lambda x: x['true_standard_error'].isin([np.nan])].head(5)
-```
-
-```python
 output.isna().sum().loc[lambda x: x> 0].sort_values()
 ```
 
-Journal withouts critical information
+## Explain missings:
 
+### Date
+
+- 'Does Corporate Social Responsibility Pay Off in Times of Crisis? An Alternate Perspective on the Relationship between Financial and Corporate Social Performance':
+    - No date
+- 'How does corporate social responsibility contribute to firm financial performance? The mediating role of competitive advantage reputation and customer satisfaction',
+    - No date
+- 'L’impact de la responsabilité sociale (RSE) sur la performance financière des entreprises (PFE) au Cameroun'
+    - Poor date formating: 2007 Semester I, 2007 Semester I
+
+```python
+def make_clickable(val):
+    return '<a href="{}">{}</a>'.format(val,val)
+```
+
+```python
+(
+    output
+    .loc[lambda x: x['first_date_of_observations'].isin([np.nan])]
+    .reindex(columns = ['paper_name', 'row_id_excel'])
+    .drop_duplicates()
+    .style
+    .format(make_clickable, subset = ['row_id_excel'])
+)
+```
+
+### location
+
+- Corporate social responsibility and financial performance in Islamic banks
+    - Missing
+- Corporate social responsibility and financial performance: the ‘‘virtuous circle’’ revisited
+    - Missing
+
+```python
+(
+    output
+    .loc[lambda x: x['study_focusing_on_developing_or_developed_countries'].isin([np.nan])]
+    .reindex(columns = ['paper_name', 'row_id_excel'])
+    .drop_duplicates()
+    .style
+    .format(make_clickable, subset = ['row_id_excel'])
+)
+```
+
+### peer_reviewed
+
+- L’impact de la responsabilité sociale (RSE) sur la performance financière des entreprises (PFE) au Cameroun
+    - Missing
+- Looking for evidence of the relationship between CSR and CFP in an Emerging Market
+    - Missing
+- The Relationship of CSR and Financial Performance: New Evidence From Indonesian Companies
+    - Missing
+- Exploring the moderating effect of financial performance on the relationship between corporate environmental responsibility and institutional investors: some Egyptian evidence
+    - Missing
+- STRATEGIC USE OF CSR AS A SIGNAL FOR GOOD MANAGEMENT
+    - Missing
+
+```python
+(
+    output
+    .loc[lambda x: x['peer_reviewed'].isin([np.nan])]
+    .reindex(columns = ['paper_name', 'row_id_excel'])
+    .drop_duplicates()
+    .style
+    .format(make_clickable, subset = ['row_id_excel'])
+)
+```
+
+## adjusted_independent
+
+- Need to be adjusted
+
+```python
+(
+    output
+    .loc[lambda x: x['adjusted_independent'].isin([np.nan])]
+    .reindex(columns = ['paper_name', 'row_id_google_spreadsheet'])
+    .drop_duplicates()
+    .head(5)
+    .style
+    .format(make_clickable, subset = ['row_id_google_spreadsheet'])
+)
+```
 
 ### Save data to Google Spreadsheet for sharing
 
@@ -428,7 +513,9 @@ WITH merge AS (
   SELECT 
     id, 
     image,
+    row_id_excel,
     table_refer,
+    row_id_google_spreadsheet,
     incremental_id,
     paper_name, 
     publication_year, 
@@ -467,6 +554,7 @@ WITH merge AS (
     to_remove, 
     critical_value, 
     true_standard_error, 
+    final_standard_error,
     true_t_value, 
     true_stars,  
     significant,
@@ -475,7 +563,7 @@ WITH merge AS (
     esg.papers_meta_analysis_new 
     LEFT JOIN (
       SELECT 
-        DISTINCT(title), 
+        DISTINCT(title),
         nr, 
         publication_year, 
         publication_type, 
@@ -493,16 +581,19 @@ LEFT JOIN (
 SELECT 
         nr,
         CAST(MIN(first_date_of_observations) as int) as first_date_of_observations,
-        CAST(MAX(last_date_of_observations)as int) as last_date_of_observations
+        CAST(MAX(last_date_of_observations)as int) as last_date_of_observations,
+        min(row_id_excel) as row_id_excel
       FROM 
         esg.papers_meta_analysis
         GROUP BY nr
 ) as date_pub on papers_meta_analysis_new.id = date_pub.nr
 ) 
 SELECT 
-  to_remove, 
+    to_remove, 
     id, 
     image,
+    row_id_excel,
+    row_id_google_spreadsheet,
     table_refer,
     incremental_id,
     paper_name,
@@ -543,10 +634,11 @@ SELECT
     beta, 
     sign_of_effect,
     significant,
-    critical_value, 
-    true_standard_error, 
-    true_t_value, 
-    true_stars, 
+    -- critical_value, 
+    final_standard_error,
+    --true_standard_error, 
+    --true_t_value, 
+    --true_stars, 
     to_check_final 
 FROM 
   merge 
