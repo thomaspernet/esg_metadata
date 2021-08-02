@@ -144,15 +144,21 @@ WITH merge AS (
       ' '
     ) as publication_name, 
     cnrs_ranking, 
-    -- ranking, 
     peer_reviewed, 
     study_focused_on_social_environmental_behaviour, 
     type_of_data, 
     study_focusing_on_developing_or_developed_countries, 
     first_date_of_observations,
     last_date_of_observations,
+    adjusted_model,
     dependent, 
-    independent, 
+    adjusted_dependent,
+    independent,
+    adjusted_independent, 
+    social,
+    environmnental,
+    governance,
+    sign_of_effect,
     lag, 
     interaction_term, 
     quadratic_term, 
@@ -163,10 +169,7 @@ WITH merge AS (
     critical_value, 
     true_standard_error, 
     true_t_value, 
-    true_stars, 
-    adjusted_dependent, 
-    adjusted_independent, 
-    adjusted_model, 
+    true_stars,  
     significant,
     to_check_final
   FROM 
@@ -198,7 +201,8 @@ SELECT
 ) as date_pub on papers_meta_analysis_new.id = date_pub.nr
 ) 
 SELECT 
-  id, 
+    to_remove, 
+    id, 
     image,
     table_refer,
     incremental_id,
@@ -224,23 +228,26 @@ SELECT
     study_focusing_on_developing_or_developed_countries, 
     first_date_of_observations,
     last_date_of_observations,
+    adjusted_model, 
     dependent, 
+    adjusted_dependent, 
     independent, 
+    adjusted_independent, 
+    social,
+    environmnental,
+    governance,
     lag, 
     interaction_term, 
     quadratic_term, 
     n, 
     r2, 
     beta, 
-    to_remove, 
+    sign_of_effect,
+    significant,
     critical_value, 
     true_standard_error, 
     true_t_value, 
     true_stars, 
-    adjusted_dependent, 
-    adjusted_independent, 
-    adjusted_model, 
-    significant,
     to_check_final 
 FROM 
   merge 
@@ -362,7 +369,6 @@ drive = connect_drive.drive_operations(gd_auth)
 ```python
 import shutil
 shutil.rmtree(os.path.join(path,"creds"))
-
 ```
 
 ```python
