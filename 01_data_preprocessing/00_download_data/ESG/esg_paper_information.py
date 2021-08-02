@@ -228,8 +228,8 @@ schema = [
 {'Name': 'adjusted_coefficient_of_determination', 'Type': 'float', 'Comment': ''},
 {'Name': 'econometric_method', 'Type': 'string', 'Comment': ''},
 {'Name': 'kyoto_db', 'Type': 'string', 'Comment': ''},
-{'Name': 'crisis_db', 'Type': 'string', 'Comment': ''}
-
+{'Name': 'crisis_db', 'Type': 'string', 'Comment': ''},
+{'Name': 'row_id_excel', 'Type': 'string', 'Comment': 'link to original row'}
 ]
 
 # ADD DESCRIPTION
