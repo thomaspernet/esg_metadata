@@ -122,6 +122,7 @@ var = (
                       'doi',
                       'drive_url',
                       'image',
+                      'row_id_google_spreadsheet',
                       'model_name',
                       'updated_model_name',
                       'adjusted_model_name',
@@ -242,8 +243,10 @@ schema = [
         'Comment': 'if adjusted_independent in ENVIRONMENTAL, ENVIRONMENTAL AND SOCIAL, ENVIRONMENTAL, SOCIAL and GOVERNANCE'},
     {'Name': 'governance', 'Type': 'string',
         'Comment': 'if adjusted_independent in GOVERNANCE ENVIRONMENTAL, SOCIAL and GOVERNANCE'},
-        {'Name': 'sign_of_effect', 'Type': 'string',
-            'Comment': 'if stars is not blank and beta > 0, then POSITIVE, if stars is not blank and beta < 0, then NEGATIVE else INSIGNIFICANT'}
+    {'Name': 'sign_of_effect', 'Type': 'string',
+            'Comment': 'if stars is not blank and beta > 0, then POSITIVE, if stars is not blank and beta < 0, then NEGATIVE else INSIGNIFICANT'},
+    {'Name': 'row_id_google_spreadsheet', 'Type': 'string',
+        'Comment': 'Google spreadsheet link to raw data'},
 ]
 
 # ADD DESCRIPTION
