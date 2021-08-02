@@ -127,6 +127,13 @@ var = (
                       'updated_model_name',
                       'adjusted_model_name',
                       'adjusted_model',
+                      'model_instrument',
+                      'model_diff_in_diff',
+                      'model_other',
+                      'model_fixed_effect',
+                      'model_lag_dependent',
+                      'model_pooled_ols'
+                      'model_random_effect',
                       'dependent',
                       'adjusted_dependent',
                       'independent',
@@ -256,8 +263,31 @@ schema = [
         'Comment': 'if sign_of_effect is NEGATIVE then True'},
     {'Name': 'sign_insignificant', 'Type': 'string',
      'Comment': 'if sign_of_effect is INSIGNIFICANT then True'},
+    {'Name': 'model_instrument', 'Type': 'string',
+        'Comment': 'if adjusted_model is equal to INSTRUMENT then true'},
+    {'Name': 'model_diff_in_diff', 'Type': 'string',
+        'Comment': 'if adjusted_model is equal to DIFF IN DIFF then true'},
+    {'Name': 'model_other', 'Type': 'string',
+        'Comment': 'if adjusted_model is equal to OTHER then true'},
+    {'Name': 'model_fixed_effect', 'Type': 'string',
+        'Comment': 'if adjusted_model is equal to FIXED EFFECT then true'},
+    {'Name': 'model_lag_dependent', 'Type': 'string',
+        'Comment': 'if adjusted_model is equal to LAG DEPENDENT then true'},
+    {'Name': 'model_pooled_ols', 'Type': 'string',
+        'Comment': 'if adjusted_model is equal to POOLED OLS then true'},
+    {'Name': 'model_random_effect', 'Type': 'string',
+        'Comment': 'if adjusted_model is equal to RANDOM EFFECT then true'},
+
 ]
 
+
+'',
+'',
+'',
+'',
+'',
+''
+''
 # ADD DESCRIPTION
 description = 'upload new values for papers in Drive'
 
