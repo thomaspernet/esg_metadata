@@ -100,6 +100,13 @@
 | 44 | sign_positive             | string | if sign_of_effect is POSITIVE then True                                                                                 |
 | 45 | sign_negative             | string | if sign_of_effect is NEGATIVE then True                                                                                 |
 | 46 | sign_insignificant        | string | if sign_of_effect is INSIGNIFICANT then True                                                                            |
+| 47 | model_instrument          | string | if adjusted_model is equal to INSTRUMENT then true                                                                      |
+| 48 | model_diff_in_diff        | string | if adjusted_model is equal to DIFF IN DIFF then true                                                                    |
+| 49 | model_other               | string | if adjusted_model is equal to OTHER then true                                                                           |
+| 50 | model_fixed_effect        | string | if adjusted_model is equal to FIXED EFFECT then true                                                                    |
+| 51 | model_lag_dependent       | string | if adjusted_model is equal to LAG DEPENDENT then true                                                                   |
+| 52 | model_pooled_ols          | string | if adjusted_model is equal to POOLED OLS then true                                                                      |
+| 53 | model_random_effect       | string | if adjusted_model is equal to RANDOM EFFECT then true                                                                   |
 
     
 
@@ -142,25 +149,32 @@
 | 27 | first_date_of_observations                          | int    | first date of observations                                                                                                              |
 | 28 | last_date_of_observations                           | int    | last date of observations                                                                                                               |
 | 29 | adjusted_model                                      | string | reorganise model variable into smaller group                                                                                            |
-| 30 | dependent                                           | string | dependent variable                                                                                                                      |
-| 31 | adjusted_dependent                                  | string | reorganise dependent variable into smaller groups                                                                                       |
-| 32 | independent                                         | string | independent variables                                                                                                                   |
-| 33 | adjusted_independent                                | string | reorganise independent variable into smaller group                                                                                      |
-| 34 | social                                              | string | if adjusted_independent in ENVIRONMENTAL AND SOCIAL, SOCIAL, CSP, CSR, ENVIRONMENTAL, SOCIAL and GOVERNANCE                             |
-| 35 | environmnental                                      | string | if adjusted_independent in ENVIRONMENTAL, ENVIRONMENTAL AND SOCIAL, ENVIRONMENTAL, SOCIAL and GOVERNANCE                                |
-| 36 | governance                                          | string | if adjusted_independent in GOVERNANCE ENVIRONMENTAL, SOCIAL and GOVERNANCE                                                              |
-| 37 | lag                                                 | string | the table contains lag or not                                                                                                           |
-| 38 | interaction_term                                    | string | the table contains interaction terms or not                                                                                             |
-| 39 | quadratic_term                                      | string | the table contains quadratic terms or not                                                                                               |
-| 40 | n                                                   | float  | number of observations                                                                                                                  |
-| 41 | r2                                                  | float  | R square                                                                                                                                |
-| 42 | beta                                                | float  | Beta coefficient                                                                                                                        |
-| 43 | sign_of_effect                                      | string | if stars is not blank and beta > 0, then POSITIVE, if stars is not blank and beta < 0, then NEGATIVE else INSIGNIFICANT                 |
-| 44 | sign_positive                                       | string | if sign_of_effect is POSITIVE then True                                                                                                 |
-| 45 | sign_negative                                       | string | if sign_of_effect is NEGATIVE then True                                                                                                 |
-| 46 | sign_insignificant                                  | string | if sign_of_effect is INSIGNIFICANT then True                                                                                            |
-| 47 | significant                                         | string | is beta significant                                                                                                                     |
-| 48 | final_standard_error                                | float  | reconstructed standard error and use sr when true_standard_error is nan or error                                                        |
-| 49 | to_check_final                                      | string | Final check rows                                                                                                                        |
+| 30 | model_instrument                                    | string | if adjusted_model is equal to INSTRUMENT then true                                                                                      |
+| 31 | model_diff_in_diff                                  | string | if adjusted_model is equal to DIFF IN DIFF then true                                                                                    |
+| 32 | model_other                                         | string | if adjusted_model is equal to OTHER then true                                                                                           |
+| 33 | model_fixed_effect                                  | string | if adjusted_model is equal to FIXED EFFECT then true                                                                                    |
+| 34 | model_lag_dependent                                 | string | if adjusted_model is equal to LAG DEPENDENT then true                                                                                   |
+| 35 | model_pooled_ols                                    | string | if adjusted_model is equal to POOLED OLS then true                                                                                      |
+| 36 | model_random_effect                                 | string | if adjusted_model is equal to RANDOM EFFECT then true                                                                                   |
+| 37 | dependent                                           | string | dependent variable                                                                                                                      |
+| 38 | adjusted_dependent                                  | string | reorganise dependent variable into smaller groups                                                                                       |
+| 39 | independent                                         | string | independent variables                                                                                                                   |
+| 40 | adjusted_independent                                | string | reorganise independent variable into smaller group                                                                                      |
+| 41 | social                                              | string | if adjusted_independent in ENVIRONMENTAL AND SOCIAL, SOCIAL, CSP, CSR, ENVIRONMENTAL, SOCIAL and GOVERNANCE                             |
+| 42 | environmnental                                      | string | if adjusted_independent in ENVIRONMENTAL, ENVIRONMENTAL AND SOCIAL, ENVIRONMENTAL, SOCIAL and GOVERNANCE                                |
+| 43 | governance                                          | string | if adjusted_independent in GOVERNANCE ENVIRONMENTAL, SOCIAL and GOVERNANCE                                                              |
+| 44 | lag                                                 | string | the table contains lag or not                                                                                                           |
+| 45 | interaction_term                                    | string | the table contains interaction terms or not                                                                                             |
+| 46 | quadratic_term                                      | string | the table contains quadratic terms or not                                                                                               |
+| 47 | n                                                   | float  | number of observations                                                                                                                  |
+| 48 | r2                                                  | float  | R square                                                                                                                                |
+| 49 | beta                                                | float  | Beta coefficient                                                                                                                        |
+| 50 | sign_of_effect                                      | string | if stars is not blank and beta > 0, then POSITIVE, if stars is not blank and beta < 0, then NEGATIVE else INSIGNIFICANT                 |
+| 51 | sign_positive                                       | string | if sign_of_effect is POSITIVE then True                                                                                                 |
+| 52 | sign_negative                                       | string | if sign_of_effect is NEGATIVE then True                                                                                                 |
+| 53 | sign_insignificant                                  | string | if sign_of_effect is INSIGNIFICANT then True                                                                                            |
+| 54 | significant                                         | string | is beta significant                                                                                                                     |
+| 55 | final_standard_error                                | float  | reconstructed standard error and use sr when true_standard_error is nan or error                                                        |
+| 56 | to_check_final                                      | string | Final check rows                                                                                                                        |
 
     

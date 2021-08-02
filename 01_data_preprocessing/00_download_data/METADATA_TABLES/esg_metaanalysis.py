@@ -132,7 +132,7 @@ var = (
                       'model_other',
                       'model_fixed_effect',
                       'model_lag_dependent',
-                      'model_pooled_ols'
+                      'model_pooled_ols',
                       'model_random_effect',
                       'dependent',
                       'adjusted_dependent',
@@ -280,14 +280,6 @@ schema = [
 
 ]
 
-
-'',
-'',
-'',
-'',
-'',
-''
-''
 # ADD DESCRIPTION
 description = 'upload new values for papers in Drive'
 
