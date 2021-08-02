@@ -42,13 +42,16 @@ The relationship between corporate social responsibility (CSR) and corporate fin
        - [README.md](https://github.com/thomaspernet/esg_metadata/tree/master/02_data_analysis/01_model_train_evaluate/00_replicate_results/README.md)
        - **Reports/**
          - [00_replicate_tables.html](https://htmlpreview.github.io/?https://github.com/thomaspernet/esg_metadata/blob/master/02_data_analysis/01_model_train_evaluate/00_replicate_results/Reports/00_replicate_tables.html)
+     - **01_sign_of_effect/**
+       - [00_sign_of_effect_classification.md](https://github.com/thomaspernet/esg_metadata/tree/master/02_data_analysis/01_model_train_evaluate/01_sign_of_effect/00_sign_of_effect_classification.md)
+       - **Reports/**
+         - [00_sign_of_effect_classification.html](https://htmlpreview.github.io/?https://github.com/thomaspernet/esg_metadata/blob/master/02_data_analysis/01_model_train_evaluate/01_sign_of_effect/Reports/00_sign_of_effect_classification.html)
  - **utils/**
    - [README.md](https://github.com/thomaspernet/esg_metadata/tree/master/utils/README.md)
    - [create_report.py](https://github.com/thomaspernet/esg_metadata/tree/master/utils/create_report.py)
    - [create_schema.py](https://github.com/thomaspernet/esg_metadata/tree/master/utils/create_schema.py)
    - [make_toc.py](https://github.com/thomaspernet/esg_metadata/tree/master/utils/make_toc.py)
    - [prepare_catalog.py](https://github.com/thomaspernet/esg_metadata/tree/master/utils/prepare_catalog.py)
-   - [summary_stat.py](https://github.com/thomaspernet/esg_metadata/tree/master/utils/summary_stat.py)
    - [update_glue_github.py](https://github.com/thomaspernet/esg_metadata/tree/master/utils/update_glue_github.py)
    - **IMAGES/**
      - [script_diagram_meta_analysis_esg_cfp.py](https://github.com/thomaspernet/esg_metadata/tree/master/utils/IMAGES/script_diagram_meta_analysis_esg_cfp.py)
