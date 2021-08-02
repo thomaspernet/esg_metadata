@@ -161,6 +161,9 @@ WITH merge AS (
     environmnental,
     governance,
     sign_of_effect,
+    sign_positive,
+    sign_negative,
+    sign_insignificant,
     lag, 
     interaction_term, 
     quadratic_term, 
@@ -249,6 +252,9 @@ SELECT
     r2, 
     beta, 
     sign_of_effect,
+    sign_positive,
+    sign_negative,
+    sign_insignificant,
     significant,
     -- critical_value, 
     final_standard_error,
@@ -418,6 +424,8 @@ def make_clickable(val):
 
 ### Save data to Google Spreadsheet for sharing
 
+- Link: [METADATA_MODEL](https://docs.google.com/spreadsheets/d/13gpRy93l7POWGe-rKjytt7KWOcD1oSLACngTEpuqCTg/edit#gid=0)
+
 ```python
 #!pip install --upgrade git+git://github.com/thomaspernet/GoogleDrive-python
 ```
@@ -545,6 +553,9 @@ WITH merge AS (
     environmnental,
     governance,
     sign_of_effect,
+    sign_positive,
+    sign_negative,
+    sign_insignificant,
     lag, 
     interaction_term, 
     quadratic_term, 
@@ -633,6 +644,9 @@ SELECT
     r2, 
     beta, 
     sign_of_effect,
+    sign_positive,
+    sign_negative,
+    sign_insignificant,
     significant,
     -- critical_value, 
     final_standard_error,
