@@ -9,7 +9,7 @@
 
 
 <style type="text/css">
-    pre { line-height: 125%; margin: 0; }
+    pre { line-height: 125%; }
 td.linenos pre { color: #000000; background-color: #f0f0f0; padding-left: 5px; padding-right: 5px; }
 span.linenos { color: #000000; background-color: #f0f0f0; padding-left: 5px; padding-right: 5px; }
 td.linenos pre.special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
@@ -14440,6 +14440,9 @@ a.anchor-link {
 <span class="s2">    environmnental,</span>
 <span class="s2">    governance,</span>
 <span class="s2">    sign_of_effect,</span>
+<span class="s2">    sign_positive,</span>
+<span class="s2">    sign_negative,</span>
+<span class="s2">    sign_insignificant,</span>
 <span class="s2">    lag, </span>
 <span class="s2">    interaction_term, </span>
 <span class="s2">    quadratic_term, </span>
@@ -14528,6 +14531,9 @@ a.anchor-link {
 <span class="s2">    r2, </span>
 <span class="s2">    beta, </span>
 <span class="s2">    sign_of_effect,</span>
+<span class="s2">    sign_positive,</span>
+<span class="s2">    sign_negative,</span>
+<span class="s2">    sign_insignificant,</span>
 <span class="s2">    significant,</span>
 <span class="s2">    -- critical_value, </span>
 <span class="s2">    final_standard_error,</span>
@@ -14659,6 +14665,9 @@ a.anchor-link {
       <th>r2</th>
       <th>beta</th>
       <th>sign_of_effect</th>
+      <th>sign_positive</th>
+      <th>sign_negative</th>
+      <th>sign_insignificant</th>
       <th>significant</th>
       <th>final_standard_error</th>
       <th>to_check_final</th>
@@ -14712,6 +14721,9 @@ a.anchor-link {
       <td>0.108</td>
       <td>0.0122</td>
       <td>INSIGNIFICANT</td>
+      <td>False</td>
+      <td>False</td>
+      <td>True</td>
       <td>NO</td>
       <td>0.0135</td>
       <td>NO</td>
@@ -14763,6 +14775,9 @@ a.anchor-link {
       <td>0.198</td>
       <td>1.2115</td>
       <td>POSITIVE</td>
+      <td>True</td>
+      <td>False</td>
+      <td>False</td>
       <td>YES</td>
       <td>0.1581</td>
       <td>NO</td>
@@ -14814,6 +14829,9 @@ a.anchor-link {
       <td>0.857</td>
       <td>0.3959</td>
       <td>POSITIVE</td>
+      <td>True</td>
+      <td>False</td>
+      <td>False</td>
       <td>YES</td>
       <td>0.0800</td>
       <td>NO</td>
@@ -14865,6 +14883,9 @@ a.anchor-link {
       <td>0.375</td>
       <td>6.8766</td>
       <td>POSITIVE</td>
+      <td>True</td>
+      <td>False</td>
+      <td>False</td>
       <td>YES</td>
       <td>0.5481</td>
       <td>NO</td>
@@ -14916,6 +14937,9 @@ a.anchor-link {
       <td>0.539</td>
       <td>-0.5037</td>
       <td>NEGATIVE</td>
+      <td>False</td>
+      <td>True</td>
+      <td>False</td>
       <td>NO</td>
       <td>0.2497</td>
       <td>NO</td>
@@ -14960,7 +14984,7 @@ a.anchor-link {
 
 
 <div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain">
-<pre>(701, 48)</pre>
+<pre>(701, 51)</pre>
 </div>
 
 </div>
@@ -15484,21 +15508,21 @@ dtype: int64</pre>
 
 <div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html">
 <style  type="text/css" >
-</style><table id="T_65eaa670_f35d_11eb_94e8_cbf60a676dd9" ><thead>    <tr>        <th class="blank level0" ></th>        <th class="col_heading level0 col0" >paper_name</th>        <th class="col_heading level0 col1" >row_id_excel</th>    </tr></thead><tbody>
+</style><table id="T_12395_" ><thead>    <tr>        <th class="blank level0" ></th>        <th class="col_heading level0 col0" >paper_name</th>        <th class="col_heading level0 col1" >row_id_excel</th>    </tr></thead><tbody>
                 <tr>
-                        <th id="T_65eaa670_f35d_11eb_94e8_cbf60a676dd9level0_row0" class="row_heading level0 row0" >385</th>
-                        <td id="T_65eaa670_f35d_11eb_94e8_cbf60a676dd9row0_col0" class="data row0 col0" >How does corporate social responsibility contribute to firm financial performance? The mediating role of competitive advantage reputation and customer satisfaction</td>
-                        <td id="T_65eaa670_f35d_11eb_94e8_cbf60a676dd9row0_col1" class="data row0 col1" ><a href="https://docs.google.com/spreadsheets/d/11A3l50yfiGxxRuyV-f3WV9Z-4DcsQLYW6XBl4a7U4bQ/edit#gid=18346659&range=B657">https://docs.google.com/spreadsheets/d/11A3l50yfiGxxRuyV-f3WV9Z-4DcsQLYW6XBl4a7U4bQ/edit#gid=18346659&range=B657</a></td>
+                        <th id="T_12395_level0_row0" class="row_heading level0 row0" >385</th>
+                        <td id="T_12395_row0_col0" class="data row0 col0" >How does corporate social responsibility contribute to firm financial performance? The mediating role of competitive advantage reputation and customer satisfaction</td>
+                        <td id="T_12395_row0_col1" class="data row0 col1" ><a href="https://docs.google.com/spreadsheets/d/11A3l50yfiGxxRuyV-f3WV9Z-4DcsQLYW6XBl4a7U4bQ/edit#gid=18346659&range=B657">https://docs.google.com/spreadsheets/d/11A3l50yfiGxxRuyV-f3WV9Z-4DcsQLYW6XBl4a7U4bQ/edit#gid=18346659&range=B657</a></td>
             </tr>
             <tr>
-                        <th id="T_65eaa670_f35d_11eb_94e8_cbf60a676dd9level0_row1" class="row_heading level0 row1" >397</th>
-                        <td id="T_65eaa670_f35d_11eb_94e8_cbf60a676dd9row1_col0" class="data row1 col0" >L’impact de la responsabilité sociale (RSE) sur la performance financière des entreprises (PFE) au Cameroun</td>
-                        <td id="T_65eaa670_f35d_11eb_94e8_cbf60a676dd9row1_col1" class="data row1 col1" ><a href="https://docs.google.com/spreadsheets/d/11A3l50yfiGxxRuyV-f3WV9Z-4DcsQLYW6XBl4a7U4bQ/edit#gid=18346659&range=B723">https://docs.google.com/spreadsheets/d/11A3l50yfiGxxRuyV-f3WV9Z-4DcsQLYW6XBl4a7U4bQ/edit#gid=18346659&range=B723</a></td>
+                        <th id="T_12395_level0_row1" class="row_heading level0 row1" >397</th>
+                        <td id="T_12395_row1_col0" class="data row1 col0" >L’impact de la responsabilité sociale (RSE) sur la performance financière des entreprises (PFE) au Cameroun</td>
+                        <td id="T_12395_row1_col1" class="data row1 col1" ><a href="https://docs.google.com/spreadsheets/d/11A3l50yfiGxxRuyV-f3WV9Z-4DcsQLYW6XBl4a7U4bQ/edit#gid=18346659&range=B723">https://docs.google.com/spreadsheets/d/11A3l50yfiGxxRuyV-f3WV9Z-4DcsQLYW6XBl4a7U4bQ/edit#gid=18346659&range=B723</a></td>
             </tr>
             <tr>
-                        <th id="T_65eaa670_f35d_11eb_94e8_cbf60a676dd9level0_row2" class="row_heading level0 row2" >451</th>
-                        <td id="T_65eaa670_f35d_11eb_94e8_cbf60a676dd9row2_col0" class="data row2 col0" >Does Corporate Social Responsibility Pay Off in Times of Crisis? An Alternate Perspective on the Relationship between Financial and Corporate Social Performance</td>
-                        <td id="T_65eaa670_f35d_11eb_94e8_cbf60a676dd9row2_col1" class="data row2 col1" ><a href="https://docs.google.com/spreadsheets/d/11A3l50yfiGxxRuyV-f3WV9Z-4DcsQLYW6XBl4a7U4bQ/edit#gid=18346659&range=B784">https://docs.google.com/spreadsheets/d/11A3l50yfiGxxRuyV-f3WV9Z-4DcsQLYW6XBl4a7U4bQ/edit#gid=18346659&range=B784</a></td>
+                        <th id="T_12395_level0_row2" class="row_heading level0 row2" >451</th>
+                        <td id="T_12395_row2_col0" class="data row2 col0" >Does Corporate Social Responsibility Pay Off in Times of Crisis? An Alternate Perspective on the Relationship between Financial and Corporate Social Performance</td>
+                        <td id="T_12395_row2_col1" class="data row2 col1" ><a href="https://docs.google.com/spreadsheets/d/11A3l50yfiGxxRuyV-f3WV9Z-4DcsQLYW6XBl4a7U4bQ/edit#gid=18346659&range=B784">https://docs.google.com/spreadsheets/d/11A3l50yfiGxxRuyV-f3WV9Z-4DcsQLYW6XBl4a7U4bQ/edit#gid=18346659&range=B784</a></td>
             </tr>
     </tbody></table>
 </div>
@@ -15559,16 +15583,16 @@ dtype: int64</pre>
 
 <div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html">
 <style  type="text/css" >
-</style><table id="T_65ede128_f35d_11eb_94e8_cbf60a676dd9" ><thead>    <tr>        <th class="blank level0" ></th>        <th class="col_heading level0 col0" >paper_name</th>        <th class="col_heading level0 col1" >row_id_excel</th>    </tr></thead><tbody>
+</style><table id="T_07b34_" ><thead>    <tr>        <th class="blank level0" ></th>        <th class="col_heading level0 col0" >paper_name</th>        <th class="col_heading level0 col1" >row_id_excel</th>    </tr></thead><tbody>
                 <tr>
-                        <th id="T_65ede128_f35d_11eb_94e8_cbf60a676dd9level0_row0" class="row_heading level0 row0" >391</th>
-                        <td id="T_65ede128_f35d_11eb_94e8_cbf60a676dd9row0_col0" class="data row0 col0" >Corporate social responsibility and financial performance in Islamic banks</td>
-                        <td id="T_65ede128_f35d_11eb_94e8_cbf60a676dd9row0_col1" class="data row0 col1" ><a href="https://docs.google.com/spreadsheets/d/11A3l50yfiGxxRuyV-f3WV9Z-4DcsQLYW6XBl4a7U4bQ/edit#gid=18346659&range=B701">https://docs.google.com/spreadsheets/d/11A3l50yfiGxxRuyV-f3WV9Z-4DcsQLYW6XBl4a7U4bQ/edit#gid=18346659&range=B701</a></td>
+                        <th id="T_07b34_level0_row0" class="row_heading level0 row0" >391</th>
+                        <td id="T_07b34_row0_col0" class="data row0 col0" >Corporate social responsibility and financial performance in Islamic banks</td>
+                        <td id="T_07b34_row0_col1" class="data row0 col1" ><a href="https://docs.google.com/spreadsheets/d/11A3l50yfiGxxRuyV-f3WV9Z-4DcsQLYW6XBl4a7U4bQ/edit#gid=18346659&range=B701">https://docs.google.com/spreadsheets/d/11A3l50yfiGxxRuyV-f3WV9Z-4DcsQLYW6XBl4a7U4bQ/edit#gid=18346659&range=B701</a></td>
             </tr>
             <tr>
-                        <th id="T_65ede128_f35d_11eb_94e8_cbf60a676dd9level0_row1" class="row_heading level0 row1" >593</th>
-                        <td id="T_65ede128_f35d_11eb_94e8_cbf60a676dd9row1_col0" class="data row1 col0" >Corporate social responsibility and financial performance: the ‘‘virtuous circle’’ revisited</td>
-                        <td id="T_65ede128_f35d_11eb_94e8_cbf60a676dd9row1_col1" class="data row1 col1" ><a href="https://docs.google.com/spreadsheets/d/11A3l50yfiGxxRuyV-f3WV9Z-4DcsQLYW6XBl4a7U4bQ/edit#gid=18346659&range=B1156">https://docs.google.com/spreadsheets/d/11A3l50yfiGxxRuyV-f3WV9Z-4DcsQLYW6XBl4a7U4bQ/edit#gid=18346659&range=B1156</a></td>
+                        <th id="T_07b34_level0_row1" class="row_heading level0 row1" >593</th>
+                        <td id="T_07b34_row1_col0" class="data row1 col0" >Corporate social responsibility and financial performance: the ‘‘virtuous circle’’ revisited</td>
+                        <td id="T_07b34_row1_col1" class="data row1 col1" ><a href="https://docs.google.com/spreadsheets/d/11A3l50yfiGxxRuyV-f3WV9Z-4DcsQLYW6XBl4a7U4bQ/edit#gid=18346659&range=B1156">https://docs.google.com/spreadsheets/d/11A3l50yfiGxxRuyV-f3WV9Z-4DcsQLYW6XBl4a7U4bQ/edit#gid=18346659&range=B1156</a></td>
             </tr>
     </tbody></table>
 </div>
@@ -15641,31 +15665,31 @@ dtype: int64</pre>
 
 <div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html">
 <style  type="text/css" >
-</style><table id="T_65f057c8_f35d_11eb_94e8_cbf60a676dd9" ><thead>    <tr>        <th class="blank level0" ></th>        <th class="col_heading level0 col0" >paper_name</th>        <th class="col_heading level0 col1" >row_id_excel</th>    </tr></thead><tbody>
+</style><table id="T_e1110_" ><thead>    <tr>        <th class="blank level0" ></th>        <th class="col_heading level0 col0" >paper_name</th>        <th class="col_heading level0 col1" >row_id_excel</th>    </tr></thead><tbody>
                 <tr>
-                        <th id="T_65f057c8_f35d_11eb_94e8_cbf60a676dd9level0_row0" class="row_heading level0 row0" >397</th>
-                        <td id="T_65f057c8_f35d_11eb_94e8_cbf60a676dd9row0_col0" class="data row0 col0" >L’impact de la responsabilité sociale (RSE) sur la performance financière des entreprises (PFE) au Cameroun</td>
-                        <td id="T_65f057c8_f35d_11eb_94e8_cbf60a676dd9row0_col1" class="data row0 col1" ><a href="https://docs.google.com/spreadsheets/d/11A3l50yfiGxxRuyV-f3WV9Z-4DcsQLYW6XBl4a7U4bQ/edit#gid=18346659&range=B723">https://docs.google.com/spreadsheets/d/11A3l50yfiGxxRuyV-f3WV9Z-4DcsQLYW6XBl4a7U4bQ/edit#gid=18346659&range=B723</a></td>
+                        <th id="T_e1110_level0_row0" class="row_heading level0 row0" >397</th>
+                        <td id="T_e1110_row0_col0" class="data row0 col0" >L’impact de la responsabilité sociale (RSE) sur la performance financière des entreprises (PFE) au Cameroun</td>
+                        <td id="T_e1110_row0_col1" class="data row0 col1" ><a href="https://docs.google.com/spreadsheets/d/11A3l50yfiGxxRuyV-f3WV9Z-4DcsQLYW6XBl4a7U4bQ/edit#gid=18346659&range=B723">https://docs.google.com/spreadsheets/d/11A3l50yfiGxxRuyV-f3WV9Z-4DcsQLYW6XBl4a7U4bQ/edit#gid=18346659&range=B723</a></td>
             </tr>
             <tr>
-                        <th id="T_65f057c8_f35d_11eb_94e8_cbf60a676dd9level0_row1" class="row_heading level0 row1" >440</th>
-                        <td id="T_65f057c8_f35d_11eb_94e8_cbf60a676dd9row1_col0" class="data row1 col0" >Looking for evidence of the relationship between CSR and CFP in an Emerging Market</td>
-                        <td id="T_65f057c8_f35d_11eb_94e8_cbf60a676dd9row1_col1" class="data row1 col1" ><a href="https://docs.google.com/spreadsheets/d/11A3l50yfiGxxRuyV-f3WV9Z-4DcsQLYW6XBl4a7U4bQ/edit#gid=18346659&range=B753">https://docs.google.com/spreadsheets/d/11A3l50yfiGxxRuyV-f3WV9Z-4DcsQLYW6XBl4a7U4bQ/edit#gid=18346659&range=B753</a></td>
+                        <th id="T_e1110_level0_row1" class="row_heading level0 row1" >440</th>
+                        <td id="T_e1110_row1_col0" class="data row1 col0" >Looking for evidence of the relationship between CSR and CFP in an Emerging Market</td>
+                        <td id="T_e1110_row1_col1" class="data row1 col1" ><a href="https://docs.google.com/spreadsheets/d/11A3l50yfiGxxRuyV-f3WV9Z-4DcsQLYW6XBl4a7U4bQ/edit#gid=18346659&range=B753">https://docs.google.com/spreadsheets/d/11A3l50yfiGxxRuyV-f3WV9Z-4DcsQLYW6XBl4a7U4bQ/edit#gid=18346659&range=B753</a></td>
             </tr>
             <tr>
-                        <th id="T_65f057c8_f35d_11eb_94e8_cbf60a676dd9level0_row2" class="row_heading level0 row2" >562</th>
-                        <td id="T_65f057c8_f35d_11eb_94e8_cbf60a676dd9row2_col0" class="data row2 col0" >The Relationship of CSR and Financial Performance: New Evidence From Indonesian Companies</td>
-                        <td id="T_65f057c8_f35d_11eb_94e8_cbf60a676dd9row2_col1" class="data row2 col1" ><a href="https://docs.google.com/spreadsheets/d/11A3l50yfiGxxRuyV-f3WV9Z-4DcsQLYW6XBl4a7U4bQ/edit#gid=18346659&range=B1107">https://docs.google.com/spreadsheets/d/11A3l50yfiGxxRuyV-f3WV9Z-4DcsQLYW6XBl4a7U4bQ/edit#gid=18346659&range=B1107</a></td>
+                        <th id="T_e1110_level0_row2" class="row_heading level0 row2" >562</th>
+                        <td id="T_e1110_row2_col0" class="data row2 col0" >The Relationship of CSR and Financial Performance: New Evidence From Indonesian Companies</td>
+                        <td id="T_e1110_row2_col1" class="data row2 col1" ><a href="https://docs.google.com/spreadsheets/d/11A3l50yfiGxxRuyV-f3WV9Z-4DcsQLYW6XBl4a7U4bQ/edit#gid=18346659&range=B1107">https://docs.google.com/spreadsheets/d/11A3l50yfiGxxRuyV-f3WV9Z-4DcsQLYW6XBl4a7U4bQ/edit#gid=18346659&range=B1107</a></td>
             </tr>
             <tr>
-                        <th id="T_65f057c8_f35d_11eb_94e8_cbf60a676dd9level0_row3" class="row_heading level0 row3" >625</th>
-                        <td id="T_65f057c8_f35d_11eb_94e8_cbf60a676dd9row3_col0" class="data row3 col0" >Exploring the moderating effect of financial performance on the relationship between corporate environmental responsibility and institutional investors: some Egyptian evidence</td>
-                        <td id="T_65f057c8_f35d_11eb_94e8_cbf60a676dd9row3_col1" class="data row3 col1" ><a href="https://docs.google.com/spreadsheets/d/11A3l50yfiGxxRuyV-f3WV9Z-4DcsQLYW6XBl4a7U4bQ/edit#gid=18346659&range=B1220">https://docs.google.com/spreadsheets/d/11A3l50yfiGxxRuyV-f3WV9Z-4DcsQLYW6XBl4a7U4bQ/edit#gid=18346659&range=B1220</a></td>
+                        <th id="T_e1110_level0_row3" class="row_heading level0 row3" >625</th>
+                        <td id="T_e1110_row3_col0" class="data row3 col0" >Exploring the moderating effect of financial performance on the relationship between corporate environmental responsibility and institutional investors: some Egyptian evidence</td>
+                        <td id="T_e1110_row3_col1" class="data row3 col1" ><a href="https://docs.google.com/spreadsheets/d/11A3l50yfiGxxRuyV-f3WV9Z-4DcsQLYW6XBl4a7U4bQ/edit#gid=18346659&range=B1220">https://docs.google.com/spreadsheets/d/11A3l50yfiGxxRuyV-f3WV9Z-4DcsQLYW6XBl4a7U4bQ/edit#gid=18346659&range=B1220</a></td>
             </tr>
             <tr>
-                        <th id="T_65f057c8_f35d_11eb_94e8_cbf60a676dd9level0_row4" class="row_heading level0 row4" >636</th>
-                        <td id="T_65f057c8_f35d_11eb_94e8_cbf60a676dd9row4_col0" class="data row4 col0" >STRATEGIC USE OF CSR AS A SIGNAL FOR GOOD MANAGEMENT</td>
-                        <td id="T_65f057c8_f35d_11eb_94e8_cbf60a676dd9row4_col1" class="data row4 col1" ><a href="https://docs.google.com/spreadsheets/d/11A3l50yfiGxxRuyV-f3WV9Z-4DcsQLYW6XBl4a7U4bQ/edit#gid=18346659&range=B1271">https://docs.google.com/spreadsheets/d/11A3l50yfiGxxRuyV-f3WV9Z-4DcsQLYW6XBl4a7U4bQ/edit#gid=18346659&range=B1271</a></td>
+                        <th id="T_e1110_level0_row4" class="row_heading level0 row4" >636</th>
+                        <td id="T_e1110_row4_col0" class="data row4 col0" >STRATEGIC USE OF CSR AS A SIGNAL FOR GOOD MANAGEMENT</td>
+                        <td id="T_e1110_row4_col1" class="data row4 col1" ><a href="https://docs.google.com/spreadsheets/d/11A3l50yfiGxxRuyV-f3WV9Z-4DcsQLYW6XBl4a7U4bQ/edit#gid=18346659&range=B1271">https://docs.google.com/spreadsheets/d/11A3l50yfiGxxRuyV-f3WV9Z-4DcsQLYW6XBl4a7U4bQ/edit#gid=18346659&range=B1271</a></td>
             </tr>
     </tbody></table>
 </div>
@@ -15687,7 +15711,7 @@ dtype: int64</pre>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[17]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[16]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="p">(</span>
@@ -15714,37 +15738,37 @@ dtype: int64</pre>
 <div class="jp-OutputArea-child">
 
     
-    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[17]:</div>
+    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[16]:</div>
 
 
 
 <div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html">
 <style  type="text/css" >
-</style><table id="T_a4b7c45a_f35d_11eb_94e8_cbf60a676dd9" ><thead>    <tr>        <th class="blank level0" ></th>        <th class="col_heading level0 col0" >paper_name</th>        <th class="col_heading level0 col1" >row_id_google_spreadsheet</th>    </tr></thead><tbody>
+</style><table id="T_8e010_" ><thead>    <tr>        <th class="blank level0" ></th>        <th class="col_heading level0 col0" >paper_name</th>        <th class="col_heading level0 col1" >row_id_google_spreadsheet</th>    </tr></thead><tbody>
                 <tr>
-                        <th id="T_a4b7c45a_f35d_11eb_94e8_cbf60a676dd9level0_row0" class="row_heading level0 row0" >25</th>
-                        <td id="T_a4b7c45a_f35d_11eb_94e8_cbf60a676dd9row0_col0" class="data row0 col0" >The heterogeneous effects of CSR dimensions on financial performance   a new approach for CSR measurement</td>
-                        <td id="T_a4b7c45a_f35d_11eb_94e8_cbf60a676dd9row0_col1" class="data row0 col1" ><a href="https://docs.google.com/spreadsheets/d/1d66_CVtWni7wmKlIMcpaoanvT2ghmjbXARiHgnLWvUw/edit#gid=899172650&range=B27">https://docs.google.com/spreadsheets/d/1d66_CVtWni7wmKlIMcpaoanvT2ghmjbXARiHgnLWvUw/edit#gid=899172650&range=B27</a></td>
+                        <th id="T_8e010_level0_row0" class="row_heading level0 row0" >25</th>
+                        <td id="T_8e010_row0_col0" class="data row0 col0" >The heterogeneous effects of CSR dimensions on financial performance   a new approach for CSR measurement</td>
+                        <td id="T_8e010_row0_col1" class="data row0 col1" ><a href="https://docs.google.com/spreadsheets/d/1d66_CVtWni7wmKlIMcpaoanvT2ghmjbXARiHgnLWvUw/edit#gid=899172650&range=B27">https://docs.google.com/spreadsheets/d/1d66_CVtWni7wmKlIMcpaoanvT2ghmjbXARiHgnLWvUw/edit#gid=899172650&range=B27</a></td>
             </tr>
             <tr>
-                        <th id="T_a4b7c45a_f35d_11eb_94e8_cbf60a676dd9level0_row1" class="row_heading level0 row1" >29</th>
-                        <td id="T_a4b7c45a_f35d_11eb_94e8_cbf60a676dd9row1_col0" class="data row1 col0" >The heterogeneous effects of CSR dimensions on financial performance   a new approach for CSR measurement</td>
-                        <td id="T_a4b7c45a_f35d_11eb_94e8_cbf60a676dd9row1_col1" class="data row1 col1" ><a href="https://docs.google.com/spreadsheets/d/1d66_CVtWni7wmKlIMcpaoanvT2ghmjbXARiHgnLWvUw/edit#gid=899172650&range=B31">https://docs.google.com/spreadsheets/d/1d66_CVtWni7wmKlIMcpaoanvT2ghmjbXARiHgnLWvUw/edit#gid=899172650&range=B31</a></td>
+                        <th id="T_8e010_level0_row1" class="row_heading level0 row1" >29</th>
+                        <td id="T_8e010_row1_col0" class="data row1 col0" >The heterogeneous effects of CSR dimensions on financial performance   a new approach for CSR measurement</td>
+                        <td id="T_8e010_row1_col1" class="data row1 col1" ><a href="https://docs.google.com/spreadsheets/d/1d66_CVtWni7wmKlIMcpaoanvT2ghmjbXARiHgnLWvUw/edit#gid=899172650&range=B31">https://docs.google.com/spreadsheets/d/1d66_CVtWni7wmKlIMcpaoanvT2ghmjbXARiHgnLWvUw/edit#gid=899172650&range=B31</a></td>
             </tr>
             <tr>
-                        <th id="T_a4b7c45a_f35d_11eb_94e8_cbf60a676dd9level0_row2" class="row_heading level0 row2" >33</th>
-                        <td id="T_a4b7c45a_f35d_11eb_94e8_cbf60a676dd9row2_col0" class="data row2 col0" >The heterogeneous effects of CSR dimensions on financial performance   a new approach for CSR measurement</td>
-                        <td id="T_a4b7c45a_f35d_11eb_94e8_cbf60a676dd9row2_col1" class="data row2 col1" ><a href="https://docs.google.com/spreadsheets/d/1d66_CVtWni7wmKlIMcpaoanvT2ghmjbXARiHgnLWvUw/edit#gid=899172650&range=B35">https://docs.google.com/spreadsheets/d/1d66_CVtWni7wmKlIMcpaoanvT2ghmjbXARiHgnLWvUw/edit#gid=899172650&range=B35</a></td>
+                        <th id="T_8e010_level0_row2" class="row_heading level0 row2" >33</th>
+                        <td id="T_8e010_row2_col0" class="data row2 col0" >The heterogeneous effects of CSR dimensions on financial performance   a new approach for CSR measurement</td>
+                        <td id="T_8e010_row2_col1" class="data row2 col1" ><a href="https://docs.google.com/spreadsheets/d/1d66_CVtWni7wmKlIMcpaoanvT2ghmjbXARiHgnLWvUw/edit#gid=899172650&range=B35">https://docs.google.com/spreadsheets/d/1d66_CVtWni7wmKlIMcpaoanvT2ghmjbXARiHgnLWvUw/edit#gid=899172650&range=B35</a></td>
             </tr>
             <tr>
-                        <th id="T_a4b7c45a_f35d_11eb_94e8_cbf60a676dd9level0_row3" class="row_heading level0 row3" >121</th>
-                        <td id="T_a4b7c45a_f35d_11eb_94e8_cbf60a676dd9row3_col0" class="data row3 col0" >Environmental Social and Governance (ESG) Scores and Financial Performance of Multilatinas: Moderating Effects of Geographic International Diversification and Financial Slack</td>
-                        <td id="T_a4b7c45a_f35d_11eb_94e8_cbf60a676dd9row3_col1" class="data row3 col1" ><a href="https://docs.google.com/spreadsheets/d/1d66_CVtWni7wmKlIMcpaoanvT2ghmjbXARiHgnLWvUw/edit#gid=899172650&range=B123">https://docs.google.com/spreadsheets/d/1d66_CVtWni7wmKlIMcpaoanvT2ghmjbXARiHgnLWvUw/edit#gid=899172650&range=B123</a></td>
+                        <th id="T_8e010_level0_row3" class="row_heading level0 row3" >121</th>
+                        <td id="T_8e010_row3_col0" class="data row3 col0" >Environmental Social and Governance (ESG) Scores and Financial Performance of Multilatinas: Moderating Effects of Geographic International Diversification and Financial Slack</td>
+                        <td id="T_8e010_row3_col1" class="data row3 col1" ><a href="https://docs.google.com/spreadsheets/d/1d66_CVtWni7wmKlIMcpaoanvT2ghmjbXARiHgnLWvUw/edit#gid=899172650&range=B123">https://docs.google.com/spreadsheets/d/1d66_CVtWni7wmKlIMcpaoanvT2ghmjbXARiHgnLWvUw/edit#gid=899172650&range=B123</a></td>
             </tr>
             <tr>
-                        <th id="T_a4b7c45a_f35d_11eb_94e8_cbf60a676dd9level0_row4" class="row_heading level0 row4" >125</th>
-                        <td id="T_a4b7c45a_f35d_11eb_94e8_cbf60a676dd9row4_col0" class="data row4 col0" >Environmental Social and Governance (ESG) Scores and Financial Performance of Multilatinas: Moderating Effects of Geographic International Diversification and Financial Slack</td>
-                        <td id="T_a4b7c45a_f35d_11eb_94e8_cbf60a676dd9row4_col1" class="data row4 col1" ><a href="https://docs.google.com/spreadsheets/d/1d66_CVtWni7wmKlIMcpaoanvT2ghmjbXARiHgnLWvUw/edit#gid=899172650&range=B127">https://docs.google.com/spreadsheets/d/1d66_CVtWni7wmKlIMcpaoanvT2ghmjbXARiHgnLWvUw/edit#gid=899172650&range=B127</a></td>
+                        <th id="T_8e010_level0_row4" class="row_heading level0 row4" >125</th>
+                        <td id="T_8e010_row4_col0" class="data row4 col0" >Environmental Social and Governance (ESG) Scores and Financial Performance of Multilatinas: Moderating Effects of Geographic International Diversification and Financial Slack</td>
+                        <td id="T_8e010_row4_col1" class="data row4 col1" ><a href="https://docs.google.com/spreadsheets/d/1d66_CVtWni7wmKlIMcpaoanvT2ghmjbXARiHgnLWvUw/edit#gid=899172650&range=B127">https://docs.google.com/spreadsheets/d/1d66_CVtWni7wmKlIMcpaoanvT2ghmjbXARiHgnLWvUw/edit#gid=899172650&range=B127</a></td>
             </tr>
     </tbody></table>
 </div>
@@ -15758,12 +15782,15 @@ dtype: int64</pre>
 </div>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h3 id="Save-data-to-Google-Spreadsheet-for-sharing">Save data to Google Spreadsheet for sharing<a class="anchor-link" href="#Save-data-to-Google-Spreadsheet-for-sharing">&#182;</a></h3>
+<h3 id="Save-data-to-Google-Spreadsheet-for-sharing">Save data to Google Spreadsheet for sharing<a class="anchor-link" href="#Save-data-to-Google-Spreadsheet-for-sharing">&#182;</a></h3><ul>
+<li>Link: <a href="https://docs.google.com/spreadsheets/d/13gpRy93l7POWGe-rKjytt7KWOcD1oSLACngTEpuqCTg/edit#gid=0">METADATA_MODEL</a></li>
+</ul>
+
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[17]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="ch">#!pip install --upgrade git+git://github.com/thomaspernet/GoogleDrive-python</span>
@@ -15904,7 +15931,7 @@ dtype: int64</pre>
 
 
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
-<pre>Range MODEL_DATA!A1:AW705 has been updated.
+<pre>Range MODEL_DATA!A1:AZ705 has been updated.
 </pre>
 </div>
 </div>
@@ -15981,7 +16008,7 @@ dtype: int64</pre>
 
 
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
-<pre>{&#39;ResponseMetadata&#39;: {&#39;RequestId&#39;: &#39;e02368e0-5f10-4c37-ab83-d20e789839e4&#39;, &#39;HTTPStatusCode&#39;: 200, &#39;HTTPHeaders&#39;: {&#39;date&#39;: &#39;Mon, 02 Aug 2021 06:50:02 GMT&#39;, &#39;content-type&#39;: &#39;application/x-amz-json-1.1&#39;, &#39;content-length&#39;: &#39;2&#39;, &#39;connection&#39;: &#39;keep-alive&#39;, &#39;x-amzn-requestid&#39;: &#39;e02368e0-5f10-4c37-ab83-d20e789839e4&#39;}, &#39;RetryAttempts&#39;: 0}}
+<pre>{&#39;ResponseMetadata&#39;: {&#39;RequestId&#39;: &#39;e1c38fa9-5686-45d3-893b-21a7899eaea2&#39;, &#39;HTTPStatusCode&#39;: 200, &#39;HTTPHeaders&#39;: {&#39;date&#39;: &#39;Mon, 02 Aug 2021 07:26:26 GMT&#39;, &#39;content-type&#39;: &#39;application/x-amz-json-1.1&#39;, &#39;content-length&#39;: &#39;2&#39;, &#39;connection&#39;: &#39;keep-alive&#39;, &#39;x-amzn-requestid&#39;: &#39;e1c38fa9-5686-45d3-893b-21a7899eaea2&#39;}, &#39;RetryAttempts&#39;: 0}}
 </pre>
 </div>
 </div>
@@ -16078,6 +16105,9 @@ dtype: int64</pre>
 <span class="s2">    environmnental,</span>
 <span class="s2">    governance,</span>
 <span class="s2">    sign_of_effect,</span>
+<span class="s2">    sign_positive,</span>
+<span class="s2">    sign_negative,</span>
+<span class="s2">    sign_insignificant,</span>
 <span class="s2">    lag, </span>
 <span class="s2">    interaction_term, </span>
 <span class="s2">    quadratic_term, </span>
@@ -16166,6 +16196,9 @@ dtype: int64</pre>
 <span class="s2">    r2, </span>
 <span class="s2">    beta, </span>
 <span class="s2">    sign_of_effect,</span>
+<span class="s2">    sign_positive,</span>
+<span class="s2">    sign_negative,</span>
+<span class="s2">    sign_insignificant,</span>
 <span class="s2">    significant,</span>
 <span class="s2">    -- critical_value, </span>
 <span class="s2">    final_standard_error,</span>
@@ -16227,8 +16260,8 @@ dtype: int64</pre>
 
 
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
-<pre>CPU times: user 179 ms, sys: 3.9 ms, total: 183 ms
-Wall time: 4.21 s
+<pre>CPU times: user 340 ms, sys: 25.7 ms, total: 366 ms
+Wall time: 3.09 s
 </pre>
 </div>
 </div>
@@ -16243,9 +16276,9 @@ Wall time: 4.21 s
 
 <div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain">
 <pre>{&#39;Results&#39;: {&#39;State&#39;: &#39;SUCCEEDED&#39;,
-  &#39;SubmissionDateTime&#39;: datetime.datetime(2021, 8, 2, 6, 50, 6, 630000, tzinfo=tzlocal()),
-  &#39;CompletionDateTime&#39;: datetime.datetime(2021, 8, 2, 6, 50, 9, 470000, tzinfo=tzlocal())},
- &#39;QueryID&#39;: &#39;4d2338d8-6452-493c-ab06-36623a276dd4&#39;}</pre>
+  &#39;SubmissionDateTime&#39;: datetime.datetime(2021, 8, 2, 9, 26, 28, 643000, tzinfo=tzlocal()),
+  &#39;CompletionDateTime&#39;: datetime.datetime(2021, 8, 2, 9, 26, 30, 800000, tzinfo=tzlocal())},
+ &#39;QueryID&#39;: &#39;0c3e1e17-4d4e-4ae8-8a85-b245c7eb163e&#39;}</pre>
 </div>
 
 </div>
@@ -16604,277 +16637,292 @@ Wall time: 4.21 s
 
 <div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output " data-mime-type="text/html">
 <style  type="text/css" >
-#T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row0_col1{
+#T_99b93_row0_col1{
             width:  10em;
              height:  80%;
             background:  linear-gradient(90deg,#d65f5f 100.0%, transparent 100.0%);
-        }#T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row1_col1{
+        }#T_99b93_row1_col1{
             width:  10em;
              height:  80%;
             background:  linear-gradient(90deg,#d65f5f 20.0%, transparent 20.0%);
-        }#T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row2_col1{
+        }#T_99b93_row2_col1{
             width:  10em;
              height:  80%;
             background:  linear-gradient(90deg,#d65f5f 15.8%, transparent 15.8%);
-        }#T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row3_col1,#T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row4_col1,#T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row5_col1,#T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row6_col1,#T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row7_col1,#T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row8_col1,#T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row9_col1,#T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row10_col1,#T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row11_col1,#T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row12_col1,#T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row13_col1{
+        }#T_99b93_row3_col1,#T_99b93_row4_col1,#T_99b93_row5_col1,#T_99b93_row6_col1,#T_99b93_row7_col1,#T_99b93_row8_col1,#T_99b93_row9_col1,#T_99b93_row10_col1,#T_99b93_row11_col1,#T_99b93_row12_col1,#T_99b93_row13_col1{
             width:  10em;
              height:  80%;
             background:  linear-gradient(90deg,#d65f5f 14.8%, transparent 14.8%);
-        }#T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row14_col1,#T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row15_col1{
+        }#T_99b93_row14_col1,#T_99b93_row15_col1{
             width:  10em;
              height:  80%;
             background:  linear-gradient(90deg,#d65f5f 1.7%, transparent 1.7%);
-        }#T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row16_col1{
+        }#T_99b93_row16_col1{
             width:  10em;
              height:  80%;
             background:  linear-gradient(90deg,#d65f5f 1.3%, transparent 1.3%);
-        }#T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row17_col1{
+        }#T_99b93_row17_col1{
             width:  10em;
              height:  80%;
             background:  linear-gradient(90deg,#d65f5f 0.4%, transparent 0.4%);
-        }#T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row18_col1,#T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row19_col1,#T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row20_col1,#T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row21_col1,#T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row22_col1,#T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row23_col1,#T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row24_col1,#T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row25_col1,#T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row26_col1,#T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row27_col1,#T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row28_col1,#T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row29_col1,#T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row30_col1,#T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row31_col1,#T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row32_col1,#T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row33_col1,#T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row34_col1,#T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row35_col1,#T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row36_col1,#T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row37_col1,#T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row38_col1,#T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row39_col1,#T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row40_col1,#T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row41_col1,#T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row42_col1,#T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row43_col1,#T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row44_col1,#T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row45_col1,#T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row46_col1,#T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row47_col1{
+        }#T_99b93_row18_col1,#T_99b93_row19_col1,#T_99b93_row20_col1,#T_99b93_row21_col1,#T_99b93_row22_col1,#T_99b93_row23_col1,#T_99b93_row24_col1,#T_99b93_row25_col1,#T_99b93_row26_col1,#T_99b93_row27_col1,#T_99b93_row28_col1,#T_99b93_row29_col1,#T_99b93_row30_col1,#T_99b93_row31_col1,#T_99b93_row32_col1,#T_99b93_row33_col1,#T_99b93_row34_col1,#T_99b93_row35_col1,#T_99b93_row36_col1,#T_99b93_row37_col1,#T_99b93_row38_col1,#T_99b93_row39_col1,#T_99b93_row40_col1,#T_99b93_row41_col1,#T_99b93_row42_col1,#T_99b93_row43_col1,#T_99b93_row44_col1,#T_99b93_row45_col1,#T_99b93_row46_col1,#T_99b93_row47_col1,#T_99b93_row48_col1,#T_99b93_row49_col1,#T_99b93_row50_col1{
             width:  10em;
              height:  80%;
-        }</style><table id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9" ><thead>    <tr>        <th class="blank level0" ></th>        <th class="col_heading level0 col0" >total_missing</th>        <th class="col_heading level0 col1" >total_missing_pct</th>    </tr></thead><tbody>
+        }</style><table id="T_99b93_" ><thead>    <tr>        <th class="blank level0" ></th>        <th class="col_heading level0 col0" >total_missing</th>        <th class="col_heading level0 col1" >total_missing_pct</th>    </tr></thead><tbody>
                 <tr>
-                        <th id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9level0_row0" class="row_heading level0 row0" >nb_obs</th>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row0_col0" class="data row0 col0" >701</td>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row0_col1" class="data row0 col1" >100.00%</td>
+                        <th id="T_99b93_level0_row0" class="row_heading level0 row0" >nb_obs</th>
+                        <td id="T_99b93_row0_col0" class="data row0 col0" >701</td>
+                        <td id="T_99b93_row0_col1" class="data row0 col1" >100.00%</td>
             </tr>
             <tr>
-                        <th id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9level0_row1" class="row_heading level0 row1" >final_standard_error</th>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row1_col0" class="data row1 col0" >140</td>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row1_col1" class="data row1 col1" >19.97%</td>
+                        <th id="T_99b93_level0_row1" class="row_heading level0 row1" >final_standard_error</th>
+                        <td id="T_99b93_row1_col0" class="data row1 col0" >140</td>
+                        <td id="T_99b93_row1_col1" class="data row1 col1" >19.97%</td>
             </tr>
             <tr>
-                        <th id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9level0_row2" class="row_heading level0 row2" >r2</th>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row2_col0" class="data row2 col0" >111</td>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row2_col1" class="data row2 col1" >15.83%</td>
+                        <th id="T_99b93_level0_row2" class="row_heading level0 row2" >r2</th>
+                        <td id="T_99b93_row2_col0" class="data row2 col0" >111</td>
+                        <td id="T_99b93_row2_col1" class="data row2 col1" >15.83%</td>
             </tr>
             <tr>
-                        <th id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9level0_row3" class="row_heading level0 row3" >sjr_best_quartile</th>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row3_col0" class="data row3 col0" >104</td>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row3_col1" class="data row3 col1" >14.84%</td>
+                        <th id="T_99b93_level0_row3" class="row_heading level0 row3" >sjr_best_quartile</th>
+                        <td id="T_99b93_row3_col0" class="data row3 col0" >104</td>
+                        <td id="T_99b93_row3_col1" class="data row3 col1" >14.84%</td>
             </tr>
             <tr>
-                        <th id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9level0_row4" class="row_heading level0 row4" >country</th>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row4_col0" class="data row4 col0" >104</td>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row4_col1" class="data row4 col1" >14.84%</td>
+                        <th id="T_99b93_level0_row4" class="row_heading level0 row4" >country</th>
+                        <td id="T_99b93_row4_col0" class="data row4 col0" >104</td>
+                        <td id="T_99b93_row4_col1" class="data row4 col1" >14.84%</td>
             </tr>
             <tr>
-                        <th id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9level0_row5" class="row_heading level0 row5" >cites_doc_2years</th>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row5_col0" class="data row5 col0" >104</td>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row5_col1" class="data row5 col1" >14.84%</td>
+                        <th id="T_99b93_level0_row5" class="row_heading level0 row5" >cites_doc_2years</th>
+                        <td id="T_99b93_row5_col0" class="data row5 col0" >104</td>
+                        <td id="T_99b93_row5_col1" class="data row5 col1" >14.84%</td>
             </tr>
             <tr>
-                        <th id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9level0_row6" class="row_heading level0 row6" >citable_docs_3years</th>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row6_col0" class="data row6 col0" >104</td>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row6_col1" class="data row6 col1" >14.84%</td>
+                        <th id="T_99b93_level0_row6" class="row_heading level0 row6" >citable_docs_3years</th>
+                        <td id="T_99b93_row6_col0" class="data row6 col0" >104</td>
+                        <td id="T_99b93_row6_col1" class="data row6 col1" >14.84%</td>
             </tr>
             <tr>
-                        <th id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9level0_row7" class="row_heading level0 row7" >total_cites_3years</th>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row7_col0" class="data row7 col0" >104</td>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row7_col1" class="data row7 col1" >14.84%</td>
+                        <th id="T_99b93_level0_row7" class="row_heading level0 row7" >total_cites_3years</th>
+                        <td id="T_99b93_row7_col0" class="data row7 col0" >104</td>
+                        <td id="T_99b93_row7_col1" class="data row7 col1" >14.84%</td>
             </tr>
             <tr>
-                        <th id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9level0_row8" class="row_heading level0 row8" >total_refs</th>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row8_col0" class="data row8 col0" >104</td>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row8_col1" class="data row8 col1" >14.84%</td>
+                        <th id="T_99b93_level0_row8" class="row_heading level0 row8" >total_docs_3years</th>
+                        <td id="T_99b93_row8_col0" class="data row8 col0" >104</td>
+                        <td id="T_99b93_row8_col1" class="data row8 col1" >14.84%</td>
             </tr>
             <tr>
-                        <th id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9level0_row9" class="row_heading level0 row9" >total_docs_2020</th>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row9_col0" class="data row9 col0" >104</td>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row9_col1" class="data row9 col1" >14.84%</td>
+                        <th id="T_99b93_level0_row9" class="row_heading level0 row9" >total_docs_2020</th>
+                        <td id="T_99b93_row9_col0" class="data row9 col0" >104</td>
+                        <td id="T_99b93_row9_col1" class="data row9 col1" >14.84%</td>
             </tr>
             <tr>
-                        <th id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9level0_row10" class="row_heading level0 row10" >h_index</th>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row10_col0" class="data row10 col0" >104</td>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row10_col1" class="data row10 col1" >14.84%</td>
+                        <th id="T_99b93_level0_row10" class="row_heading level0 row10" >h_index</th>
+                        <td id="T_99b93_row10_col0" class="data row10 col0" >104</td>
+                        <td id="T_99b93_row10_col1" class="data row10 col1" >14.84%</td>
             </tr>
             <tr>
-                        <th id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9level0_row11" class="row_heading level0 row11" >total_docs_3years</th>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row11_col0" class="data row11 col0" >104</td>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row11_col1" class="data row11 col1" >14.84%</td>
+                        <th id="T_99b93_level0_row11" class="row_heading level0 row11" >total_refs</th>
+                        <td id="T_99b93_row11_col0" class="data row11 col0" >104</td>
+                        <td id="T_99b93_row11_col1" class="data row11 col1" >14.84%</td>
             </tr>
             <tr>
-                        <th id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9level0_row12" class="row_heading level0 row12" >sjr</th>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row12_col0" class="data row12 col0" >104</td>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row12_col1" class="data row12 col1" >14.84%</td>
+                        <th id="T_99b93_level0_row12" class="row_heading level0 row12" >sjr</th>
+                        <td id="T_99b93_row12_col0" class="data row12 col0" >104</td>
+                        <td id="T_99b93_row12_col1" class="data row12 col1" >14.84%</td>
             </tr>
             <tr>
-                        <th id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9level0_row13" class="row_heading level0 row13" >rank</th>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row13_col0" class="data row13 col0" >104</td>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row13_col1" class="data row13 col1" >14.84%</td>
+                        <th id="T_99b93_level0_row13" class="row_heading level0 row13" >rank</th>
+                        <td id="T_99b93_row13_col0" class="data row13 col0" >104</td>
+                        <td id="T_99b93_row13_col1" class="data row13 col1" >14.84%</td>
             </tr>
             <tr>
-                        <th id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9level0_row14" class="row_heading level0 row14" >first_date_of_observations</th>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row14_col0" class="data row14 col0" >12</td>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row14_col1" class="data row14 col1" >1.71%</td>
+                        <th id="T_99b93_level0_row14" class="row_heading level0 row14" >last_date_of_observations</th>
+                        <td id="T_99b93_row14_col0" class="data row14 col0" >12</td>
+                        <td id="T_99b93_row14_col1" class="data row14 col1" >1.71%</td>
             </tr>
             <tr>
-                        <th id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9level0_row15" class="row_heading level0 row15" >last_date_of_observations</th>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row15_col0" class="data row15 col0" >12</td>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row15_col1" class="data row15 col1" >1.71%</td>
+                        <th id="T_99b93_level0_row15" class="row_heading level0 row15" >first_date_of_observations</th>
+                        <td id="T_99b93_row15_col0" class="data row15 col0" >12</td>
+                        <td id="T_99b93_row15_col1" class="data row15 col1" >1.71%</td>
             </tr>
             <tr>
-                        <th id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9level0_row16" class="row_heading level0 row16" >n</th>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row16_col0" class="data row16 col0" >9</td>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row16_col1" class="data row16 col1" >1.28%</td>
+                        <th id="T_99b93_level0_row16" class="row_heading level0 row16" >n</th>
+                        <td id="T_99b93_row16_col0" class="data row16 col0" >9</td>
+                        <td id="T_99b93_row16_col1" class="data row16 col1" >1.28%</td>
             </tr>
             <tr>
-                        <th id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9level0_row17" class="row_heading level0 row17" >beta</th>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row17_col0" class="data row17 col0" >3</td>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row17_col1" class="data row17 col1" >0.43%</td>
+                        <th id="T_99b93_level0_row17" class="row_heading level0 row17" >beta</th>
+                        <td id="T_99b93_row17_col0" class="data row17 col0" >3</td>
+                        <td id="T_99b93_row17_col1" class="data row17 col1" >0.43%</td>
             </tr>
             <tr>
-                        <th id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9level0_row18" class="row_heading level0 row18" >quadratic_term</th>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row18_col0" class="data row18 col0" >0</td>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row18_col1" class="data row18 col1" >0.00%</td>
+                        <th id="T_99b93_level0_row18" class="row_heading level0 row18" >lag</th>
+                        <td id="T_99b93_row18_col0" class="data row18 col0" >0</td>
+                        <td id="T_99b93_row18_col1" class="data row18 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9level0_row19" class="row_heading level0 row19" >sign_of_effect</th>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row19_col0" class="data row19 col0" >0</td>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row19_col1" class="data row19 col1" >0.00%</td>
+                        <th id="T_99b93_level0_row19" class="row_heading level0 row19" >adjusted_independent</th>
+                        <td id="T_99b93_row19_col0" class="data row19 col0" >0</td>
+                        <td id="T_99b93_row19_col1" class="data row19 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9level0_row20" class="row_heading level0 row20" >significant</th>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row20_col0" class="data row20 col0" >0</td>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row20_col1" class="data row20 col1" >0.00%</td>
+                        <th id="T_99b93_level0_row20" class="row_heading level0 row20" >social</th>
+                        <td id="T_99b93_row20_col0" class="data row20 col0" >0</td>
+                        <td id="T_99b93_row20_col1" class="data row20 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9level0_row21" class="row_heading level0 row21" >dependent</th>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row21_col0" class="data row21 col0" >0</td>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row21_col1" class="data row21 col1" >0.00%</td>
+                        <th id="T_99b93_level0_row21" class="row_heading level0 row21" >environmnental</th>
+                        <td id="T_99b93_row21_col0" class="data row21 col0" >0</td>
+                        <td id="T_99b93_row21_col1" class="data row21 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9level0_row22" class="row_heading level0 row22" >governance</th>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row22_col0" class="data row22 col0" >0</td>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row22_col1" class="data row22 col1" >0.00%</td>
+                        <th id="T_99b93_level0_row22" class="row_heading level0 row22" >governance</th>
+                        <td id="T_99b93_row22_col0" class="data row22 col0" >0</td>
+                        <td id="T_99b93_row22_col1" class="data row22 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9level0_row23" class="row_heading level0 row23" >environmnental</th>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row23_col0" class="data row23 col0" >0</td>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row23_col1" class="data row23 col1" >0.00%</td>
+                        <th id="T_99b93_level0_row23" class="row_heading level0 row23" >quadratic_term</th>
+                        <td id="T_99b93_row23_col0" class="data row23 col0" >0</td>
+                        <td id="T_99b93_row23_col1" class="data row23 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9level0_row24" class="row_heading level0 row24" >social</th>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row24_col0" class="data row24 col0" >0</td>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row24_col1" class="data row24 col1" >0.00%</td>
+                        <th id="T_99b93_level0_row24" class="row_heading level0 row24" >interaction_term</th>
+                        <td id="T_99b93_row24_col0" class="data row24 col0" >0</td>
+                        <td id="T_99b93_row24_col1" class="data row24 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9level0_row25" class="row_heading level0 row25" >adjusted_independent</th>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row25_col0" class="data row25 col0" >0</td>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row25_col1" class="data row25 col1" >0.00%</td>
+                        <th id="T_99b93_level0_row25" class="row_heading level0 row25" >significant</th>
+                        <td id="T_99b93_row25_col0" class="data row25 col0" >0</td>
+                        <td id="T_99b93_row25_col1" class="data row25 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9level0_row26" class="row_heading level0 row26" >independent</th>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row26_col0" class="data row26 col0" >0</td>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row26_col1" class="data row26 col1" >0.00%</td>
+                        <th id="T_99b93_level0_row26" class="row_heading level0 row26" >sign_insignificant</th>
+                        <td id="T_99b93_row26_col0" class="data row26 col0" >0</td>
+                        <td id="T_99b93_row26_col1" class="data row26 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9level0_row27" class="row_heading level0 row27" >adjusted_dependent</th>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row27_col0" class="data row27 col0" >0</td>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row27_col1" class="data row27 col1" >0.00%</td>
+                        <th id="T_99b93_level0_row27" class="row_heading level0 row27" >sign_negative</th>
+                        <td id="T_99b93_row27_col0" class="data row27 col0" >0</td>
+                        <td id="T_99b93_row27_col1" class="data row27 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9level0_row28" class="row_heading level0 row28" >interaction_term</th>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row28_col0" class="data row28 col0" >0</td>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row28_col1" class="data row28 col1" >0.00%</td>
+                        <th id="T_99b93_level0_row28" class="row_heading level0 row28" >sign_positive</th>
+                        <td id="T_99b93_row28_col0" class="data row28 col0" >0</td>
+                        <td id="T_99b93_row28_col1" class="data row28 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9level0_row29" class="row_heading level0 row29" >lag</th>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row29_col0" class="data row29 col0" >0</td>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row29_col1" class="data row29 col1" >0.00%</td>
+                        <th id="T_99b93_level0_row29" class="row_heading level0 row29" >adjusted_dependent</th>
+                        <td id="T_99b93_row29_col0" class="data row29 col0" >0</td>
+                        <td id="T_99b93_row29_col1" class="data row29 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9level0_row30" class="row_heading level0 row30" >peer_reviewed</th>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row30_col0" class="data row30 col0" >0</td>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row30_col1" class="data row30 col1" >0.00%</td>
+                        <th id="T_99b93_level0_row30" class="row_heading level0 row30" >sign_of_effect</th>
+                        <td id="T_99b93_row30_col0" class="data row30 col0" >0</td>
+                        <td id="T_99b93_row30_col1" class="data row30 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9level0_row31" class="row_heading level0 row31" >adjusted_model</th>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row31_col0" class="data row31 col0" >0</td>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row31_col1" class="data row31 col1" >0.00%</td>
+                        <th id="T_99b93_level0_row31" class="row_heading level0 row31" >independent</th>
+                        <td id="T_99b93_row31_col0" class="data row31 col0" >0</td>
+                        <td id="T_99b93_row31_col1" class="data row31 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9level0_row32" class="row_heading level0 row32" >paper_name</th>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row32_col0" class="data row32 col0" >0</td>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row32_col1" class="data row32 col1" >0.00%</td>
+                        <th id="T_99b93_level0_row32" class="row_heading level0 row32" >study_focused_on_social_environmental_behaviour</th>
+                        <td id="T_99b93_row32_col0" class="data row32 col0" >0</td>
+                        <td id="T_99b93_row32_col1" class="data row32 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9level0_row33" class="row_heading level0 row33" >id</th>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row33_col0" class="data row33 col0" >0</td>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row33_col1" class="data row33 col1" >0.00%</td>
+                        <th id="T_99b93_level0_row33" class="row_heading level0 row33" >dependent</th>
+                        <td id="T_99b93_row33_col0" class="data row33 col0" >0</td>
+                        <td id="T_99b93_row33_col1" class="data row33 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9level0_row34" class="row_heading level0 row34" >image</th>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row34_col0" class="data row34 col0" >0</td>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row34_col1" class="data row34 col1" >0.00%</td>
+                        <th id="T_99b93_level0_row34" class="row_heading level0 row34" >adjusted_model</th>
+                        <td id="T_99b93_row34_col0" class="data row34 col0" >0</td>
+                        <td id="T_99b93_row34_col1" class="data row34 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9level0_row35" class="row_heading level0 row35" >row_id_excel</th>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row35_col0" class="data row35 col0" >0</td>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row35_col1" class="data row35 col1" >0.00%</td>
+                        <th id="T_99b93_level0_row35" class="row_heading level0 row35" >id</th>
+                        <td id="T_99b93_row35_col0" class="data row35 col0" >0</td>
+                        <td id="T_99b93_row35_col1" class="data row35 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9level0_row36" class="row_heading level0 row36" >row_id_google_spreadsheet</th>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row36_col0" class="data row36 col0" >0</td>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row36_col1" class="data row36 col1" >0.00%</td>
+                        <th id="T_99b93_level0_row36" class="row_heading level0 row36" >image</th>
+                        <td id="T_99b93_row36_col0" class="data row36 col0" >0</td>
+                        <td id="T_99b93_row36_col1" class="data row36 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9level0_row37" class="row_heading level0 row37" >table_refer</th>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row37_col0" class="data row37 col0" >0</td>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row37_col1" class="data row37 col1" >0.00%</td>
+                        <th id="T_99b93_level0_row37" class="row_heading level0 row37" >row_id_excel</th>
+                        <td id="T_99b93_row37_col0" class="data row37 col0" >0</td>
+                        <td id="T_99b93_row37_col1" class="data row37 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9level0_row38" class="row_heading level0 row38" >incremental_id</th>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row38_col0" class="data row38 col0" >0</td>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row38_col1" class="data row38 col1" >0.00%</td>
+                        <th id="T_99b93_level0_row38" class="row_heading level0 row38" >row_id_google_spreadsheet</th>
+                        <td id="T_99b93_row38_col0" class="data row38 col0" >0</td>
+                        <td id="T_99b93_row38_col1" class="data row38 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9level0_row39" class="row_heading level0 row39" >publication_name</th>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row39_col0" class="data row39 col0" >0</td>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row39_col1" class="data row39 col1" >0.00%</td>
+                        <th id="T_99b93_level0_row39" class="row_heading level0 row39" >table_refer</th>
+                        <td id="T_99b93_row39_col0" class="data row39 col0" >0</td>
+                        <td id="T_99b93_row39_col1" class="data row39 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9level0_row40" class="row_heading level0 row40" >study_focusing_on_developing_or_developed_countries</th>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row40_col0" class="data row40 col0" >0</td>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row40_col1" class="data row40 col1" >0.00%</td>
+                        <th id="T_99b93_level0_row40" class="row_heading level0 row40" >incremental_id</th>
+                        <td id="T_99b93_row40_col0" class="data row40 col0" >0</td>
+                        <td id="T_99b93_row40_col1" class="data row40 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9level0_row41" class="row_heading level0 row41" >publication_year</th>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row41_col0" class="data row41 col0" >0</td>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row41_col1" class="data row41 col1" >0.00%</td>
+                        <th id="T_99b93_level0_row41" class="row_heading level0 row41" >paper_name</th>
+                        <td id="T_99b93_row41_col0" class="data row41 col0" >0</td>
+                        <td id="T_99b93_row41_col1" class="data row41 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9level0_row42" class="row_heading level0 row42" >publication_type</th>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row42_col0" class="data row42 col0" >0</td>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row42_col1" class="data row42 col1" >0.00%</td>
+                        <th id="T_99b93_level0_row42" class="row_heading level0 row42" >publication_name</th>
+                        <td id="T_99b93_row42_col0" class="data row42 col0" >0</td>
+                        <td id="T_99b93_row42_col1" class="data row42 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9level0_row43" class="row_heading level0 row43" >cnrs_ranking</th>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row43_col0" class="data row43 col0" >0</td>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row43_col1" class="data row43 col1" >0.00%</td>
+                        <th id="T_99b93_level0_row43" class="row_heading level0 row43" >publication_year</th>
+                        <td id="T_99b93_row43_col0" class="data row43 col0" >0</td>
+                        <td id="T_99b93_row43_col1" class="data row43 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9level0_row44" class="row_heading level0 row44" >to_remove</th>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row44_col0" class="data row44 col0" >0</td>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row44_col1" class="data row44 col1" >0.00%</td>
+                        <th id="T_99b93_level0_row44" class="row_heading level0 row44" >publication_type</th>
+                        <td id="T_99b93_row44_col0" class="data row44 col0" >0</td>
+                        <td id="T_99b93_row44_col1" class="data row44 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9level0_row45" class="row_heading level0 row45" >study_focused_on_social_environmental_behaviour</th>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row45_col0" class="data row45 col0" >0</td>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row45_col1" class="data row45 col1" >0.00%</td>
+                        <th id="T_99b93_level0_row45" class="row_heading level0 row45" >cnrs_ranking</th>
+                        <td id="T_99b93_row45_col0" class="data row45 col0" >0</td>
+                        <td id="T_99b93_row45_col1" class="data row45 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9level0_row46" class="row_heading level0 row46" >type_of_data</th>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row46_col0" class="data row46 col0" >0</td>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row46_col1" class="data row46 col1" >0.00%</td>
+                        <th id="T_99b93_level0_row46" class="row_heading level0 row46" >peer_reviewed</th>
+                        <td id="T_99b93_row46_col0" class="data row46 col0" >0</td>
+                        <td id="T_99b93_row46_col1" class="data row46 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9level0_row47" class="row_heading level0 row47" >to_check_final</th>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row47_col0" class="data row47 col0" >0</td>
-                        <td id="T_f4a11020_f35d_11eb_94e8_cbf60a676dd9row47_col1" class="data row47 col1" >0.00%</td>
+                        <th id="T_99b93_level0_row47" class="row_heading level0 row47" >to_remove</th>
+                        <td id="T_99b93_row47_col0" class="data row47 col0" >0</td>
+                        <td id="T_99b93_row47_col1" class="data row47 col1" >0.00%</td>
+            </tr>
+            <tr>
+                        <th id="T_99b93_level0_row48" class="row_heading level0 row48" >type_of_data</th>
+                        <td id="T_99b93_row48_col0" class="data row48 col0" >0</td>
+                        <td id="T_99b93_row48_col1" class="data row48 col1" >0.00%</td>
+            </tr>
+            <tr>
+                        <th id="T_99b93_level0_row49" class="row_heading level0 row49" >study_focusing_on_developing_or_developed_countries</th>
+                        <td id="T_99b93_row49_col0" class="data row49 col0" >0</td>
+                        <td id="T_99b93_row49_col1" class="data row49 col1" >0.00%</td>
+            </tr>
+            <tr>
+                        <th id="T_99b93_level0_row50" class="row_heading level0 row50" >to_check_final</th>
+                        <td id="T_99b93_row50_col0" class="data row50 col0" >0</td>
+                        <td id="T_99b93_row50_col1" class="data row50 col1" >0.00%</td>
             </tr>
     </tbody></table>
 </div>

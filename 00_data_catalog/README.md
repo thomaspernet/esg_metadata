@@ -97,6 +97,9 @@
 | 41 | governance                | string | if adjusted_independent in GOVERNANCE ENVIRONMENTAL, SOCIAL and GOVERNANCE                                              |
 | 42 | sign_of_effect            | string | if stars is not blank and beta > 0, then POSITIVE, if stars is not blank and beta < 0, then NEGATIVE else INSIGNIFICANT |
 | 43 | row_id_google_spreadsheet | string | Google spreadsheet link to raw data                                                                                     |
+| 44 | sign_positive             | string | if sign_of_effect is POSITIVE then True                                                                                 |
+| 45 | sign_negative             | string | if sign_of_effect is NEGATIVE then True                                                                                 |
+| 46 | sign_insignificant        | string | if sign_of_effect is INSIGNIFICANT then True                                                                            |
 
     
 
@@ -153,8 +156,11 @@
 | 41 | r2                                                  | float  | R square                                                                                                                                |
 | 42 | beta                                                | float  | Beta coefficient                                                                                                                        |
 | 43 | sign_of_effect                                      | string | if stars is not blank and beta > 0, then POSITIVE, if stars is not blank and beta < 0, then NEGATIVE else INSIGNIFICANT                 |
-| 44 | significant                                         | string | is beta significant                                                                                                                     |
-| 45 | final_standard_error                                | float  | reconstructed standard error and use sr when true_standard_error is nan or error                                                        |
-| 46 | to_check_final                                      | string | Final check rows                                                                                                                        |
+| 44 | sign_positive                                       | string | if sign_of_effect is POSITIVE then True                                                                                                 |
+| 45 | sign_negative                                       | string | if sign_of_effect is NEGATIVE then True                                                                                                 |
+| 46 | sign_insignificant                                  | string | if sign_of_effect is INSIGNIFICANT then True                                                                                            |
+| 47 | significant                                         | string | is beta significant                                                                                                                     |
+| 48 | final_standard_error                                | float  | reconstructed standard error and use sr when true_standard_error is nan or error                                                        |
+| 49 | to_check_final                                      | string | Final check rows                                                                                                                        |
 
     
