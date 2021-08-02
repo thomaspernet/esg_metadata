@@ -115,21 +115,56 @@ var = (
         significant=lambda x: np.where(x['true_stars'].isin(
             ['1_PERCENT', '5_PERCENT', '10_PERCENT']), "YES", "NO")
     )
-    .reindex(columns=['to_remove', 'id', 'incremental_id', 'paper_name', 'doi', 'drive_url', 'image',
+    .reindex(columns=['to_remove',
+                      'id',
+                      'incremental_id',
+                      'paper_name',
+                      'doi',
+                      'drive_url',
+                      'image',
                       'model_name',
-                      'updated_model_name', 'adjusted_model_name',
+                      'updated_model_name',
+                      'adjusted_model_name',
                       'adjusted_model',
-                      'dependent', 'adjusted_dependent',
-                      'independent', 'adjusted_independent', 'social', 'environmnental', 'governance', 'lag',
-                      'interaction_term', 'quadratic_term', 'n', 'beta', 'r2', 'sign', 'star',
-                      'deg_freedom', 'critical_99', 'critical_95', 'critical_90', 'sr',
-                      'p_value', 't_value', 'really_no_information',
-                      'critical_value', 'test_standard_error', 'test_p_value', 'test_t_value',
-                      'should_t_value', 'true_standard_error', 'true_t_value',
-                      'to_check_final', 'table_refer',
-                      'true_critical', 'true_stars',
+                      'dependent',
+                      'adjusted_dependent',
+                      'independent',
+                      'adjusted_independent',
+                      'social',
+                      'environmnental',
+                      'governance',
+                      'lag',
+                      'interaction_term',
+                      'quadratic_term',
+                      'n',
+                      'beta',
+                      'r2',
+                      'sign',
+                      'star',
+                      "sign_of_effect",
+                      'deg_freedom',
+                      'critical_99',
+                      'critical_95',
+                      'critical_90',
+                      'sr',
+                      'p_value',
+                      't_value',
+                      'really_no_information',
+                      'critical_value',
+                      'test_standard_error',
+                      'test_p_value',
+                      'test_t_value',
+                      'should_t_value',
+                      'true_standard_error',
+                      'true_t_value',
+                      'to_check_final',
+                      'table_refer',
+                      'true_critical',
+                      'true_stars',
                       'significant'])
 )
+
+
 # var.loc[lambda x:
 #(x['to_remove'].isin(['TO_KEEP'])) & (x['to_check_final'].isin(['NO']))
 # ].loc[lambda x: x['true_standard_error'].isin([np.nan])][
@@ -209,7 +244,9 @@ schema = [
     {'Name': 'environmnental', 'Type': 'string',
         'Comment': 'if adjusted_independent in ENVIRONMENTAL, ENVIRONMENTAL AND SOCIAL, ENVIRONMENTAL, SOCIAL and GOVERNANCE'},
     {'Name': 'governance', 'Type': 'string',
-        'Comment': 'if adjusted_independent in GOVERNANCE ENVIRONMENTAL, SOCIAL and GOVERNANCE'}
+        'Comment': 'if adjusted_independent in GOVERNANCE ENVIRONMENTAL, SOCIAL and GOVERNANCE'},
+        {'Name': 'sign_of_effect', 'Type': 'string',
+            'Comment': 'if stars is not blank and beta > 0, then POSITIVE, if stars is not blank and beta < 0, then NEGATIVE else INSIGNIFICANT'}
 ]
 
 # ADD DESCRIPTION
