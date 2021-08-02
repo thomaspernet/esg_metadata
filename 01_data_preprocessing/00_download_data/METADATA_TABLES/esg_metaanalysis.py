@@ -163,12 +163,6 @@ var = (
                       'true_stars',
                       'significant'])
 )
-
-
-# var.loc[lambda x:
-#(x['to_remove'].isin(['TO_KEEP'])) & (x['to_check_final'].isin(['NO']))
-# ].loc[lambda x: x['true_standard_error'].isin([np.nan])][
-# ['id','beta', 'sr', 'true_standard_error', 'test_standard_error']]
 # READ DATA
 # SAVE LOCALLY
 input_path = os.path.join(parent_path, "00_data_catalog",
@@ -226,7 +220,7 @@ schema = [
     {'Name': 'true_stars', 'Type': 'string', 'Comment': 'reconstructed stars'},
     {'Name': 'adjusted_dependent', 'Type': 'string',
         'Comment': 'reorganise dependent variable into smaller groups'},
-    {'Name': 'adjusted_independent', 'Type': 'float',
+    {'Name': 'adjusted_independent', 'Type': 'string',
         'Comment': 'reorganise independent variable into smaller group'},
     {'Name': 'adjusted_model', 'Type': 'string',
         'Comment': 'reorganise model variable into smaller group'},
