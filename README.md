@@ -52,6 +52,7 @@ The relationship between corporate social responsibility (CSR) and corporate fin
    - [create_schema.py](https://github.com/thomaspernet/esg_metadata/tree/master/utils/create_schema.py)
    - [make_toc.py](https://github.com/thomaspernet/esg_metadata/tree/master/utils/make_toc.py)
    - [prepare_catalog.py](https://github.com/thomaspernet/esg_metadata/tree/master/utils/prepare_catalog.py)
+   - [summary_stat.py](https://github.com/thomaspernet/esg_metadata/tree/master/utils/summary_stat.py)
    - [update_glue_github.py](https://github.com/thomaspernet/esg_metadata/tree/master/utils/update_glue_github.py)
    - **IMAGES/**
      - [script_diagram_meta_analysis_esg_cfp.py](https://github.com/thomaspernet/esg_metadata/tree/master/utils/IMAGES/script_diagram_meta_analysis_esg_cfp.py)
