@@ -172,6 +172,14 @@ df['adjusted_model'].unique()
 pd.DataFrame(schema)
 ```
 
+<!-- #region kernel="SoS" -->
+## unbalanced ID
+<!-- #endregion -->
+
+```sos kernel="SoS"
+df.assign(weight = lambda x: x.groupby(['id'])['id'].transform('size'))['weight'].describe()
+```
+
 <!-- #region kernel="SoS" nteract={"transient": {"deleting": false}} -->
 ## Schema Latex table
 
@@ -271,7 +279,7 @@ se_robust_clustered <- function(x)
 ```
 
 <!-- #region kernel="SoS" -->
-## Table 1:Logit
+## Table 1:Probit
 
 $$
 \begin{aligned}
@@ -281,6 +289,19 @@ $$
 
 - robust standard error
 - Cannot compute clustered standard error if we add features without variation among the cluster (i.e `n`, or journal information)
+
+TO estimate a probit, use `probit` link function.  For logistic regression, use `binomial`
+
+- Reason Probit instead of Logit
+    - [What is the Difference Between Logit and Probit Models?](https://tutorials.methodsconsultants.com/posts/what-is-the-difference-between-logit-and-probit-models/)
+    
+Logit and probit differ in how they define $f(∗)$. The logit model uses something called the cumulative distribution function of the logistic distribution. The probit model uses something called the cumulative distribution function of the standard normal distribution to define $f(∗)$.
+
+Probit models can be generalized to account for non-constant error variances in more advanced econometric settings (known as heteroskedastic probit models)
+
+**Comparison group**
+
+- Always `OTHER`
 <!-- #endregion -->
 
 ```sos kernel="SoS" nteract={"transient": {"deleting": false}}
@@ -297,32 +318,40 @@ for ext in ['.txt', '.tex', '.pdf']:
 
 <!-- #region kernel="SoS" -->
 ## test Dummy positive
+
+![image.png](attachment:90454340-6201-4e4b-b0ae-cb04d0f7d11c.png)
 <!-- #endregion -->
 
 ```sos kernel="R"
 %get path table
 #
-t_0 <- glm(sign_positive ~ adjusted_model+ id, data = df_final %>% filter(adjusted_model != 'TO_REMOVE'), family = "binomial")
+t_0 <- glm(sign_positive ~ adjusted_model+ id, data = df_final, family = binomial(link = "probit"))
 #
 t_1 <- glm(sign_positive ~ adjusted_model+ environmnental + social + governance +
-           id, data = df_final %>% filter(adjusted_model != 'TO_REMOVE'), family = "binomial")            
+           id, data = df_final, binomial(link = "probit"))            
 #
 t_2 <- glm(sign_positive ~ adjusted_model+ environmnental + social + governance + lag + interaction_term + quadratic_term+
-           id, data = df_final %>% filter(adjusted_model != 'TO_REMOVE'), family = "binomial")
+           id, data = df_final, family = binomial(link = "probit"))
 
 #
 t_3 <- glm(sign_positive ~ adjusted_model+ environmnental + social + governance + lag + interaction_term + quadratic_term+
            n+
-           id, data = df_final %>% filter(adjusted_model != 'TO_REMOVE'), family = "binomial") 
+           id, data = df_final, family = binomial(link = "probit")) 
 
 #
 t_4 <- glm(sign_positive ~ adjusted_model+ environmnental + social + governance + lag + interaction_term + quadratic_term+
            n+
            adjusted_dependent+
-           id, data = df_final %>% filter(adjusted_model != 'TO_REMOVE'), family = "binomial")  
+           id, data = df_final, family =binomial(link = "probit"))  
+
+# Journal 
+t_5 <- glm(sign_positive ~ adjusted_model+ environmnental + social + governance + lag + interaction_term + quadratic_term+
+           n+
+           adjusted_dependent+sjr+
+           id, data = df_final, family =binomial(link = "probit")) 
 dep <- "Dependent variable: Sign positive"
 
-list_final = list(t_0, t_1, t_2, t_3, t_4
+list_final = list(t_0, t_1, t_2, t_3, t_4, t_5
                  )
 stargazer(list_final, type = "text", 
   se = lapply(list_final,
@@ -333,19 +362,19 @@ stargazer(list_final, type = "text",
 ```sos kernel="R"
 %get path table
 #
-t_0 <- glm(sign_positive ~ model_instrument+ environmnental + social + governance+ id, data = df_final %>% filter(adjusted_model != 'TO_REMOVE'), family = "binomial")
+t_0 <- glm(sign_positive ~ model_instrument+ environmnental + social + governance+ sjr+id, data = df_final , binomial(link = "probit"))
 #
-t_1 <- glm(sign_positive ~ model_diff_in_diff+ environmnental + social + governance+ id, data = df_final %>% filter(adjusted_model != 'TO_REMOVE'), family = "binomial")
+t_1 <- glm(sign_positive ~ model_diff_in_diff+ environmnental + social + governance+ sjr+id, data = df_final, binomial(link = "probit"))
 #
-t_2 <- glm(sign_positive ~ model_other+ environmnental + social + governance+ id, data = df_final %>% filter(adjusted_model != 'TO_REMOVE'), family = "binomial")
+t_2 <- glm(sign_positive ~ model_other+ environmnental + social + governance+ sjr+id, data = df_final, binomial(link = "probit"))
 #
-t_3 <- glm(sign_positive ~ model_fixed_effect+ environmnental + social + governance+ id, data = df_final %>% filter(adjusted_model != 'TO_REMOVE'), family = "binomial")
+t_3 <- glm(sign_positive ~ model_fixed_effect+ environmnental + social + governance+sjr+ id, data = df_final, binomial(link = "probit"))
 #
-t_4 <- glm(sign_positive ~ model_lag_dependent+ environmnental + social + governance+ id, data = df_final %>% filter(adjusted_model != 'TO_REMOVE'), family = "binomial")
+t_4 <- glm(sign_positive ~ model_lag_dependent+ environmnental + social + governance+sjr+ id, data = df_final, binomial(link = "probit"))
 #
-t_5 <- glm(sign_positive ~ model_pooled_ols+ environmnental + social + governance+ id, data = df_final %>% filter(adjusted_model != 'TO_REMOVE'), family = "binomial")
+t_5 <- glm(sign_positive ~ model_pooled_ols+ environmnental + social + governance+sjr+ id, data = df_final, binomial(link = "probit"))
 #
-t_6 <- glm(sign_positive ~ model_random_effect+ environmnental + social + governance+ id, data = df_final %>% filter(adjusted_model != 'TO_REMOVE'), family = "binomial")
+t_6 <- glm(sign_positive ~ model_random_effect+ environmnental + social + governance+sjr+ id, data = df_final, binomial(link = "probit"))
 
   
 dep <- "Dependent variable: Sign positive"
@@ -360,32 +389,39 @@ stargazer(list_final, type = "text",
 
 <!-- #region kernel="R" -->
 ## test Dummy negative
+
+![image.png](attachment:b7b21814-e784-4724-aba9-5e32ef8e5a60.png)
 <!-- #endregion -->
 
 ```sos kernel="R"
 %get path table
 #
-t_0 <- glm(sign_negative ~ adjusted_model+ id, data = df_final %>% filter(adjusted_model != 'TO_REMOVE'), family = "binomial")
+t_0 <- glm(sign_negative ~ adjusted_model+ id, data = df_final, binomial(link = "probit"))
 #
 t_1 <- glm(sign_negative ~ adjusted_model+ environmnental + social + governance +
-           id, data = df_final %>% filter(adjusted_model != 'TO_REMOVE'), family = "binomial")            
+           id, data = df_final, binomial(link = "probit"))            
 #
 t_2 <- glm(sign_negative ~ adjusted_model+ environmnental + social + governance + lag + interaction_term + quadratic_term+
-           id, data = df_final %>% filter(adjusted_model != 'TO_REMOVE'), family = "binomial")
+           id, data = df_final, binomial(link = "probit"))
 
 #
 t_3 <- glm(sign_negative ~ adjusted_model+ environmnental + social + governance + lag + interaction_term + quadratic_term+
            n+
-           id, data = df_final %>% filter(adjusted_model != 'TO_REMOVE'), family = "binomial") 
+           id, data = df_final, binomial(link = "probit")) 
 
 #
 t_4 <- glm(sign_negative ~ adjusted_model+ environmnental + social + governance + lag + interaction_term + quadratic_term+
            n+
            adjusted_dependent+
-           id, data = df_final %>% filter(adjusted_model != 'TO_REMOVE'), family = "binomial")  
+           id, data = df_final, binomial(link = "probit"))  
+# Journal 
+t_5 <- glm(sign_negative ~ adjusted_model+ environmnental + social + governance + lag + interaction_term + quadratic_term+
+           n+
+           adjusted_dependent+sjr+
+           id, data = df_final, family =binomial(link = "probit")) 
 dep <- "Dependent variable: Sign negative"
 
-list_final = list(t_0, t_1, t_2, t_3, t_4
+list_final = list(t_0, t_1, t_2, t_3, t_4, t_5
                  )
 stargazer(list_final, type = "text", 
   se = lapply(list_final,
@@ -396,19 +432,19 @@ stargazer(list_final, type = "text",
 ```sos kernel="R"
 %get path table
 #
-t_0 <- glm(sign_negative ~ model_instrument+ environmnental + social + governance+ id, data = df_final %>% filter(adjusted_model != 'TO_REMOVE'), family = "binomial")
+t_0 <- glm(sign_negative ~ model_instrument+ environmnental + social + governance+ sjr+id, data = df_final, binomial(link = "probit"))
 #
-t_1 <- glm(sign_negative ~ model_diff_in_diff+ environmnental + social + governance+ id, data = df_final %>% filter(adjusted_model != 'TO_REMOVE'), family = "binomial")
+t_1 <- glm(sign_negative ~ model_diff_in_diff+ environmnental + social + governance+ sjr+id, data = df_final, binomial(link = "probit"))
 #
-t_2 <- glm(sign_negative ~ model_other+ environmnental + social + governance+ id, data = df_final %>% filter(adjusted_model != 'TO_REMOVE'), family = "binomial")
+t_2 <- glm(sign_negative ~ model_other+ environmnental + social + governance+ sjr+id, data = df_final, binomial(link = "probit"))
 #
-t_3 <- glm(sign_negative ~ model_fixed_effect+ environmnental + social + governance+ id, data = df_final %>% filter(adjusted_model != 'TO_REMOVE'), family = "binomial")
+t_3 <- glm(sign_negative ~ model_fixed_effect+ environmnental + social + governance+ sjr+id, data = df_final, binomial(link = "probit"))
 #
-t_4 <- glm(sign_negative ~ model_lag_dependent+ environmnental + social + governance+ id, data = df_final %>% filter(adjusted_model != 'TO_REMOVE'), family = "binomial")
+t_4 <- glm(sign_negative ~ model_lag_dependent+ environmnental + social + governance+ sjr+id, data = df_final , binomial(link = "probit"))
 #
-t_5 <- glm(sign_negative ~ model_pooled_ols+ environmnental + social + governance+ id, data = df_final %>% filter(adjusted_model != 'TO_REMOVE'), family = "binomial")
+t_5 <- glm(sign_negative ~ model_pooled_ols+ environmnental + social + governance+ sjr+id, data = df_final, binomial(link = "probit"))
 #
-t_6 <- glm(sign_negative ~ model_random_effect+ environmnental + social + governance+ id, data = df_final %>% filter(adjusted_model != 'TO_REMOVE'), family = "binomial")
+t_6 <- glm(sign_negative ~ model_random_effect+ environmnental + social + governance+ sjr+id, data = df_final, binomial(link = "probit"))
 
   
 dep <- "Dependent variable: Sign negative"
@@ -423,32 +459,40 @@ stargazer(list_final, type = "text",
 
 <!-- #region kernel="R" -->
 ## test Dummy insignificant
+
+![image.png](attachment:87966f77-0857-471e-9ceb-9bfb9be48dc9.png)
 <!-- #endregion -->
 
 ```sos kernel="R"
 %get path table
 #
-t_0 <- glm(sign_insignificant ~ adjusted_model+ id, data = df_final %>% filter(adjusted_model != 'TO_REMOVE'), family = "binomial")
+t_0 <- glm(sign_insignificant ~ adjusted_model+ id, data = df_final, binomial(link = "probit"))
 #
 t_1 <- glm(sign_insignificant ~ adjusted_model+ environmnental + social + governance +
-           id, data = df_final %>% filter(adjusted_model != 'TO_REMOVE'), family = "binomial")            
+           id, data = df_final, binomial(link = "probit"))            
 #
 t_2 <- glm(sign_insignificant ~ adjusted_model+ environmnental + social + governance + lag + interaction_term + quadratic_term+
-           id, data = df_final %>% filter(adjusted_model != 'TO_REMOVE'), family = "binomial")
+           id, data = df_final,binomial(link = "probit"))
 
 #
 t_3 <- glm(sign_insignificant ~ adjusted_model+ environmnental + social + governance + lag + interaction_term + quadratic_term+
            n+
-           id, data = df_final %>% filter(adjusted_model != 'TO_REMOVE'), family = "binomial") 
+           id, data = df_final,binomial(link = "probit")) 
 
 #
 t_4 <- glm(sign_insignificant ~ adjusted_model+ environmnental + social + governance + lag + interaction_term + quadratic_term+
            n+
            adjusted_dependent+
-           id, data = df_final %>% filter(adjusted_model != 'TO_REMOVE'), family = "binomial")  
+           id, data = df_final, binomial(link = "probit"))  
+
+# Journal 
+t_5 <- glm(sign_insignificant ~ adjusted_model+ environmnental + social + governance + lag + interaction_term + quadratic_term+
+           n+
+           adjusted_dependent+sjr+
+           id, data = df_final, family =binomial(link = "probit")) 
 dep <- "Dependent variable: Sign insignificant"
 
-list_final = list(t_0, t_1, t_2, t_3, t_4
+list_final = list(t_0, t_1, t_2, t_3, t_4, t_5
                  )
 stargazer(list_final, type = "text", 
   se = lapply(list_final,
@@ -459,19 +503,19 @@ stargazer(list_final, type = "text",
 ```sos kernel="R"
 %get path table
 #
-t_0 <- glm(sign_insignificant ~ model_instrument+ environmnental + social + governance+ id, data = df_final %>% filter(adjusted_model != 'TO_REMOVE'), family = "binomial")
+t_0 <- glm(sign_insignificant ~ model_instrument+ environmnental + social + governance+ sjr+id, data = df_final,binomial(link = "probit"))
 #
-t_1 <- glm(sign_insignificant ~ model_diff_in_diff+ environmnental + social + governance+ id, data = df_final %>% filter(adjusted_model != 'TO_REMOVE'), family = "binomial")
+t_1 <- glm(sign_insignificant ~ model_diff_in_diff+ environmnental + social + governance+sjr+ id, data = df_final, binomial(link = "probit"))
 #
-t_2 <- glm(sign_insignificant ~ model_other+ environmnental + social + governance+ id, data = df_final %>% filter(adjusted_model != 'TO_REMOVE'), family = "binomial")
+t_2 <- glm(sign_insignificant ~ model_other+ environmnental + social + governance+ sjr+id, data = df_final, binomial(link = "probit"))
 #
-t_3 <- glm(sign_insignificant ~ model_fixed_effect+ environmnental + social + governance+ id, data = df_final %>% filter(adjusted_model != 'TO_REMOVE'), family = "binomial")
+t_3 <- glm(sign_insignificant ~ model_fixed_effect+ environmnental + social + governance+ sjr+id, data = df_final, binomial(link = "probit"))
 #
-t_4 <- glm(sign_insignificant ~ model_lag_dependent+ environmnental + social + governance+ id, data = df_final %>% filter(adjusted_model != 'TO_REMOVE'), family = "binomial")
+t_4 <- glm(sign_insignificant ~ model_lag_dependent+ environmnental + social + governance+ sjr+id, data = df_final,binomial(link = "probit"))
 #
-t_5 <- glm(sign_insignificant ~ model_pooled_ols+ environmnental + social + governance+ id, data = df_final %>% filter(adjusted_model != 'TO_REMOVE'), family = "binomial")
+t_5 <- glm(sign_insignificant ~ model_pooled_ols+ environmnental + social + governance+ sjr+id, data = df_final, binomial(link = "probit"))
 #
-t_6 <- glm(sign_insignificant ~ model_random_effect+ environmnental + social + governance+ id, data = df_final %>% filter(adjusted_model != 'TO_REMOVE'), family = "binomial")
+t_6 <- glm(sign_insignificant ~ model_random_effect+ environmnental + social + governance+sjr+ id, data = df_final, binomial(link = "probit"))
 
   
 dep <- "Dependent variable: Sign insignificant"
@@ -486,6 +530,8 @@ stargazer(list_final, type = "text",
 
 <!-- #region kernel="R" -->
 # Multinomial
+
+**Note**: comparison group "INSIGNIFICANT" and Standard error not robust
 <!-- #endregion -->
 
 ```sos kernel="R"
@@ -494,11 +540,11 @@ library(nnet)
 
 ```sos kernel="R"
 #
-t_0 <- multinom(sign_of_effect ~ adjusted_model+ id,
-                data = df_final %>% filter(adjusted_model != 'TO_REMOVE'), trace = FALSE)
+t_0 <- multinom(sign_of_effect ~ adjusted_model+ sjr+id,
+                data = df_final, trace = FALSE)
 #
 t_1 <- multinom(sign_of_effect ~ adjusted_model+ environmnental + social + governance +adjusted_dependent+
-           id, data = df_final %>% filter(adjusted_model != 'TO_REMOVE'), trace = FALSE)            
+           sjr+id, data = df_final, trace = FALSE)            
 dep <- "Dependent variable: Sign insignificant"
 
 list_final = list(t_0, t_1
@@ -511,9 +557,9 @@ stargazer(list_final, type = "text",
 
 ```sos kernel="R"
 #
-t_0 <- multinom(sign_of_effect ~ model_instrument+ environmnental + social + governance+ id, data = df_final, trace = FALSE)
+t_0 <- multinom(sign_of_effect ~ model_instrument+ environmnental + social + governance+ sjr+id, data = df_final, trace = FALSE)
 #
-t_1 <- multinom(sign_of_effect ~ model_diff_in_diff+ environmnental + social + governance+ id, data = df_final, trace = FALSE)
+t_1 <- multinom(sign_of_effect ~ model_diff_in_diff+ environmnental + social + governance+sjr+ id, data = df_final, trace = FALSE)
 
   
 dep <- "Dependent variable: Sign insignificant"
@@ -527,9 +573,9 @@ stargazer(list_final, type = "text",
 ```
 
 ```sos kernel="R"
-t_2 <- multinom(sign_of_effect ~ model_other+ environmnental + social + governance+ id, data = df_final, trace = FALSE)
+t_2 <- multinom(sign_of_effect ~ model_other+ environmnental + social + governance+ sjr+id, data = df_final, trace = FALSE)
 #
-t_3 <- multinom(sign_of_effect ~ model_fixed_effect+ environmnental + social + governance+ id, data = df_final, trace = FALSE)
+t_3 <- multinom(sign_of_effect ~ model_fixed_effect+ environmnental + social + governance+ sjr+id, data = df_final, trace = FALSE)
 
 
   
@@ -560,6 +606,75 @@ stargazer(list_final, type = "text",
   #se = lapply(list_final,
   #            se_robust),
           omit = "id", style = "qje")  
+```
+
+<!-- #region kernel="R" -->
+Check model by model
+
+
+<!-- #endregion -->
+
+```sos kernel="R"
+t_0 <- multinom(sign_of_effect ~ model_instrument+environmnental + social + governance +adjusted_dependent+ sjr+id,
+                data = df_final, trace = FALSE)
+stargazer(t_0, type = "text", 
+  #se = lapply(list_final,
+  #            se_robust),
+          omit = "id", style = "qje") 
+```
+
+```sos kernel="R"
+t_0 <- multinom(sign_of_effect ~ model_diff_in_diff+ environmnental + social + governance +adjusted_dependent+sjr+id,
+                data = df_final, trace = FALSE)
+stargazer(t_0, type = "text", 
+  #se = lapply(list_final,
+  #            se_robust),
+          omit = "id", style = "qje") 
+```
+
+```sos kernel="R"
+t_0 <- multinom(sign_of_effect ~ model_other+ environmnental + social + governance +adjusted_dependent+sjr+id,
+                data = df_final, trace = FALSE)
+stargazer(t_0, type = "text", 
+  #se = lapply(list_final,
+  #            se_robust),
+          omit = "id", style = "qje") 
+```
+
+```sos kernel="R"
+t_0 <- multinom(sign_of_effect ~ model_fixed_effect+ environmnental + social + governance +adjusted_dependent+sjr+id,
+                data = df_final, trace = FALSE)
+stargazer(t_0, type = "text", 
+  #se = lapply(list_final,
+  #            se_robust),
+          omit = "id", style = "qje") 
+```
+
+```sos kernel="R"
+t_0 <- multinom(sign_of_effect ~ model_lag_dependent+ environmnental + social + governance +adjusted_dependent+sjr+id,
+                data = df_final, trace = FALSE)
+stargazer(t_0, type = "text", 
+  #se = lapply(list_final,
+  #            se_robust),
+          omit = "id", style = "qje") 
+```
+
+```sos kernel="R"
+t_0 <- multinom(sign_of_effect ~ model_pooled_ols+environmnental + social + governance +adjusted_dependent+ sjr+id,
+                data = df_final, trace = FALSE)
+stargazer(t_0, type = "text", 
+  #se = lapply(list_final,
+  #            se_robust),
+          omit = "id", style = "qje") 
+```
+
+```sos kernel="R"
+t_0 <- multinom(sign_of_effect ~ model_random_effect+ environmnental + social + governance +adjusted_dependent+sjr+id,
+                data = df_final, trace = FALSE)
+stargazer(t_0, type = "text", 
+  #se = lapply(list_final,
+  #            se_robust),
+          omit = "id", style = "qje") 
 ```
 
 <!-- #region kernel="SoS" nteract={"transient": {"deleting": false}} -->
