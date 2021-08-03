@@ -536,10 +536,11 @@ CREATE TABLE {0}.{1} WITH (format = 'PARQUET') AS
 WITH merge AS (
   SELECT 
     id, 
-    image,
-    row_id_excel,
     table_refer,
-    row_id_google_spreadsheet,
+    image as url_image,
+    row_id_excel as url_excel,
+    row_id_google_spreadsheet as url_google_spreadsheet,
+    drive_url,
     incremental_id,
     paper_name, 
     publication_year, 
@@ -625,9 +626,10 @@ SELECT
 SELECT 
     to_remove, 
     id, 
-    image,
-    row_id_excel,
-    row_id_google_spreadsheet,
+    url_image,
+    url_excel,
+    url_google_spreadsheet,
+    drive_url,
     table_refer,
     incremental_id,
     paper_name,
