@@ -7,7 +7,7 @@
 
     
 - [journals_scimago](https://github.com/thomaspernet/esg_metadata/tree/master/00_data_catalog#table-journals_scimago)
-- [papers_meta_analysis_new](https://github.com/thomaspernet/esg_metadata/tree/master/00_data_catalog#table-papers_meta_analysis_new)
+- [papers_meta_analysis](https://github.com/thomaspernet/esg_metadata/tree/master/00_data_catalog#table-papers_meta_analysis)
 - [meta_analysis_esg_cfp](https://github.com/thomaspernet/esg_metadata/tree/master/00_data_catalog#table-meta_analysis_esg_cfp)
 
     
@@ -44,69 +44,60 @@
 
     
 
-## Table papers_meta_analysis_new
+## Table papers_meta_analysis
 
 - Database: esg
-- S3uri: `s3://datalake-london/DATA/FINANCE/ESG/META_ANALYSIS_NEW`
+- S3uri: `s3://datalake-london/DATA/FINANCE/ESG/META_ANALYSIS`
 - Partitition: []
-- Script: https://github.com/thomaspernet/esg_metadata/01_data_preprocessing/00_download_data/METADATA_TABLES/esg_metaanalysis.py
+- Script: https://github.com/thomaspernet/esg_metadata/01_data_preprocessing/00_download_data/ESG/esg_metaanalysis.py
 
-|    | Name                      | Type   | Comment                                                                                                                 |
-|---:|:--------------------------|:-------|:------------------------------------------------------------------------------------------------------------------------|
-|  0 | id                        | string | paper ID                                                                                                                |
-|  1 | incremental_id            | string | row id                                                                                                                  |
-|  2 | paper_name                | string | Paper name                                                                                                              |
-|  3 | dependent                 | string | dependent variable                                                                                                      |
-|  4 | independent               | string | independent variables                                                                                                   |
-|  5 | lag                       | string | the table contains lag or not                                                                                           |
-|  6 | interaction_term          | string | the table contains interaction terms or not                                                                             |
-|  7 | quadratic_term            | string | the table contains quadratic terms or not                                                                               |
-|  8 | n                         | float  | number of observations                                                                                                  |
-|  9 | r2                        | float  | R square                                                                                                                |
-| 10 | beta                      | float  | Beta coefficient                                                                                                        |
-| 11 | sign                      | string | sign positive or negative                                                                                               |
-| 12 | star                      | string | Level of significant. *, ** or ***                                                                                      |
-| 13 | sr                        | float  | standard error                                                                                                          |
-| 14 | p_value                   | float  | p value                                                                                                                 |
-| 15 | t_value                   | float  | student value                                                                                                           |
-| 16 | image                     | string | Link row data image                                                                                                     |
-| 17 | table_refer               | string | table number in the paper                                                                                               |
-| 18 | model_name                | string | Model name from Susie                                                                                                   |
-| 19 | updated_model_name        | string | Model name adjusted by Thomas                                                                                           |
-| 20 | adjusted_model_name       | string | Model name normalised                                                                                                   |
-| 21 | doi                       | string | DOI                                                                                                                     |
-| 22 | drive_url                 | string | paper link in Google Drive                                                                                              |
-| 23 | test_standard_error       | string | check if sr really standard error by comparing beta divided by sr and critical values                                   |
-| 24 | test_p_value              | string | check if sign and p value match                                                                                         |
-| 25 | test_t_value              | string | check if t critial value and sign match                                                                                 |
-| 26 | should_t_value            | string | use sr as t value when mistake                                                                                          |
-| 27 | true_standard_error       | float  | reconstructed standard error                                                                                            |
-| 28 | final_standard_error      | float  | reconstructed standard error and use sr when true_standard_error is nan or error                                        |
-| 29 | true_t_value              | float  | reconstructed t value                                                                                                   |
-| 30 | true_stars                | string | reconstructed stars                                                                                                     |
-| 31 | adjusted_dependent        | string | reorganise dependent variable into smaller groups                                                                       |
-| 32 | adjusted_independent      | string | reorganise independent variable into smaller group                                                                      |
-| 33 | adjusted_model            | string | reorganise model variable into smaller group                                                                            |
-| 34 | significant               | string | is beta significant                                                                                                     |
-| 35 | to_check_final            | string | Final check rows                                                                                                        |
-| 36 | critical_99               | string | 99 t stat critical value calculated based on nb obserations                                                             |
-| 37 | critical_90               | string | 90 t stat critical value calculated based on nb obserations                                                             |
-| 38 | critical_95               | string | 95 t stat critical value calculated based on nb obserations                                                             |
-| 39 | social                    | string | if adjusted_independent in ENVIRONMENTAL AND SOCIAL, SOCIAL, CSP, CSR, ENVIRONMENTAL, SOCIAL and GOVERNANCE             |
-| 40 | environmnental            | string | if adjusted_independent in ENVIRONMENTAL, ENVIRONMENTAL AND SOCIAL, ENVIRONMENTAL, SOCIAL and GOVERNANCE                |
-| 41 | governance                | string | if adjusted_independent in GOVERNANCE ENVIRONMENTAL, SOCIAL and GOVERNANCE                                              |
-| 42 | sign_of_effect            | string | if stars is not blank and beta > 0, then POSITIVE, if stars is not blank and beta < 0, then NEGATIVE else INSIGNIFICANT |
-| 43 | row_id_google_spreadsheet | string | Google spreadsheet link to raw data                                                                                     |
-| 44 | sign_positive             | string | if sign_of_effect is POSITIVE then True                                                                                 |
-| 45 | sign_negative             | string | if sign_of_effect is NEGATIVE then True                                                                                 |
-| 46 | sign_insignificant        | string | if sign_of_effect is INSIGNIFICANT then True                                                                            |
-| 47 | model_instrument          | string | if adjusted_model is equal to INSTRUMENT then true                                                                      |
-| 48 | model_diff_in_diff        | string | if adjusted_model is equal to DIFF IN DIFF then true                                                                    |
-| 49 | model_other               | string | if adjusted_model is equal to OTHER then true                                                                           |
-| 50 | model_fixed_effect        | string | if adjusted_model is equal to FIXED EFFECT then true                                                                    |
-| 51 | model_lag_dependent       | string | if adjusted_model is equal to LAG DEPENDENT then true                                                                   |
-| 52 | model_pooled_ols          | string | if adjusted_model is equal to POOLED OLS then true                                                                      |
-| 53 | model_random_effect       | string | if adjusted_model is equal to RANDOM EFFECT then true                                                                   |
+|    | Name                                                | Type   | Comment              |
+|---:|:----------------------------------------------------|:-------|:---------------------|
+|  0 | nr                                                  | string |                      |
+|  1 | title                                               | string |                      |
+|  2 | first_author                                        | string |                      |
+|  3 | second_author                                       | string |                      |
+|  4 | third_author                                        | string |                      |
+|  5 | publication_year                                    | float  |                      |
+|  6 | publication_type                                    | string |                      |
+|  7 | publication_name                                    | string |                      |
+|  8 | cnrs_ranking                                        | string |                      |
+|  9 | ranking                                             | float  |                      |
+| 10 | peer_reviewed                                       | string |                      |
+| 11 | study_focused_on_social_environmental_behaviour     | string |                      |
+| 12 | comments_on_sample                                  | string |                      |
+| 13 | type_of_data                                        | string |                      |
+| 14 | sample_size_number_of_companies                     | float  |                      |
+| 15 | first_date_of_observations                          | float  |                      |
+| 16 | last_date_of_observations                           | float  |                      |
+| 17 | number_of_observations                              | float  |                      |
+| 18 | regions_of_selected_firms                           | string |                      |
+| 19 | study_focusing_on_developing_or_developed_countries | string |                      |
+| 20 | measure_of_corporate_social_responsibility_crp      | string |                      |
+| 21 | csr_7_categories                                    | string |                      |
+| 22 | csr_20_categories                                   | string |                      |
+| 23 | unit_for_measure_of_environmental_behaviour         | string |                      |
+| 24 | measure_of_financial_performance                    | string |                      |
+| 25 | cfp_26_categories                                   | string |                      |
+| 26 | unit_for_measure_of_financial_performance           | string |                      |
+| 27 | cfp_4_categories                                    | string |                      |
+| 28 | lagged_csr_explanatory_variable                     | string |                      |
+| 29 | evaluation_method_of_the_link_between_csr_and_cfp   | string |                      |
+| 30 | developed_new                                       | string |                      |
+| 31 | definition_of_cfp_as_dependent_variable             | string |                      |
+| 32 | comments                                            | string |                      |
+| 33 | cfp_regrouping                                      | string |                      |
+| 34 | level_of_significancy                               | float  |                      |
+| 35 | sign_of_effect                                      | string |                      |
+| 36 | standard_error                                      | float  |                      |
+| 37 | tstatistic_calculated_with_formula                  | float  |                      |
+| 38 | pvalue_calculated_with_formula                      | float  |                      |
+| 39 | effect_coeffient_estimator_beta                     | float  |                      |
+| 40 | adjusted_coefficient_of_determination               | float  |                      |
+| 41 | econometric_method                                  | string |                      |
+| 42 | kyoto_db                                            | string |                      |
+| 43 | crisis_db                                           | string |                      |
+| 44 | row_id_excel                                        | string | link to original row |
 
     
 
