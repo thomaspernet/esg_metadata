@@ -79,6 +79,8 @@ list_tables = 'automatic',
             com = next((i for i, item in enumerate(schema) if item["Name"] == name['Name']), None)
             if name['Comment'] != '':
                 schema[com]['Comment'] = name['Comment']
+            if name['Type'] != '':
+                schema[com]['Type'] = name['Type']
             else:
                 schema[com]['Comment'] = name['Name'].replace("_", " ")
         return [i[0] for i in list_to_search],  schema
