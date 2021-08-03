@@ -128,10 +128,11 @@ query = """
 WITH merge AS (
   SELECT 
     id, 
-    image,
-    row_id_excel,
     table_refer,
-    row_id_google_spreadsheet,
+    image as url_image,
+    row_id_excel as url_excel,
+    row_id_google_spreadsheet as url_google_spreadsheet,
+    drive_url,
     incremental_id,
     paper_name, 
     publication_year, 
@@ -217,9 +218,10 @@ SELECT
 SELECT 
     to_remove, 
     id, 
-    image,
-    row_id_excel,
-    row_id_google_spreadsheet,
+    url_image,
+    url_excel,
+    url_google_spreadsheet,
+    drive_url,
     table_refer,
     incremental_id,
     paper_name,
@@ -371,10 +373,10 @@ def make_clickable(val):
 (
     output
     .loc[lambda x: x['first_date_of_observations'].isin([np.nan])]
-    .reindex(columns = ['paper_name', 'row_id_excel'])
+    .reindex(columns = ['paper_name', 'url_excel'])
     .drop_duplicates()
     .style
-    .format(make_clickable, subset = ['row_id_excel'])
+    .format(make_clickable, subset = ['url_excel'])
 )
 ```
 
@@ -389,10 +391,10 @@ def make_clickable(val):
 (
     output
     .loc[lambda x: x['study_focusing_on_developing_or_developed_countries'].isin([np.nan])]
-    .reindex(columns = ['paper_name', 'row_id_excel'])
+    .reindex(columns = ['paper_name', 'url_excel'])
     .drop_duplicates()
     .style
-    .format(make_clickable, subset = ['row_id_excel'])
+    .format(make_clickable, subset = ['url_excel'])
 )
 ```
 
@@ -413,10 +415,10 @@ def make_clickable(val):
 (
     output
     .loc[lambda x: x['peer_reviewed'].isin([np.nan])]
-    .reindex(columns = ['paper_name', 'row_id_excel'])
+    .reindex(columns = ['paper_name', 'url_excel'])
     .drop_duplicates()
     .style
-    .format(make_clickable, subset = ['row_id_excel'])
+    .format(make_clickable, subset = ['url_excel'])
 )
 ```
 
@@ -428,11 +430,11 @@ def make_clickable(val):
 (
     output
     .loc[lambda x: x['adjusted_independent'].isin([np.nan])]
-    .reindex(columns = ['paper_name', 'row_id_google_spreadsheet'])
+    .reindex(columns = ['paper_name', 'url_google_spreadsheet'])
     .drop_duplicates()
     .head(5)
     .style
-    .format(make_clickable, subset = ['row_id_google_spreadsheet'])
+    .format(make_clickable, subset = ['url_google_spreadsheet'])
 )
 ```
 
