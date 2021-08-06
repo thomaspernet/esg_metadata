@@ -137,9 +137,50 @@ if download_data:
     s3 = service_s3.connect_S3(client = client,
                           bucket = bucket, verbose = False)
     query = """
-    SELECT * 
-    FROM {}.{}
-    WHERE first_date_of_observations IS NOT NULL and last_date_of_observations IS NOT NULL and adjusted_model != 'TO_REMOVE'
+    WITH test as (
+  SELECT 
+    *, concat(environmnental,  social, governance) as filters
+  FROM {}.{} 
+  WHERE 
+    first_date_of_observations IS NOT NULL 
+    and last_date_of_observations IS NOT NULL 
+    and adjusted_model != 'TO_REMOVE' 
+) 
+SELECT 
+  filters, to_remove, test.id, image, row_id_excel, row_id_google_spreadsheet,
+       table_refer, incremental_id, paper_name, publication_name,
+       rank, sjr, sjr_best_quartile, h_index, total_docs_2020,
+       total_docs_3years, total_refs, total_cites_3years,
+       citable_docs_3years, cites_doc_2years, country,
+       publication_year, publication_type, cnrs_ranking, peer_reviewed,
+       study_focused_on_social_environmental_behaviour, type_of_data,
+       study_focusing_on_developing_or_developed_countries, regions,
+       first_date_of_observations, last_date_of_observations,
+       windows, avg_windows, adjusted_model_name,
+       adjusted_model, dependent, adjusted_dependent, independent,
+       adjusted_independent, 
+       CASE WHEN social = 'True' THEN 'YES' ELSE 'NO' END AS social,
+       CASE WHEN environmnental = 'True' THEN 'YES' ELSE 'NO' END AS environmnental,
+       CASE WHEN governance = 'True' THEN 'YES' ELSE 'NO' END AS governance,
+       CASE WHEN financial_crisis = True THEN 'YES' ELSE 'NO' END AS financial_crisis,
+       CASE WHEN kyoto = True THEN 'YES' ELSE 'NO' END AS kyoto,
+       lag,
+       interaction_term, quadratic_term, n, r2, beta,
+       sign_of_effect, significant, final_standard_error,
+       to_check_final, weight 
+FROM 
+  test 
+  LEFT JOIN (
+    SELECT 
+      id, 
+      COUNT(*) as weight 
+    FROM 
+      test 
+    GROUP BY 
+      id
+  ) as c on test.id = c.id
+  WHERE filters != 'TrueTrueTrue' and filters != 'FalseFalseFalse'
+
     """.format(db, table)
     try:
         df = (s3.run_query(
@@ -165,7 +206,11 @@ df.head(2)
 ```
 
 ```sos kernel="SoS"
-df['adjusted_model'].unique()
+#df['adjusted_model'].unique()
+```
+
+```sos kernel="SoS"
+#df['financial_crisis'].unique()
 ```
 
 ```sos kernel="SoS" nteract={"transient": {"deleting": false}}
@@ -177,7 +222,7 @@ pd.DataFrame(schema)
 <!-- #endregion -->
 
 ```sos kernel="SoS"
-df.assign(weight = lambda x: x.groupby(['id'])['id'].transform('size'))['weight'].describe()
+#df['weight'].describe()
 ```
 
 <!-- #region kernel="SoS" nteract={"transient": {"deleting": false}} -->
@@ -254,8 +299,17 @@ mutate(
     sign_of_effect = relevel(sign_of_effect, ref='INSIGNIFICANT'),
     adjusted_model = relevel(adjusted_model, ref='OTHER'),
     adjusted_dependent = relevel(adjusted_dependent, ref='OTHER'),
-      id = as.factor(id)
+      id = as.factor(id),
+    governance = relevel(as.factor(governance), ref = 'NO'),
+    social = relevel(as.factor(social), ref = 'NO'),
+    environmnental =relevel(as.factor(environmnental), ref = 'NO'),
+    financial_crisis =relevel(as.factor(financial_crisis), ref = 'NO'),
+    kyoto =relevel(as.factor(kyoto), ref = 'NO'),
 ) 
+```
+
+```sos kernel="R"
+glimpse(df_final)
 ```
 
 ```sos kernel="R"
@@ -278,403 +332,300 @@ se_robust_clustered <- function(x)
         )[, 2]
 ```
 
-<!-- #region kernel="SoS" -->
-## Table 1:Probit
-
-$$
-\begin{aligned}
-\text{Write your equation}
-\end{aligned}
-$$
-
-- robust standard error
-- Cannot compute clustered standard error if we add features without variation among the cluster (i.e `n`, or journal information)
-
-TO estimate a probit, use `probit` link function.  For logistic regression, use `binomial`
-
-- Reason Probit instead of Logit
-    - [What is the Difference Between Logit and Probit Models?](https://tutorials.methodsconsultants.com/posts/what-is-the-difference-between-logit-and-probit-models/)
-    
-Logit and probit differ in how they define $f(∗)$. The logit model uses something called the cumulative distribution function of the logistic distribution. The probit model uses something called the cumulative distribution function of the standard normal distribution to define $f(∗)$.
-
-Probit models can be generalized to account for non-constant error variances in more advanced econometric settings (known as heteroskedastic probit models)
-
-**Comparison group**
-
-- Always `OTHER`
-<!-- #endregion -->
-
-```sos kernel="SoS" nteract={"transient": {"deleting": false}}
-folder = 'Tables_0'
-table_nb = 1
-table = 'table_{}'.format(table_nb)
-path = os.path.join(folder, table + '.txt')
-if os.path.exists(folder) == False:
-        os.mkdir(folder)
-for ext in ['.txt', '.tex', '.pdf']:
-    x = [a for a in os.listdir(folder) if a.endswith(ext)]
-    [os.remove(os.path.join(folder, i)) for i in x]
-```
-
-<!-- #region kernel="SoS" -->
-## test Dummy positive
-
-![image.png](attachment:90454340-6201-4e4b-b0ae-cb04d0f7d11c.png)
-<!-- #endregion -->
-
-```sos kernel="R"
-%get path table
-#
-t_0 <- glm(sign_positive ~ adjusted_model+ id, data = df_final, family = binomial(link = "probit"))
-#
-t_1 <- glm(sign_positive ~ adjusted_model+ environmnental + social + governance +
-           id, data = df_final, binomial(link = "probit"))            
-#
-t_2 <- glm(sign_positive ~ adjusted_model+ environmnental + social + governance + lag + interaction_term + quadratic_term+
-           id, data = df_final, family = binomial(link = "probit"))
-
-#
-t_3 <- glm(sign_positive ~ adjusted_model+ environmnental + social + governance + lag + interaction_term + quadratic_term+
-           n+
-           id, data = df_final, family = binomial(link = "probit")) 
-
-#
-t_4 <- glm(sign_positive ~ adjusted_model+ environmnental + social + governance + lag + interaction_term + quadratic_term+
-           n+
-           adjusted_dependent+
-           id, data = df_final, family =binomial(link = "probit"))  
-
-# Journal 
-t_5 <- glm(sign_positive ~ adjusted_model+ environmnental + social + governance + lag + interaction_term + quadratic_term+
-           n+
-           adjusted_dependent+sjr+
-           id, data = df_final, family =binomial(link = "probit")) 
-dep <- "Dependent variable: Sign positive"
-
-list_final = list(t_0, t_1, t_2, t_3, t_4, t_5
-                 )
-stargazer(list_final, type = "text", 
-  se = lapply(list_final,
-              se_robust),
-          omit = "id", style = "qje")
-```
-
-```sos kernel="R"
-%get path table
-#
-t_0 <- glm(sign_positive ~ model_instrument+ environmnental + social + governance+ sjr+id, data = df_final , binomial(link = "probit"))
-#
-t_1 <- glm(sign_positive ~ model_diff_in_diff+ environmnental + social + governance+ sjr+id, data = df_final, binomial(link = "probit"))
-#
-t_2 <- glm(sign_positive ~ model_other+ environmnental + social + governance+ sjr+id, data = df_final, binomial(link = "probit"))
-#
-t_3 <- glm(sign_positive ~ model_fixed_effect+ environmnental + social + governance+sjr+ id, data = df_final, binomial(link = "probit"))
-#
-t_4 <- glm(sign_positive ~ model_lag_dependent+ environmnental + social + governance+sjr+ id, data = df_final, binomial(link = "probit"))
-#
-t_5 <- glm(sign_positive ~ model_pooled_ols+ environmnental + social + governance+sjr+ id, data = df_final, binomial(link = "probit"))
-#
-t_6 <- glm(sign_positive ~ model_random_effect+ environmnental + social + governance+sjr+ id, data = df_final, binomial(link = "probit"))
-
-  
-dep <- "Dependent variable: Sign positive"
-
-list_final = list(t_0, t_1, t_2, t_3, t_4, t_5, t_6
-                 )
-stargazer(list_final, type = "text", 
-  se = lapply(list_final,
-              se_robust),
-          omit = "id", style = "qje")
-```
-
-<!-- #region kernel="R" -->
-## test Dummy negative
-
-![image.png](attachment:b7b21814-e784-4724-aba9-5e32ef8e5a60.png)
-<!-- #endregion -->
-
-```sos kernel="R"
-%get path table
-#
-t_0 <- glm(sign_negative ~ adjusted_model+ id, data = df_final, binomial(link = "probit"))
-#
-t_1 <- glm(sign_negative ~ adjusted_model+ environmnental + social + governance +
-           id, data = df_final, binomial(link = "probit"))            
-#
-t_2 <- glm(sign_negative ~ adjusted_model+ environmnental + social + governance + lag + interaction_term + quadratic_term+
-           id, data = df_final, binomial(link = "probit"))
-
-#
-t_3 <- glm(sign_negative ~ adjusted_model+ environmnental + social + governance + lag + interaction_term + quadratic_term+
-           n+
-           id, data = df_final, binomial(link = "probit")) 
-
-#
-t_4 <- glm(sign_negative ~ adjusted_model+ environmnental + social + governance + lag + interaction_term + quadratic_term+
-           n+
-           adjusted_dependent+
-           id, data = df_final, binomial(link = "probit"))  
-# Journal 
-t_5 <- glm(sign_negative ~ adjusted_model+ environmnental + social + governance + lag + interaction_term + quadratic_term+
-           n+
-           adjusted_dependent+sjr+
-           id, data = df_final, family =binomial(link = "probit")) 
-dep <- "Dependent variable: Sign negative"
-
-list_final = list(t_0, t_1, t_2, t_3, t_4, t_5
-                 )
-stargazer(list_final, type = "text", 
-  se = lapply(list_final,
-              se_robust),
-          omit = "id", style = "qje")
-```
-
-```sos kernel="R"
-%get path table
-#
-t_0 <- glm(sign_negative ~ model_instrument+ environmnental + social + governance+ sjr+id, data = df_final, binomial(link = "probit"))
-#
-t_1 <- glm(sign_negative ~ model_diff_in_diff+ environmnental + social + governance+ sjr+id, data = df_final, binomial(link = "probit"))
-#
-t_2 <- glm(sign_negative ~ model_other+ environmnental + social + governance+ sjr+id, data = df_final, binomial(link = "probit"))
-#
-t_3 <- glm(sign_negative ~ model_fixed_effect+ environmnental + social + governance+ sjr+id, data = df_final, binomial(link = "probit"))
-#
-t_4 <- glm(sign_negative ~ model_lag_dependent+ environmnental + social + governance+ sjr+id, data = df_final , binomial(link = "probit"))
-#
-t_5 <- glm(sign_negative ~ model_pooled_ols+ environmnental + social + governance+ sjr+id, data = df_final, binomial(link = "probit"))
-#
-t_6 <- glm(sign_negative ~ model_random_effect+ environmnental + social + governance+ sjr+id, data = df_final, binomial(link = "probit"))
-
-  
-dep <- "Dependent variable: Sign negative"
-
-list_final = list(t_0, t_1, t_2, t_3, t_4, t_5, t_6
-                 )
-stargazer(list_final, type = "text", 
-  se = lapply(list_final,
-              se_robust),
-          omit = "id", style = "qje")
-```
-
-<!-- #region kernel="R" -->
-## test Dummy insignificant
-
-![image.png](attachment:87966f77-0857-471e-9ceb-9bfb9be48dc9.png)
-<!-- #endregion -->
-
-```sos kernel="R"
-%get path table
-#
-t_0 <- glm(sign_insignificant ~ adjusted_model+ id, data = df_final, binomial(link = "probit"))
-#
-t_1 <- glm(sign_insignificant ~ adjusted_model+ environmnental + social + governance +
-           id, data = df_final, binomial(link = "probit"))            
-#
-t_2 <- glm(sign_insignificant ~ adjusted_model+ environmnental + social + governance + lag + interaction_term + quadratic_term+
-           id, data = df_final,binomial(link = "probit"))
-
-#
-t_3 <- glm(sign_insignificant ~ adjusted_model+ environmnental + social + governance + lag + interaction_term + quadratic_term+
-           n+
-           id, data = df_final,binomial(link = "probit")) 
-
-#
-t_4 <- glm(sign_insignificant ~ adjusted_model+ environmnental + social + governance + lag + interaction_term + quadratic_term+
-           n+
-           adjusted_dependent+
-           id, data = df_final, binomial(link = "probit"))  
-
-# Journal 
-t_5 <- glm(sign_insignificant ~ adjusted_model+ environmnental + social + governance + lag + interaction_term + quadratic_term+
-           n+
-           adjusted_dependent+sjr+
-           id, data = df_final, family =binomial(link = "probit")) 
-dep <- "Dependent variable: Sign insignificant"
-
-list_final = list(t_0, t_1, t_2, t_3, t_4, t_5
-                 )
-stargazer(list_final, type = "text", 
-  se = lapply(list_final,
-              se_robust),
-          omit = "id", style = "qje")
-```
-
-```sos kernel="R"
-%get path table
-#
-t_0 <- glm(sign_insignificant ~ model_instrument+ environmnental + social + governance+ sjr+id, data = df_final,binomial(link = "probit"))
-#
-t_1 <- glm(sign_insignificant ~ model_diff_in_diff+ environmnental + social + governance+sjr+ id, data = df_final, binomial(link = "probit"))
-#
-t_2 <- glm(sign_insignificant ~ model_other+ environmnental + social + governance+ sjr+id, data = df_final, binomial(link = "probit"))
-#
-t_3 <- glm(sign_insignificant ~ model_fixed_effect+ environmnental + social + governance+ sjr+id, data = df_final, binomial(link = "probit"))
-#
-t_4 <- glm(sign_insignificant ~ model_lag_dependent+ environmnental + social + governance+ sjr+id, data = df_final,binomial(link = "probit"))
-#
-t_5 <- glm(sign_insignificant ~ model_pooled_ols+ environmnental + social + governance+ sjr+id, data = df_final, binomial(link = "probit"))
-#
-t_6 <- glm(sign_insignificant ~ model_random_effect+ environmnental + social + governance+sjr+ id, data = df_final, binomial(link = "probit"))
-
-  
-dep <- "Dependent variable: Sign insignificant"
-
-list_final = list(t_0, t_1, t_2, t_3, t_4, t_5,t_6
-                 )
-stargazer(list_final, type = "text", 
-  se = lapply(list_final,
-              se_robust),
-          omit = "id", style = "qje")
-```
-
 <!-- #region kernel="R" -->
 # Multinomial
 
-**Note**: comparison group "INSIGNIFICANT" and Standard error not robust
+**Note**: 
+- comparison group "INSIGNIFICANT" 
+- Standard error not robust
+- Results are relative risk ratios:
+    - Relative risk ratios allow an easier interpretation of the logit coefficients. They are the
+exponentiated value of the logit coefficients
 <!-- #endregion -->
 
 ```sos kernel="R"
 library(nnet)
 ```
 
-```sos kernel="R"
-#
-t_0 <- multinom(sign_of_effect ~ adjusted_model+ sjr+id,
-                data = df_final, trace = FALSE)
-#
-t_1 <- multinom(sign_of_effect ~ adjusted_model+ environmnental + social + governance +adjusted_dependent+
-           sjr+id, data = df_final, trace = FALSE)            
-dep <- "Dependent variable: Sign insignificant"
-
-list_final = list(t_0, t_1
-                 )
-stargazer(list_final, type = "text", 
-  #se = lapply(list_final,
-  #            se_robust),
-          omit = "id", style = "qje")
+```sos kernel="SoS"
+(
+    df
+    ['sign_of_effect']
+    .value_counts()
+)
 ```
 
-```sos kernel="R"
-#
-t_0 <- multinom(sign_of_effect ~ model_instrument+ environmnental + social + governance+ sjr+id, data = df_final, trace = FALSE)
-#
-t_1 <- multinom(sign_of_effect ~ model_diff_in_diff+ environmnental + social + governance+sjr+ id, data = df_final, trace = FALSE)
-
-  
-dep <- "Dependent variable: Sign insignificant"
-
-list_final = list(t_0, t_1
-                 )
-stargazer(list_final, type = "text", 
-  #se = lapply(list_final,
-  #            se_robust),
-          omit = "id", style = "qje")           
+```sos kernel="SoS"
+(
+    df
+    .groupby(['sign_of_effect'])['governance']
+    .value_counts()
+    .unstack(-1)
+)
 ```
 
-```sos kernel="R"
-t_2 <- multinom(sign_of_effect ~ model_other+ environmnental + social + governance+ sjr+id, data = df_final, trace = FALSE)
-#
-t_3 <- multinom(sign_of_effect ~ model_fixed_effect+ environmnental + social + governance+ sjr+id, data = df_final, trace = FALSE)
-
-
-  
-dep <- "Dependent variable: Sign insignificant"
-
-list_final = list(t_2, t_3
-                 )
-stargazer(list_final, type = "text", 
-  #se = lapply(list_final,
-  #            se_robust),
-          omit = "id", style = "qje")  
+```sos kernel="SoS"
+(
+    df
+    .groupby(['adjusted_model','sign_of_effect'])['governance']
+    .value_counts()
+    .rename('count')
+    .reset_index()
+    .set_index(['governance', 'sign_of_effect', 'adjusted_model'])
+    .unstack(-1)
+    .style
+    .format("{0:,.0f}")
+)
 ```
 
-```sos kernel="R"
-#
-t_4 <- multinom(sign_of_effect ~ model_lag_dependent+ environmnental + social + governance+ id, data = df_final, trace = FALSE)
-#
-t_5 <- multinom(sign_of_effect ~ model_pooled_ols+ environmnental + social + governance+ id, data = df_final, trace = FALSE)
-#
-t_6 <- multinom(sign_of_effect ~ model_random_effect+ environmnental + social + governance+ id, data = df_final, trace = FALSE)
+```sos kernel="SoS"
+(
+    df
+    .groupby(['adjusted_model','sign_of_effect'])['social']
+    .value_counts()
+    .rename('count')
+    .reset_index()
+    .set_index(['social', 'sign_of_effect', 'adjusted_model'])
+    .unstack(-1)
+    .style
+    .format("{0:,.0f}")
+)
+```
 
-  
-dep <- "Dependent variable: Sign insignificant"
-
-list_final = list(t_4, t_5,t_6
-                 )
-stargazer(list_final, type = "text", 
-  #se = lapply(list_final,
-  #            se_robust),
-          omit = "id", style = "qje")  
+```sos kernel="SoS"
+(
+    df
+    .groupby(['adjusted_model','sign_of_effect'])['environmnental']
+    .value_counts()
+    .rename('count')
+    .reset_index()
+    .set_index(['environmnental', 'sign_of_effect', 'adjusted_model'])
+    .unstack(-1)
+    .style
+    .format("{0:,.0f}")
+)
 ```
 
 <!-- #region kernel="R" -->
-Check model by model
+**How to read**
 
+- Categorical:
+    - Keeping all other variables constant, if the analysis uses FIXED EFFECT model, there are 2.71 times more likely to stay in the NEGATIVE sign category as compared to the OTHER model category. The coefficient, however, is not significant. (Col 1)
+- Continuous:
+    - Keeping all other variables constant, if the SJR score increases one unit, there is 1.003 times more likely to stay in the POSITIVE sign category as compared to the OTHER model category y (the risk or odds is 2% higher).. The coefficient is significant.
+    
+Here, OTHER means insignificant
+<!-- #endregion -->
 
+<!-- #region kernel="SoS" -->
+Currently, issue with:
+
+- governance 
+- full inclusion dummy -> probably collinearity need to check
 <!-- #endregion -->
 
 ```sos kernel="R"
-t_0 <- multinom(sign_of_effect ~ model_instrument+environmnental + social + governance +adjusted_dependent+ sjr+id,
-                data = df_final, trace = FALSE)
-stargazer(t_0, type = "text", 
-  #se = lapply(list_final,
-  #            se_robust),
-          omit = "id", style = "qje") 
+#
+t_1 <- multinom(sign_of_effect ~ adjusted_model+ social  +#adjusted_dependent+
+           sjr, data = df_final, trace = FALSE)    
+t_1.rrr <- exp(coef(t_1))
+#
+t_2 <- multinom(sign_of_effect ~ adjusted_model+ environmnental  +#adjusted_dependent+
+           sjr, data = df_final, trace = FALSE)    
+t_2.rrr <- exp(coef(t_2))
+#
+t_3 <- multinom(sign_of_effect ~ adjusted_model+ governance  +#adjusted_dependent+
+           sjr, data = df_final, trace = FALSE)    
+t_3.rrr <- exp(coef(t_3))
+#
+t_4 <- multinom(sign_of_effect ~ adjusted_model+ social +environmnental+ governance  +#adjusted_dependent+
+           sjr, data = df_final, trace = FALSE)    
+t_4.rrr <- exp(coef(t_4))
+
+dep <- "Dependent variable: Sign insignificant"
+
+list_final <- list(t_1, t_2, t_3, t_4)
+list_final.rrr <-list(t_1.rrr, t_2.rrr, t_3.rrr, t_4.rrr)
+stargazer(list_final,
+          type = "text", 
+          coef=list_final.rrr,
+          omit = "id",
+          style = "qje")
+```
+
+<!-- #region kernel="R" -->
+test with `id` 
+<!-- #endregion -->
+
+```sos kernel="R"
+#
+t_1 <- multinom(sign_of_effect ~ adjusted_model+ social  +#adjusted_dependent+
+           sjr + id, data = df_final, trace = FALSE)    
+t_1.rrr <- exp(coef(t_1))
+#
+t_2 <- multinom(sign_of_effect ~ adjusted_model+ environmnental  +#adjusted_dependent+
+           sjr+ id, data = df_final, trace = FALSE)    
+t_2.rrr <- exp(coef(t_2))
+#
+t_3 <- multinom(sign_of_effect ~ adjusted_model+ governance  +#adjusted_dependent+
+           sjr+ id, data = df_final, trace = FALSE)    
+t_3.rrr <- exp(coef(t_3))
+#
+t_4 <- multinom(sign_of_effect ~ adjusted_model+ social +environmnental+ governance  +#adjusted_dependent+
+           sjr+ id, data = df_final, trace = FALSE)    
+t_4.rrr <- exp(coef(t_4))
+
+dep <- "Dependent variable: Sign insignificant"
+
+list_final <- list(t_1, t_2, t_3, t_4)
+list_final.rrr <-list(t_1.rrr, t_2.rrr, t_3.rrr, t_4.rrr)
+stargazer(list_final,
+          type = "text", 
+          coef=list_final.rrr,
+          omit = "id",
+          style = "qje")
 ```
 
 ```sos kernel="R"
-t_0 <- multinom(sign_of_effect ~ model_diff_in_diff+ environmnental + social + governance +adjusted_dependent+sjr+id,
-                data = df_final, trace = FALSE)
-stargazer(t_0, type = "text", 
-  #se = lapply(list_final,
-  #            se_robust),
-          omit = "id", style = "qje") 
+#
+t_1 <- multinom(sign_of_effect ~ adjusted_model+ social  +adjusted_dependent+
+           sjr
+                , data = df_final, trace = FALSE)    
+t_1.rrr <- exp(coef(t_1))
+#
+t_2 <- multinom(sign_of_effect ~ adjusted_model+ environmnental + adjusted_dependent+
+                publication_year + 
+           sjr
+                , data = df_final, trace = FALSE)    
+t_2.rrr <- exp(coef(t_2))
+#
+t_3 <- multinom(sign_of_effect ~ adjusted_model+ environmnental + adjusted_dependent+
+                publication_year + first_date_of_observations + last_date_of_observations +
+           sjr
+                , data = df_final, trace = FALSE)    
+t_3.rrr <- exp(coef(t_3))
+#
+t_4 <- multinom(sign_of_effect ~ adjusted_model+ environmnental + adjusted_dependent+
+                publication_year + windows +
+           sjr
+                , data = df_final, trace = FALSE)    
+t_4.rrr <- exp(coef(t_4))
+
+dep <- "Dependent variable: Sign insignificant"
+
+list_final <- list(t_1, t_2)
+list_final.rrr <-list(t_1.rrr, t_2.rrr)
+stargazer(list_final,
+          type = "text", 
+          coef=list_final.rrr,
+          omit = "id",
+          style = "qje")
+```
+
+```sos kernel="SoS"
+(
+    df
+    .groupby(['sign_of_effect'])['adjusted_dependent']
+    .value_counts()
+    .rename('count')
+    #.reset_index()
+    #.set_index(['adjusted_dependent', 'sign_of_effect', 'adjusted_model'])
+    .unstack(-2)
+    #.style
+    #.format("{0:,.0f}")
+)
+```
+
+```sos kernel="SoS"
+(
+    df
+    .groupby(['adjusted_model','sign_of_effect'])['adjusted_dependent']
+    .value_counts()
+    .rename('count')
+    .reset_index()
+    .set_index(['adjusted_dependent', 'sign_of_effect', 'adjusted_model'])
+    .unstack(-1)
+    .style
+    .format("{0:,.0f}")
+)
+```
+
+<!-- #region kernel="SoS" -->
+Test with Kyoto, financial crisis & region
+
+- CASE WHEN first_date_of_observations >= 1997 THEN TRUE ELSE FALSE END AS kyoto,
+- CASE WHEN first_date_of_observations >= 2009 THEN TRUE ELSE FALSE END AS financial_crisis
+<!-- #endregion -->
+
+```sos kernel="R"
+#
+t_1 <- multinom(sign_of_effect ~ adjusted_model+ environmnental + adjusted_dependent+
+                publication_year + kyoto + financial_crisis+
+           sjr, data = df_final, trace = FALSE)    
+t_1.rrr <- exp(coef(t_1))
+#
+t_2 <- multinom(sign_of_effect ~ adjusted_model+ environmnental + adjusted_dependent+
+                publication_year + first_date_of_observations + last_date_of_observations +
+                + kyoto + financial_crisis+
+           sjr, data = df_final, trace = FALSE)    
+t_2.rrr <- exp(coef(t_2))
+#
+t_3 <- multinom(sign_of_effect ~ adjusted_model+ environmnental + adjusted_dependent+
+                publication_year + windows +
+                + kyoto + financial_crisis+
+           sjr, data = df_final, trace = FALSE)    
+t_3.rrr <- exp(coef(t_3))
+
+dep <- "Dependent variable: Sign insignificant"
+
+list_final <- list(t_1, t_2, t_3)
+list_final.rrr <-list(t_1.rrr, t_2.rrr,  t_3.rrr)
+stargazer(list_final,
+          type = "text", 
+          coef=list_final.rrr,
+          omit = "id",
+          style = "qje")
+```
+
+```sos kernel="SoS"
+(
+    df
+    .groupby(['adjusted_model','sign_of_effect'])['financial_crisis']
+    .value_counts()
+    .rename('count')
+    .reset_index()
+    .set_index(['financial_crisis', 'sign_of_effect', 'adjusted_model'])
+    .unstack(-1)
+    .style
+    .format("{0:,.0f}")
+)
 ```
 
 ```sos kernel="R"
-t_0 <- multinom(sign_of_effect ~ model_other+ environmnental + social + governance +adjusted_dependent+sjr+id,
-                data = df_final, trace = FALSE)
-stargazer(t_0, type = "text", 
-  #se = lapply(list_final,
-  #            se_robust),
-          omit = "id", style = "qje") 
+t_4 <- multinom(sign_of_effect ~  environmnental + adjusted_dependent+
+                publication_year + windows +
+                + kyoto + financial_crisis+ regions+
+           sjr, data = df_final, trace = FALSE)    
+t_4.rrr <- exp(coef(t_4))
+stargazer(list(t_4),
+          type = "text", 
+          coef=list(t_4.rrr),
+          omit = "id",
+          style = "qje")
 ```
 
-```sos kernel="R"
-t_0 <- multinom(sign_of_effect ~ model_fixed_effect+ environmnental + social + governance +adjusted_dependent+sjr+id,
-                data = df_final, trace = FALSE)
-stargazer(t_0, type = "text", 
-  #se = lapply(list_final,
-  #            se_robust),
-          omit = "id", style = "qje") 
-```
-
-```sos kernel="R"
-t_0 <- multinom(sign_of_effect ~ model_lag_dependent+ environmnental + social + governance +adjusted_dependent+sjr+id,
-                data = df_final, trace = FALSE)
-stargazer(t_0, type = "text", 
-  #se = lapply(list_final,
-  #            se_robust),
-          omit = "id", style = "qje") 
-```
-
-```sos kernel="R"
-t_0 <- multinom(sign_of_effect ~ model_pooled_ols+environmnental + social + governance +adjusted_dependent+ sjr+id,
-                data = df_final, trace = FALSE)
-stargazer(t_0, type = "text", 
-  #se = lapply(list_final,
-  #            se_robust),
-          omit = "id", style = "qje") 
-```
-
-```sos kernel="R"
-t_0 <- multinom(sign_of_effect ~ model_random_effect+ environmnental + social + governance +adjusted_dependent+sjr+id,
-                data = df_final, trace = FALSE)
-stargazer(t_0, type = "text", 
-  #se = lapply(list_final,
-  #            se_robust),
-          omit = "id", style = "qje") 
+```sos kernel="SoS"
+(
+    df
+    .groupby(['adjusted_model','sign_of_effect'])['regions']
+    .value_counts()
+    .rename('count')
+    .reset_index()
+    .set_index(['regions', 'sign_of_effect', 'adjusted_model'])
+    .unstack(-1)
+    .style
+    .format("{0:,.0f}")
+)
 ```
 
 <!-- #region kernel="SoS" nteract={"transient": {"deleting": false}} -->
@@ -699,7 +650,7 @@ path_json = os.path.join(str(Path(path).parent.parent), 'utils',name_json)
 ```
 
 ```sos kernel="python3" nteract={"transient": {"deleting": false}} outputExpanded=false
-create_report.create_report(extension = "html", keep_code = False, notebookname = "00_sign_of_effect_classification.ipynb")
+create_report.create_report(extension = "html", keep_code = True, notebookname = "00_sign_of_effect_classification.ipynb")
 ```
 
 ```sos kernel="python3"
