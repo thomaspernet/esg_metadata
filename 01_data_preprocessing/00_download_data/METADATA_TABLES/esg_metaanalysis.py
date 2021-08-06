@@ -150,6 +150,7 @@ var = (
                       'sign',
                       'star',
                       "sign_of_effect",
+                      "target",
                       "sign_positive",
                       "sign_negative",
                       "sign_insignificant",
@@ -238,7 +239,7 @@ schema = [
         'Comment': 'reorganise independent variable into smaller group'},
     {'Name': 'adjusted_model', 'Type': 'string',
         'Comment': 'reorganise model variable into smaller group'},
-    {'Name': 'significant', 'Type': 'string', 'Comment': 'is beta significant'},
+    {'Name': 'significant', 'Type': 'string', 'Comment': 'is beta significant. Computed from reconstructed critical values, not the paper. From paper, see variable target'},
     {'Name': 'to_check_final', 'Type': 'string', 'Comment': 'Final check rows'},
     {'Name': 'critical_99', 'Type': 'string',
         'Comment': '99 t stat critical value calculated based on nb obserations'},
@@ -277,6 +278,8 @@ schema = [
         'Comment': 'if adjusted_model is equal to POOLED OLS then true'},
     {'Name': 'model_random_effect', 'Type': 'string',
         'Comment': 'if adjusted_model is equal to RANDOM EFFECT then true'},
+        {'Name': 'target', 'Type': 'string',
+            'Comment': 'indicate wheither or not the coefficient is significant. based on stars'},
 
 ]
 
