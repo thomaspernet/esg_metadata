@@ -5,7 +5,7 @@ from diagrams.aws.database import Redshift, RDS
 from diagrams.aws.integration import SQS
 from diagrams.aws.storage import S3
 
-with Diagram("META ANALYSIS ESG CFP", show=False, filename="/Users/thomas/Google Drive/PROJECT/GITHUB/REPOSITORIES/esg_metadata/utils/IMAGES/meta_analysis_esg_cfp", outformat="jpg"):
+with Diagram("META ANALYSIS ESG CFP", show=False, filename="/home/ec2-user/esg_metadata/utils/IMAGES/meta_analysis_esg_cfp", outformat="jpg"):
 
      temp_1 = S3('papers_meta_analysis_new')
      temp_2 = S3('papers_meta_analysis')

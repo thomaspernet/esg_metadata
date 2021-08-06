@@ -128,11 +128,10 @@ query = """
 WITH merge AS (
   SELECT 
     id, 
+    image,
+    row_id_excel,
     table_refer,
-    image as url_image,
-    row_id_excel as url_excel,
-    row_id_google_spreadsheet as url_google_spreadsheet,
-    drive_url,
+    row_id_google_spreadsheet,
     incremental_id,
     paper_name, 
     publication_year, 
@@ -150,28 +149,21 @@ WITH merge AS (
     peer_reviewed, 
     study_focused_on_social_environmental_behaviour, 
     type_of_data, 
-    study_focusing_on_developing_or_developed_countries, 
+    study_focusing_on_developing_or_developed_countries,
+    regions,
     first_date_of_observations,
     last_date_of_observations,
+    adjusted_model_name,
     adjusted_model,
-    model_instrument,
-    model_diff_in_diff,
-    model_other,
-    model_fixed_effect,
-    model_lag_dependent,
-    model_pooled_ols,
-    model_random_effect,
     dependent, 
     adjusted_dependent,
     independent,
     adjusted_independent, 
     social,
-    environmnental,
+    environmental,
     governance,
     sign_of_effect,
-    sign_positive,
-    sign_negative,
-    sign_insignificant,
+    target,
     lag, 
     interaction_term, 
     quadratic_term, 
@@ -214,14 +206,39 @@ SELECT
         esg.papers_meta_analysis
         GROUP BY nr
 ) as date_pub on papers_meta_analysis_new.id = date_pub.nr
+LEFT JOIN (
+SELECT 
+  nr, 
+  MIN(regions) as regions 
+FROM 
+  (
+    SELECT 
+      nr, 
+      CASE WHEN regions_of_selected_firms in (
+        'Cameroon', 'Egypt', 'Libya', 'Morocco', 
+        'Nigeria'
+      ) THEN 'AFRICA' WHEN regions_of_selected_firms in ('GCC countries') THEN 'ARAB WORLD' WHEN regions_of_selected_firms in (
+        'India', 'Indonesia', 'Taiwan', 'Vietnam', 
+        'Australia', 'China', 'Iran', 'Malaysia', 
+        'Pakistan', 'South Korea', 'Bangladesh'
+      ) THEN 'ASIA AND PACIFIC' WHEN regions_of_selected_firms in (
+        'Spain', '20 European countries', 
+        'United Kingdom', 'France', 'Germany, Italy, the Netherlands and United Kingdom', 
+        'Turkey', 'UK'
+      ) THEN 'EUROPE' WHEN regions_of_selected_firms in ('Latin America', 'Brazil') THEN 'LATIN AMERICA' WHEN regions_of_selected_firms in ('USA', 'US', 'U.S.', 'Canada') THEN 'NORTH AMERICA' ELSE 'WORLDWIDE' END AS regions 
+    FROM 
+      papers_meta_analysis
+  ) 
+GROUP BY 
+  nr
+) as reg on papers_meta_analysis_new.id = reg.nr
 ) 
 SELECT 
     to_remove, 
     id, 
-    url_image,
-    url_excel,
-    url_google_spreadsheet,
-    drive_url,
+    image,
+    row_id_excel,
+    row_id_google_spreadsheet,
     table_refer,
     incremental_id,
     paper_name,
@@ -244,22 +261,21 @@ SELECT
     study_focused_on_social_environmental_behaviour, 
     type_of_data, 
     study_focusing_on_developing_or_developed_countries, 
+    regions,
     first_date_of_observations,
     last_date_of_observations,
-    adjusted_model,
-    model_instrument,
-    model_diff_in_diff,
-    model_other,
-    model_fixed_effect,
-    model_lag_dependent,
-    model_pooled_ols,
-    model_random_effect,
+    CASE WHEN first_date_of_observations >= 1997 THEN TRUE ELSE FALSE END AS kyoto,
+    CASE WHEN first_date_of_observations >= 2009 THEN TRUE ELSE FALSE END AS financial_crisis,
+    last_date_of_observations - first_date_of_observations as windows,
+    (last_date_of_observations - first_date_of_observations) / 2 avg_windows,
+    adjusted_model_name,
+    adjusted_model, 
     dependent, 
     adjusted_dependent, 
     independent, 
     adjusted_independent, 
     social,
-    environmnental,
+    environmental,
     governance,
     lag, 
     interaction_term, 
@@ -268,15 +284,9 @@ SELECT
     r2, 
     beta, 
     sign_of_effect,
-    sign_positive,
-    sign_negative,
-    sign_insignificant,
+    target,
     significant,
-    -- critical_value, 
     final_standard_error,
-    --true_standard_error, 
-    --true_t_value, 
-    --true_stars, 
     to_check_final 
 FROM 
   merge 
@@ -536,11 +546,10 @@ CREATE TABLE {0}.{1} WITH (format = 'PARQUET') AS
 WITH merge AS (
   SELECT 
     id, 
+    image,
+    row_id_excel,
     table_refer,
-    image as url_image,
-    row_id_excel as url_excel,
-    row_id_google_spreadsheet as url_google_spreadsheet,
-    drive_url,
+    row_id_google_spreadsheet,
     incremental_id,
     paper_name, 
     publication_year, 
@@ -558,28 +567,21 @@ WITH merge AS (
     peer_reviewed, 
     study_focused_on_social_environmental_behaviour, 
     type_of_data, 
-    study_focusing_on_developing_or_developed_countries, 
+    study_focusing_on_developing_or_developed_countries,
+    regions,
     first_date_of_observations,
     last_date_of_observations,
+    adjusted_model_name,
     adjusted_model,
-    model_instrument,
-    model_diff_in_diff,
-    model_other,
-    model_fixed_effect,
-    model_lag_dependent,
-    model_pooled_ols,
-    model_random_effect,
     dependent, 
     adjusted_dependent,
     independent,
     adjusted_independent, 
     social,
-    environmnental,
+    environmental,
     governance,
     sign_of_effect,
-    sign_positive,
-    sign_negative,
-    sign_insignificant,
+    target,
     lag, 
     interaction_term, 
     quadratic_term, 
@@ -622,14 +624,39 @@ SELECT
         esg.papers_meta_analysis
         GROUP BY nr
 ) as date_pub on papers_meta_analysis_new.id = date_pub.nr
+LEFT JOIN (
+SELECT 
+  nr, 
+  MIN(regions) as regions 
+FROM 
+  (
+    SELECT 
+      nr, 
+      CASE WHEN regions_of_selected_firms in (
+        'Cameroon', 'Egypt', 'Libya', 'Morocco', 
+        'Nigeria'
+      ) THEN 'AFRICA' WHEN regions_of_selected_firms in ('GCC countries') THEN 'ARAB WORLD' WHEN regions_of_selected_firms in (
+        'India', 'Indonesia', 'Taiwan', 'Vietnam', 
+        'Australia', 'China', 'Iran', 'Malaysia', 
+        'Pakistan', 'South Korea', 'Bangladesh'
+      ) THEN 'ASIA AND PACIFIC' WHEN regions_of_selected_firms in (
+        'Spain', '20 European countries', 
+        'United Kingdom', 'France', 'Germany, Italy, the Netherlands and United Kingdom', 
+        'Turkey', 'UK'
+      ) THEN 'EUROPE' WHEN regions_of_selected_firms in ('Latin America', 'Brazil') THEN 'LATIN AMERICA' WHEN regions_of_selected_firms in ('USA', 'US', 'U.S.', 'Canada') THEN 'NORTH AMERICA' ELSE 'WORLDWIDE' END AS regions 
+    FROM 
+      papers_meta_analysis
+  ) 
+GROUP BY 
+  nr
+) as reg on papers_meta_analysis_new.id = reg.nr
 ) 
 SELECT 
     to_remove, 
     id, 
-    url_image,
-    url_excel,
-    url_google_spreadsheet,
-    drive_url,
+    image,
+    row_id_excel,
+    row_id_google_spreadsheet,
     table_refer,
     incremental_id,
     paper_name,
@@ -652,22 +679,21 @@ SELECT
     study_focused_on_social_environmental_behaviour, 
     type_of_data, 
     study_focusing_on_developing_or_developed_countries, 
+    regions,
     first_date_of_observations,
     last_date_of_observations,
-    adjusted_model,
-    model_instrument,
-    model_diff_in_diff,
-    model_other,
-    model_fixed_effect,
-    model_lag_dependent,
-    model_pooled_ols,
-    model_random_effect,
+    CASE WHEN first_date_of_observations >= 1997 THEN TRUE ELSE FALSE END AS kyoto,
+    CASE WHEN first_date_of_observations >= 2000 THEN TRUE ELSE FALSE END AS financial_crisis,
+    last_date_of_observations - first_date_of_observations as windows,
+    (last_date_of_observations - first_date_of_observations) / 2 avg_windows,
+    adjusted_model_name,
+    adjusted_model, 
     dependent, 
     adjusted_dependent, 
     independent, 
     adjusted_independent, 
     social,
-    environmnental,
+    environmental,
     governance,
     lag, 
     interaction_term, 
@@ -676,15 +702,9 @@ SELECT
     r2, 
     beta, 
     sign_of_effect,
-    sign_positive,
-    sign_negative,
-    sign_insignificant,
+    target,
     significant,
-    -- critical_value, 
     final_standard_error,
-    --true_standard_error, 
-    --true_t_value, 
-    --true_stars, 
     to_check_final 
 FROM 
   merge 
