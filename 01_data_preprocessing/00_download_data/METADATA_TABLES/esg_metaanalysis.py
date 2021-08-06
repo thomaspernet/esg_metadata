@@ -139,7 +139,7 @@ var = (
                       'independent',
                       'adjusted_independent',
                       'social',
-                      'environmnental',
+                      'environmental',
                       'governance',
                       'lag',
                       'interaction_term',
