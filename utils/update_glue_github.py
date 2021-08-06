@@ -69,6 +69,13 @@ list_tables = 'automatic',
             name['Comment'] = com['Comment']
         except:
             pass
+    ### Schema can be without comment, so add comment field
+    for s in schema:
+        if 'Comment' in s.keys():
+            pass
+        else:
+            s['Comment'] = ''
+
     to_update = [i for i in schema if i['Comment'] == '']
     if automatic == True:
         for i in to_update:
