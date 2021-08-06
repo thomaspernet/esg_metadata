@@ -139,7 +139,7 @@ if download_data:
     query = """
     WITH test as (
   SELECT 
-    *, concat(environmnental,  social, governance) as filters
+    *, concat(environmental,  social, governance) as filters
   FROM {}.{} 
   WHERE 
     first_date_of_observations IS NOT NULL 
@@ -160,14 +160,14 @@ SELECT
        adjusted_model, dependent, adjusted_dependent, independent,
        adjusted_independent, 
        CASE WHEN social = 'True' THEN 'YES' ELSE 'NO' END AS social,
-       CASE WHEN environmnental = 'True' THEN 'YES' ELSE 'NO' END AS environmnental,
+       CASE WHEN environmental = 'True' THEN 'YES' ELSE 'NO' END AS environmental,
        CASE WHEN governance = 'True' THEN 'YES' ELSE 'NO' END AS governance,
        CASE WHEN financial_crisis = True THEN 'YES' ELSE 'NO' END AS financial_crisis,
        CASE WHEN kyoto = True THEN 'YES' ELSE 'NO' END AS kyoto,
        lag,
        interaction_term, quadratic_term, n, r2, beta,
-       sign_of_effect, significant, final_standard_error,
-       to_check_final, weight 
+       sign_of_effect,target, significant, final_standard_error,
+       to_check_final, weight
 FROM 
   test 
   LEFT JOIN (
@@ -179,7 +179,7 @@ FROM
     GROUP BY 
       id
   ) as c on test.id = c.id
-  WHERE filters != 'TrueTrueTrue' and filters != 'FalseFalseFalse'
+  WHERE filters != 'TrueTrueTrue' and filters != 'FalseFalseFalse' and sjr IS NOT NULL
 
     """.format(db, table)
     try:
@@ -206,11 +206,15 @@ df.head(2)
 ```
 
 ```sos kernel="SoS"
-#df['adjusted_model'].unique()
+df.isna().sum().sort_values().loc[lambda x: x> 0]
 ```
 
 ```sos kernel="SoS"
-#df['financial_crisis'].unique()
+df['adjusted_model'].unique()
+```
+
+```sos kernel="SoS"
+df['target'].value_counts()
 ```
 
 ```sos kernel="SoS" nteract={"transient": {"deleting": false}}
@@ -222,7 +226,7 @@ pd.DataFrame(schema)
 <!-- #endregion -->
 
 ```sos kernel="SoS"
-#df['weight'].describe()
+df['weight'].describe()
 ```
 
 <!-- #region kernel="SoS" nteract={"transient": {"deleting": false}} -->
@@ -296,15 +300,16 @@ source(path)
 df_final <- read_csv(df_path) %>%
 mutate_if(is.character, as.factor) %>%
 mutate(
-    sign_of_effect = relevel(sign_of_effect, ref='INSIGNIFICANT'),
+    sign_of_effect = relevel(sign_of_effect, ref='NEGATIVE'),
     adjusted_model = relevel(adjusted_model, ref='OTHER'),
     adjusted_dependent = relevel(adjusted_dependent, ref='OTHER'),
       id = as.factor(id),
     governance = relevel(as.factor(governance), ref = 'NO'),
     social = relevel(as.factor(social), ref = 'NO'),
-    environmnental =relevel(as.factor(environmnental), ref = 'NO'),
+    environmental =relevel(as.factor(environmental), ref = 'NO'),
     financial_crisis =relevel(as.factor(financial_crisis), ref = 'NO'),
     kyoto =relevel(as.factor(kyoto), ref = 'NO'),
+    target =relevel(as.factor(target), ref = 'NOT_SIGNIFICANT'),
 ) 
 ```
 
@@ -333,6 +338,79 @@ se_robust_clustered <- function(x)
 ```
 
 <!-- #region kernel="R" -->
+## Table 1:Probit
+
+$$
+\begin{aligned}
+\text{Write your equation}
+\end{aligned}
+$$
+
+- robust standard error
+- Cannot compute clustered standard error if we add features without variation among the cluster (i.e `n`, or journal information)
+
+TO estimate a probit, use `probit` link function.  For logistic regression, use `binomial`
+
+- Reason Probit instead of Logit
+    - [What is the Difference Between Logit and Probit Models?](https://tutorials.methodsconsultants.com/posts/what-is-the-difference-between-logit-and-probit-models/)
+
+Logit and probit differ in how they define $f(∗)$. The logit model uses something called the cumulative distribution function of the logistic distribution. The probit model uses something called the cumulative distribution function of the standard normal distribution to define $f(∗)$.
+
+Probit models can be generalized to account for non-constant error variances in more advanced econometric settings (known as heteroskedastic probit models)
+
+**Comparison group**
+
+- Always `OTHER`
+- Target: `SIGNIFICANT`
+<!-- #endregion -->
+
+```sos kernel="R"
+t_0 <- glm(target ~ adjusted_model
+                + environmental 
+                #+ adjusted_dependent+
+                #+ publication_year 
+                #+ first_date_of_observations 
+                #+ last_date_of_observations +
+                + kyoto 
+                + financial_crisis+
+           +sjr,
+           data = df_final ,
+           binomial(link = "probit")
+          )
+t_0.rrr <- exp(coef(t_0))
+t_1 <- glm(target ~ adjusted_model
+                + social 
+                #+ adjusted_dependent+
+                #+ publication_year 
+                #+ first_date_of_observations 
+                #+ last_date_of_observations +
+                + kyoto 
+                + financial_crisis+
+           sjr,
+           data = df_final , binomial(link = "probit"))
+t_1.rrr <- exp(coef(t_1))
+t_2 <- glm(target ~ adjusted_model
+                + governance 
+                #+ adjusted_dependent+
+                #+ publication_year 
+                #+ first_date_of_observations 
+                #+ last_date_of_observations +
+                + kyoto 
+                + financial_crisis+
+           sjr,
+           data = df_final , binomial(link = "probit"))
+t_2.rrr <- exp(coef(t_2))
+
+list_final = list(t_0, t_1, t_2)
+list_final.rrr = list(t_0.rrr,t_1.rrr ,t_2.rrr)
+stargazer(list_final, type = "text", 
+  se = lapply(list_final,
+              se_robust),
+          coef=list_final.rrr,
+          omit = "id", style = "qje")
+```
+
+<!-- #region kernel="R" -->
 # Multinomial
 
 **Note**: 
@@ -351,7 +429,15 @@ library(nnet)
 (
     df
     ['sign_of_effect']
-    .value_counts()
+    .value_counts(normalize = True)
+)
+```
+
+```sos kernel="SoS"
+(
+    df
+    ['sign_of_effect']
+    .value_counts(normalize = False)
 )
 ```
 
@@ -406,13 +492,69 @@ library(nnet)
 )
 ```
 
+```sos kernel="SoS"
+(
+    df
+    .groupby(['sign_of_effect'])['environmnental']
+    .value_counts()
+    #.rename('count')
+    #.reset_index()
+    #.set_index(['environmnental', 'sign_of_effect', 'adjusted_model'])
+    .unstack(-1)
+    #.style
+    #.format("{0:,.0f}")
+)
+```
+
+```sos kernel="SoS"
+(
+    df
+    .groupby(['sign_of_effect'])['social']
+    .value_counts()
+    #.rename('count')
+    #.reset_index()
+    #.set_index(['environmnental', 'sign_of_effect', 'adjusted_model'])
+    .unstack(-1)
+    #.style
+    #.format("{0:,.0f}")
+)
+```
+
+```sos kernel="SoS"
+(
+    df
+    .groupby(['sign_of_effect'])['governance']
+    .value_counts()
+    #.rename('count')
+    #.reset_index()
+    #.set_index(['environmnental', 'sign_of_effect', 'adjusted_model'])
+    .unstack(-1)
+    #.style
+    #.format("{0:,.0f}")
+)
+```
+
+```sos kernel="SoS"
+(
+    df
+    .groupby(['adjusted_model'])['sign_of_effect']
+    .value_counts(normalize = True)
+    #.rename('count')
+    #.reset_index()
+    #.set_index(['environmnental', 'sign_of_effect', 'adjusted_model'])
+    .unstack(-1)
+    #.style
+    #.format("{0:,.0f}")
+)
+```
+
 <!-- #region kernel="R" -->
 **How to read**
 
 - Categorical:
     - Keeping all other variables constant, if the analysis uses FIXED EFFECT model, there are 2.71 times more likely to stay in the NEGATIVE sign category as compared to the OTHER model category. The coefficient, however, is not significant. (Col 1)
 - Continuous:
-    - Keeping all other variables constant, if the SJR score increases one unit, there is 1.003 times more likely to stay in the POSITIVE sign category as compared to the OTHER model category y (the risk or odds is 2% higher).. The coefficient is significant.
+    - Keeping all other variables constant, if the SJR score increases one unit, there is 1.003 times more likely to stay in the POSITIVE sign category as compared to the OTHER model category y (the risk or odds is .2% higher). The coefficient is significant.
     
 Here, OTHER means insignificant
 <!-- #endregion -->
@@ -423,6 +565,22 @@ Currently, issue with:
 - governance 
 - full inclusion dummy -> probably collinearity need to check
 <!-- #endregion -->
+
+```sos kernel="R"
+df_final <- read_csv(df_path) %>%
+mutate_if(is.character, as.factor) %>%
+mutate(
+    sign_of_effect = relevel(sign_of_effect, ref='NEGATIVE'),
+    adjusted_model = relevel(adjusted_model, ref='OTHER'),
+    adjusted_dependent = relevel(adjusted_dependent, ref='OTHER'),
+      id = as.factor(id),
+    governance = relevel(as.factor(governance), ref = 'NO'),
+    social = relevel(as.factor(social), ref = 'NO'),
+    environmnental =relevel(as.factor(environmnental), ref = 'NO'),
+    financial_crisis =relevel(as.factor(financial_crisis), ref = 'NO'),
+    kyoto =relevel(as.factor(kyoto), ref = 'NO'),
+) 
+```
 
 ```sos kernel="R"
 #
@@ -559,19 +717,25 @@ Test with Kyoto, financial crisis & region
 
 ```sos kernel="R"
 #
-t_1 <- multinom(sign_of_effect ~ adjusted_model+ environmnental + adjusted_dependent+
-                publication_year + kyoto + financial_crisis+
+t_1 <- multinom(sign_of_effect ~ #adjusted_model
+                + environmnental 
+                #+ adjusted_dependent+
+                + publication_year + kyoto + financial_crisis+
            sjr, data = df_final, trace = FALSE)    
 t_1.rrr <- exp(coef(t_1))
 #
-t_2 <- multinom(sign_of_effect ~ adjusted_model+ environmnental + adjusted_dependent+
-                publication_year + first_date_of_observations + last_date_of_observations +
+t_2 <- multinom(sign_of_effect ~ #adjusted_model
+                + environmnental 
+                #+ adjusted_dependent+
+                + publication_year + first_date_of_observations + last_date_of_observations +
                 + kyoto + financial_crisis+
            sjr, data = df_final, trace = FALSE)    
 t_2.rrr <- exp(coef(t_2))
 #
-t_3 <- multinom(sign_of_effect ~ adjusted_model+ environmnental + adjusted_dependent+
-                publication_year + windows +
+t_3 <- multinom(sign_of_effect ~ #adjusted_model
+                + environmnental 
+                #+ adjusted_dependent+
+                + publication_year + avg_windows +
                 + kyoto + financial_crisis+
            sjr, data = df_final, trace = FALSE)    
 t_3.rrr <- exp(coef(t_3))
@@ -585,6 +749,15 @@ stargazer(list_final,
           coef=list_final.rrr,
           omit = "id",
           style = "qje")
+```
+
+```sos kernel="R"
+(
+    df
+    .groupby(['sign_of_effect'])['governance']
+    .value_counts()
+    .unstack(-1)
+)
 ```
 
 ```sos kernel="SoS"
