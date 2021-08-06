@@ -82,7 +82,7 @@ var = (
             'CSR',
             'ENVIRONMENTAL, SOCIAL and GOVERNANCE'
         ]), True, False),
-        environmnental=lambda x: np.where(x['adjusted_independent'].isin([
+        environmental=lambda x: np.where(x['adjusted_independent'].isin([
             'ENVIRONMENTAL AND SOCIAL',
             'ENVIRONMENTAL',
             'ENVIRONMENTAL, SOCIAL and GOVERNANCE'
@@ -250,7 +250,7 @@ schema = [
 
     {'Name': 'social', 'Type': 'string',
         'Comment': 'if adjusted_independent in ENVIRONMENTAL AND SOCIAL, SOCIAL, CSP, CSR, ENVIRONMENTAL, SOCIAL and GOVERNANCE'},
-    {'Name': 'environmnental', 'Type': 'string',
+    {'Name': 'environmental', 'Type': 'string',
         'Comment': 'if adjusted_independent in ENVIRONMENTAL, ENVIRONMENTAL AND SOCIAL, ENVIRONMENTAL, SOCIAL and GOVERNANCE'},
     {'Name': 'governance', 'Type': 'string',
         'Comment': 'if adjusted_independent in GOVERNANCE ENVIRONMENTAL, SOCIAL and GOVERNANCE'},
