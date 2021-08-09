@@ -61,6 +61,7 @@ import numpy as np
 #import seaborn as sns
 import os, shutil, json
 import sys
+import janitor
 
 path = os.getcwd()
 parent_path = str(Path(path).parent.parent.parent)
@@ -154,7 +155,6 @@ SELECT
        citable_docs_3years, cites_doc_2years, country,
        publication_year, publication_type, cnrs_ranking, peer_reviewed,
        study_focused_on_social_environmental_behaviour, type_of_data,
-       study_focusing_on_developing_or_developed_countries, regions,
        first_date_of_observations, last_date_of_observations,
        windows, avg_windows, adjusted_model_name,
        adjusted_model, dependent, adjusted_dependent, independent,
@@ -164,6 +164,8 @@ SELECT
        CASE WHEN governance = 'True' THEN 'YES' ELSE 'NO' END AS governance,
        CASE WHEN financial_crisis = True THEN 'YES' ELSE 'NO' END AS financial_crisis,
        CASE WHEN kyoto = True THEN 'YES' ELSE 'NO' END AS kyoto,
+       CASE WHEN regions = 'ARAB WORLD' THEN 'WORLDWIDE' ELSE regions END AS regions,
+       CASE WHEN study_focusing_on_developing_or_developed_countries = 'Europe' THEN 'Worldwide' ELSE study_focusing_on_developing_or_developed_countries END AS study_focusing_on_developing_or_developed_countries,
        lag,
        interaction_term, quadratic_term, n, r2, beta,
        sign_of_effect,target, significant, final_standard_error,
@@ -310,7 +312,11 @@ mutate(
     financial_crisis =relevel(as.factor(financial_crisis), ref = 'NO'),
     kyoto =relevel(as.factor(kyoto), ref = 'NO'),
     target =relevel(as.factor(target), ref = 'NOT_SIGNIFICANT'),
-) 
+    study_focusing_on_developing_or_developed_countries =relevel(
+        as.factor(study_focusing_on_developing_or_developed_countries), ref = 'Worldwide'),
+    regions =relevel(as.factor(regions), ref = 'WORLDWIDE'),
+    cnrs_ranking =relevel(as.factor(cnrs_ranking), ref = '0'),
+)
 ```
 
 ```sos kernel="R"
@@ -338,7 +344,7 @@ se_robust_clustered <- function(x)
 ```
 
 <!-- #region kernel="R" -->
-## Table 1:Probit
+# Table 1: Baseline
 
 $$
 \begin{aligned}
@@ -383,33 +389,586 @@ Test with Kyoto, financial crisis & region
 - CASE WHEN first_date_of_observations >= 2009 THEN TRUE ELSE FALSE END AS financial_crisis
 <!-- #endregion -->
 
+```sos kernel="SoS"
+(
+    pd.concat(
+        [
+            (df.groupby("environmental").agg({"target": "value_counts"}).unstack(0)).rename(columns = {'target':'environment'}),
+            (df.groupby("social").agg({"target": "value_counts"}).unstack(0)).rename(columns = {'target':'social'}),
+            (df.groupby("governance").agg({"target": "value_counts"}).unstack(0)).rename(columns = {'target':'governance'}),
+        ],
+        axis=1,
+    )
+    .T
+    .reset_index()
+    .rename(columns = {'environmental':'is_dummy', 'level_0':'origin'})
+    .set_index(['origin','is_dummy'])
+    .assign(pct_significant = lambda x: x[('SIGNIFICANT')]/x.sum(axis= 1))
+    #
+    #
+)
+```
+
+```sos kernel="SoS"
+(
+    df
+    .groupby('adjusted_model')
+    .agg(
+    {
+        'target':'value_counts'
+    })
+    .unstack(-1)
+    .assign(pct_significant = lambda x: x[('target','SIGNIFICANT')]/x.sum(axis= 1))
+)
+```
+
+```sos kernel="SoS"
+(
+    pd.concat(
+        [
+            (df.groupby("kyoto").agg({"target": "value_counts"}).unstack(0)).rename(columns = {'target':'kyoto'}),
+            (df.groupby("financial_crisis").agg({"target": "value_counts"}).unstack(0)).rename(columns = {'target':'financial_crisis'}),
+            #(df.groupby("governance").agg({"target": "value_counts"}).unstack(0)).rename(columns = {'target':'governance'}),
+        ],
+        axis=1,
+    )
+    .T
+    .reset_index()
+    .rename(columns = {'kyoto':'is_dummy', 'level_0':'origin'})
+    .set_index(['origin','is_dummy'])
+    .assign(pct_significant = lambda x: x[('SIGNIFICANT')]/x.sum(axis= 1))
+)
+```
+
 ```sos kernel="R"
-t_0 <- glm(target ~ adjusted_model
-                + environmental 
-                + kyoto 
-                + financial_crisis+
-           +sjr,
+t_0 <- glm(target ~ environmental,
            data = df_final ,
            binomial(link = "probit")
           )
 t_0.rrr <- exp(coef(t_0))
-t_1 <- glm(target ~ adjusted_model
-                + social 
-                + kyoto 
-                + financial_crisis+
-           sjr,
+t_1 <- glm(target ~social,
            data = df_final , binomial(link = "probit"))
 t_1.rrr <- exp(coef(t_1))
-t_2 <- glm(target ~ adjusted_model
-                + governance 
-                + kyoto 
-                + financial_crisis+
-           sjr,
+t_2 <- glm(target ~ governance ,
            data = df_final , binomial(link = "probit"))
 t_2.rrr <- exp(coef(t_2))
 
-list_final = list(t_0, t_1, t_2)
-list_final.rrr = list(t_0.rrr,t_1.rrr ,t_2.rrr)
+### add model
+t_3 <- glm(target ~ environmental+
+           adjusted_model  ,
+           data = df_final ,
+           binomial(link = "probit")
+          )
+t_3.rrr <- exp(coef(t_3))
+t_4 <- glm(target ~ social+
+           adjusted_model,
+           data = df_final , binomial(link = "probit"))
+t_4.rrr <- exp(coef(t_4))
+t_5 <- glm(target ~ governance
+           +adjusted_model,
+           data = df_final , binomial(link = "probit"))
+t_5.rrr <- exp(coef(t_5))
+
+### add kyoto and financial crisis
+t_6 <- glm(target ~ environmental+
+           adjusted_model  
+                + kyoto 
+                + financial_crisis,
+           data = df_final ,
+           binomial(link = "probit")
+          )
+t_6.rrr <- exp(coef(t_6))
+t_7 <- glm(target ~ social+
+           adjusted_model    
+                + kyoto 
+                + financial_crisis,
+           data = df_final , binomial(link = "probit"))
+t_7.rrr <- exp(coef(t_7))
+t_8 <- glm(target ~ governance
+           +adjusted_model
+                + kyoto 
+                + financial_crisis,
+           data = df_final , binomial(link = "probit"))
+t_8.rrr <- exp(coef(t_8))
+
+
+list_final = list(t_0, t_1, t_2, t_3, t_4, t_5, t_6, t_7, t_8)
+list_final.rrr = list(t_0.rrr,t_1.rrr ,t_2.rrr,t_3.rrr,t_4.rrr,t_5.rrr,t_6.rrr,t_7.rrr,t_8.rrr)
+stargazer(list_final, type = "text", 
+  se = lapply(list_final,
+              se_robust),
+          coef=list_final.rrr,
+          omit = "id", style = "qje")
+```
+
+<!-- #region kernel="R" -->
+# Table 2: Paper control
+
+- Add the following control:
+    - publication_year
+    - first_date_of_observations
+    - last_date_of_observations
+    - windows
+    - avg_windows
+    - lag
+    - interaction_term
+    - quadratic_term
+<!-- #endregion -->
+
+```sos kernel="SoS"
+(
+    df
+    .groupby('target')
+    .agg(
+    {
+        'windows':'describe'
+    })
+    #.unstack(-1)
+    #.assign(pct_significant = lambda x: x[('target','SIGNIFICANT')]/x.sum(axis= 1))
+)
+```
+
+```sos kernel="R"
+t_0 <- glm(target ~ environmental+
+           adjusted_model  
+                + kyoto 
+                + financial_crisis
+           + publication_year
+           + first_date_of_observations
+           + last_date_of_observations
+           ,
+           data = df_final ,
+           binomial(link = "probit")
+          )
+t_0.rrr <- exp(coef(t_0))
+t_1 <- glm(target ~ social+
+           adjusted_model    
+                + kyoto 
+                + financial_crisis
+           + publication_year
+           + first_date_of_observations
+           + last_date_of_observations,
+           data = df_final , binomial(link = "probit"))
+t_1.rrr <- exp(coef(t_1))
+t_2 <- glm(target ~ governance
+           +adjusted_model
+            + kyoto 
+            + financial_crisis
+           + publication_year
+           + first_date_of_observations
+           + last_date_of_observations,
+           data = df_final , binomial(link = "probit"))
+t_2.rrr <- exp(coef(t_2))
+
+### window 
+t_3 <- glm(target ~ environmental+
+           adjusted_model  
+           + kyoto 
+           + financial_crisis
+           + publication_year
+           + windows,
+           data = df_final ,
+           binomial(link = "probit")
+          )
+t_3.rrr <- exp(coef(t_3))
+t_4 <- glm(target ~ social+
+           adjusted_model    
+           + kyoto 
+           + financial_crisis
+           + publication_year
+           + windows,
+           data = df_final , binomial(link = "probit"))
+t_4.rrr <- exp(coef(t_4))
+t_5 <- glm(target ~ governance
+           +adjusted_model
+           + kyoto 
+           + financial_crisis
+           + publication_year
+           + windows,
+           data = df_final , binomial(link = "probit"))
+t_5.rrr <- exp(coef(t_5))
+
+list_final = list(t_0, t_1, t_2,t_3, t_4, t_5)
+list_final.rrr = list(t_0.rrr,t_1.rrr ,t_2.rrr,t_3.rrr,t_4.rrr ,t_5.rrr)
+stargazer(list_final, type = "text", 
+  se = lapply(list_final,
+              se_robust),
+          coef=list_final.rrr,
+          omit = "id", style = "qje")
+```
+
+<!-- #region kernel="R" -->
+- lag
+- interaction_term
+- quadratic_term
+<!-- #endregion -->
+
+```sos kernel="SoS"
+(
+    pd.concat(
+        [
+            (df.groupby("lag").agg({"target": "value_counts"}).unstack(0)).rename(columns = {'target':'lag'}),
+            (df.groupby("interaction_term").agg({"target": "value_counts"}).unstack(0)).rename(columns = {'target':'interaction_term'}),
+            (df.groupby("quadratic_term").agg({"target": "value_counts"}).unstack(0)).rename(columns = {'target':'quadratic_term'}),
+        ],
+        axis=1,
+    )
+    .T
+    .reset_index()
+    .rename(columns = {'lag':'is_dummy', 'level_0':'origin'})
+    .set_index(['origin','is_dummy'])
+    .assign(pct_significant = lambda x: x[('SIGNIFICANT')]/x.sum(axis= 1))
+)
+```
+
+```sos kernel="R"
+### lag
+t_0 <- glm(target ~ environmental+
+           adjusted_model  
+                + kyoto 
+                + financial_crisis
+           + lag
+           ,
+           data = df_final ,
+           binomial(link = "probit")
+          )
+t_0.rrr <- exp(coef(t_0))
+t_1 <- glm(target ~ social+
+           adjusted_model    
+                + kyoto 
+                + financial_crisis
+           + lag,
+           data = df_final , binomial(link = "probit"))
+t_1.rrr <- exp(coef(t_1))
+t_2 <- glm(target ~ governance
+           +adjusted_model
+            + kyoto 
+            + financial_crisis
+           + lag,
+           data = df_final , binomial(link = "probit"))
+t_2.rrr <- exp(coef(t_2))
+
+### interaction_term 
+t_3 <- glm(target ~ environmental+
+           adjusted_model  
+           + kyoto 
+           + financial_crisis
+           + interaction_term,
+           data = df_final ,
+           binomial(link = "probit")
+          )
+t_3.rrr <- exp(coef(t_3))
+t_4 <- glm(target ~ social+
+           adjusted_model    
+           + kyoto 
+           + financial_crisis
+           + interaction_term,
+           data = df_final , binomial(link = "probit"))
+t_4.rrr <- exp(coef(t_4))
+t_5 <- glm(target ~ governance
+           +adjusted_model
+           + kyoto 
+           + financial_crisis
+           + interaction_term,
+           data = df_final , binomial(link = "probit"))
+t_5.rrr <- exp(coef(t_5))
+
+### quadratic_term
+t_6 <- glm(target ~ environmental+
+           adjusted_model  
+           + kyoto 
+           + financial_crisis
+           + quadratic_term,
+           data = df_final ,
+           binomial(link = "probit")
+          )
+t_6.rrr <- exp(coef(t_6))
+t_7 <- glm(target ~ social+
+           adjusted_model    
+           + kyoto 
+           + financial_crisis
+           + quadratic_term,
+           data = df_final , binomial(link = "probit"))
+t_7.rrr <- exp(coef(t_7))
+t_8 <- glm(target ~ governance
+           +adjusted_model
+           + kyoto 
+           + financial_crisis
+           + quadratic_term,
+           data = df_final , binomial(link = "probit"))
+t_8.rrr <- exp(coef(t_8))
+
+list_final = list(t_0, t_1, t_2,t_3, t_4, t_5, t_6,t_7, t_8)
+list_final.rrr = list(t_0.rrr,t_1.rrr ,t_2.rrr,t_3.rrr,t_4.rrr ,t_5.rrr,t_6.rrr,t_7.rrr ,t_8.rrr)
+stargazer(list_final, type = "text", 
+  se = lapply(list_final,
+              se_robust),
+          coef=list_final.rrr,
+          omit = "id", style = "qje")
+```
+
+<!-- #region kernel="R" -->
+# Table 3: Region
+
+- regions
+- study_focusing_on_developing_or_developed_countries
+
+Comparison group: "WORLDWIDE"
+<!-- #endregion -->
+
+```sos kernel="SoS"
+(
+    df
+    .groupby('regions')
+    .agg(
+    {
+        'target':'value_counts'
+    })
+    .unstack(-1)
+    .assign(pct_significant = lambda x: x[('target','SIGNIFICANT')]/x.sum(axis= 1))
+)
+```
+
+```sos kernel="SoS"
+(
+    df
+    .groupby('study_focusing_on_developing_or_developed_countries')
+    .agg(
+    {
+        'target':'value_counts'
+    })
+    .unstack(-1)
+    .assign(pct_significant = lambda x: x[('target','SIGNIFICANT')]/x.sum(axis= 1))
+)
+```
+
+```sos kernel="R"
+### regions
+t_0 <- glm(target ~ environmental+
+           adjusted_model  
+                + kyoto 
+                + financial_crisis
+           + regions
+           ,
+           data = df_final ,
+           binomial(link = "probit")
+          )
+t_0.rrr <- exp(coef(t_0))
+t_1 <- glm(target ~ social+
+           adjusted_model    
+                + kyoto 
+                + financial_crisis
+           + regions,
+           data = df_final , binomial(link = "probit"))
+t_1.rrr <- exp(coef(t_1))
+t_2 <- glm(target ~ governance
+           +adjusted_model
+            + kyoto 
+            + financial_crisis
+           + regions,
+           data = df_final , binomial(link = "probit"))
+t_2.rrr <- exp(coef(t_2))
+
+### study_focusing_on_developing_or_developed_countries 
+t_3 <- glm(target ~ environmental+
+           adjusted_model  
+           + kyoto 
+           + financial_crisis
+           + study_focusing_on_developing_or_developed_countries,
+           data = df_final ,
+           binomial(link = "probit")
+          )
+t_3.rrr <- exp(coef(t_3))
+t_4 <- glm(target ~ social+
+           adjusted_model    
+           + kyoto 
+           + financial_crisis
+           + study_focusing_on_developing_or_developed_countries,
+           data = df_final , binomial(link = "probit"))
+t_4.rrr <- exp(coef(t_4))
+t_5 <- glm(target ~ governance
+           +adjusted_model
+           + kyoto 
+           + financial_crisis
+           + study_focusing_on_developing_or_developed_countries,
+           data = df_final , binomial(link = "probit"))
+t_5.rrr <- exp(coef(t_5))
+
+
+list_final = list(t_0, t_1, t_2,t_3, t_4, t_5)
+list_final.rrr = list(t_0.rrr,t_1.rrr ,t_2.rrr,t_3.rrr,t_4.rrr ,t_5.rrr)
+stargazer(list_final, type = "text", 
+  se = lapply(list_final,
+              se_robust),
+          coef=list_final.rrr,
+          omit = "id", style = "qje")
+```
+
+<!-- #region kernel="R" -->
+# Table 4: Journal
+
+- sjr 
+- sjr_best_quartile: Q1
+- cnrs_ranking: 0
+- h_index
+<!-- #endregion -->
+
+```sos kernel="SoS"
+(
+    df
+    .groupby('target')
+    .agg(
+    {
+        'sjr':'describe'
+    })
+    #.unstack(-1)
+    #.assign(pct_significant = lambda x: x[('target','SIGNIFICANT')]/x.sum(axis= 1))
+)
+```
+
+```sos kernel="SoS"
+(
+    df
+    .groupby('sjr_best_quartile')
+    .agg(
+    {
+        'target':'value_counts'
+    })
+    .unstack(-1)
+    .assign(pct_significant = lambda x: x[('target','SIGNIFICANT')]/x.sum(axis= 1))
+)
+```
+
+```sos kernel="SoS"
+(
+    df
+    .groupby('cnrs_ranking')
+    .agg(
+    {
+        'target':'value_counts'
+    })
+    .unstack(-1)
+    .assign(pct_significant = lambda x: x[('target','SIGNIFICANT')]/x.sum(axis= 1))
+)
+```
+
+```sos kernel="SoS"
+(
+    df
+    .groupby('target')
+    .agg(
+    {
+        'h_index':'describe'
+    })
+    #.unstack(-1)
+    #.assign(pct_significant = lambda x: x[('target','SIGNIFICANT')]/x.sum(axis= 1))
+)
+```
+
+```sos kernel="R"
+### sjr
+t_0 <- glm(target ~ environmental+
+           adjusted_model  
+                + kyoto 
+                + financial_crisis
+           + sjr
+           ,
+           data = df_final ,
+           binomial(link = "probit")
+          )
+t_0.rrr <- exp(coef(t_0))
+t_1 <- glm(target ~ social+
+           adjusted_model    
+                + kyoto 
+                + financial_crisis
+           + sjr,
+           data = df_final , binomial(link = "probit"))
+t_1.rrr <- exp(coef(t_1))
+t_2 <- glm(target ~ governance
+           +adjusted_model
+            + kyoto 
+            + financial_crisis
+           + sjr,
+           data = df_final , binomial(link = "probit"))
+t_2.rrr <- exp(coef(t_2))
+
+### sjr_best_quartile 
+t_3 <- glm(target ~ environmental+
+           adjusted_model  
+           + kyoto 
+           + financial_crisis
+           + sjr_best_quartile ,
+           data = df_final %>% filter(sjr_best_quartile != 'Q3'),
+           binomial(link = "probit")
+          )
+t_3.rrr <- exp(coef(t_3))
+t_4 <- glm(target ~ social+
+           adjusted_model    
+           + kyoto 
+           + financial_crisis
+           + sjr_best_quartile,
+           data = df_final %>% filter(sjr_best_quartile != 'Q3'), binomial(link = "probit"))
+t_4.rrr <- exp(coef(t_4))
+t_5 <- glm(target ~ governance
+           +adjusted_model
+           + kyoto 
+           + financial_crisis
+           + sjr_best_quartile,
+           data = df_final %>% filter(sjr_best_quartile != 'Q3'), binomial(link = "probit"))
+t_5.rrr <- exp(coef(t_5))
+
+### cnrs_ranking
+t_6 <- glm(target ~ environmental+
+           adjusted_model  
+           + kyoto 
+           + financial_crisis
+           + cnrs_ranking,
+           data = df_final ,
+           binomial(link = "probit")
+          )
+t_6.rrr <- exp(coef(t_6))
+t_7 <- glm(target ~ social+
+           adjusted_model    
+           + kyoto 
+           + financial_crisis
+           + cnrs_ranking,
+           data = df_final , binomial(link = "probit"))
+t_7.rrr <- exp(coef(t_7))
+t_8 <- glm(target ~ governance
+           +adjusted_model
+           + kyoto 
+           + financial_crisis
+           + cnrs_ranking,
+           data = df_final , binomial(link = "probit"))
+t_8.rrr <- exp(coef(t_8))
+
+### h_index
+t_9 <- glm(target ~ environmental+
+           adjusted_model  
+           + kyoto 
+           + financial_crisis
+           + h_index,
+           data = df_final ,
+           binomial(link = "probit")
+          )
+t_9.rrr <- exp(coef(t_9))
+t_10 <- glm(target ~ social+
+           adjusted_model    
+           + kyoto 
+           + financial_crisis
+           + h_index,
+           data = df_final , binomial(link = "probit"))
+t_10.rrr <- exp(coef(t_10))
+t_11 <- glm(target ~ governance
+           +adjusted_model
+           + kyoto 
+           + financial_crisis
+           + h_index,
+           data = df_final , binomial(link = "probit"))
+t_11.rrr <- exp(coef(t_11))
+
+list_final = list(t_0, t_1, t_2,t_3, t_4, t_5, t_6,t_7, t_8, t_9,t_10, t_11)
+list_final.rrr = list(t_0.rrr,t_1.rrr ,t_2.rrr,t_3.rrr,t_4.rrr ,t_5.rrr,t_6.rrr,t_7.rrr ,t_8.rrr,t_9.rrr,t_10.rrr ,t_11.rrr)
 stargazer(list_final, type = "text", 
   se = lapply(list_final,
               se_robust),
