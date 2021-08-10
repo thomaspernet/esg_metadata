@@ -87,7 +87,7 @@
 | 31 | adjusted_dependent        | string | reorganise dependent variable into smaller groups                                                                       |
 | 32 | adjusted_independent      | string | reorganise independent variable into smaller group                                                                      |
 | 33 | adjusted_model            | string | reorganise model variable into smaller group                                                                            |
-| 34 | significant               | string | is beta significant. Computed from reconstructed critical values, not the paper. From paper, see variable target        |
+| 34 | p_value_significant       | string | is beta significant. Computed from reconstructed critical values, not the paper. From paper, see variable target        |
 | 35 | to_check_final            | string | Final check rows                                                                                                        |
 | 36 | critical_99               | string | 99 t stat critical value calculated based on nb obserations                                                             |
 | 37 | critical_90               | string | 90 t stat critical value calculated based on nb obserations                                                             |
@@ -99,7 +99,7 @@
 | 43 | row_id_google_spreadsheet | string | Google spreadsheet link to raw data                                                                                     |
 | 44 | sign_positive             | string | if sign_of_effect is POSITIVE then True                                                                                 |
 | 45 | sign_negative             | string | if sign_of_effect is NEGATIVE then True                                                                                 |
-| 46 | sign_insignificant        | string | if sign_of_effect is INSIGNIFICANT then True                                                                            |
+| 46 | sign_significant          | string | if sign_of_effect is INSIGNIFICANT then False else True                                                                 |
 | 47 | model_instrument          | string | if adjusted_model is equal to INSTRUMENT then true                                                                      |
 | 48 | model_diff_in_diff        | string | if adjusted_model is equal to DIFF IN DIFF then true                                                                    |
 | 49 | model_other               | string | if adjusted_model is equal to OTHER then true                                                                           |
@@ -163,10 +163,10 @@
 | 40 | environmental                                       | string      | if adjusted_independent in ENVIRONMENTAL, ENVIRONMENTAL AND SOCIAL, ENVIRONMENTAL, SOCIAL and GOVERNANCE                                |
 | 41 | governance                                          | string      | if adjusted_independent in GOVERNANCE ENVIRONMENTAL, SOCIAL and GOVERNANCE                                                              |
 | 42 | sign_of_effect                                      | string      | if stars is not blank and beta > 0, then POSITIVE, if stars is not blank and beta < 0, then NEGATIVE else INSIGNIFICANT                 |
-| 43 | significant                                         | string      | is beta significant. Computed from reconstructed critical values, not the paper. From paper, see variable target                        |
-| 44 | sign_positive                                       | string      | if sign_of_effect is POSITIVE then True                                                                                                 |
-| 45 | sign_negative                                       | string      | if sign_of_effect is NEGATIVE then True                                                                                                 |
-| 46 | sign_insignificant                                  | string      | if sign_of_effect is INSIGNIFICANT then True                                                                                            |
+| 43 | target                                              | string      | indicate wheither or not the coefficient is significant. based on stars                                                                 |
+| 44 | p_value_significant                                 | string      | is beta significant. Computed from reconstructed critical values, not the paper. From paper, see variable target                        |
+| 45 | sign_positive                                       | string      | if sign_of_effect is POSITIVE then True                                                                                                 |
+| 46 | sign_negative                                       | string      | if sign_of_effect is NEGATIVE then True                                                                                                 |
 | 47 | lag                                                 | string      | the table contains lag or not                                                                                                           |
 | 48 | interaction_term                                    | string      | the table contains interaction terms or not                                                                                             |
 | 49 | quadratic_term                                      | string      | the table contains quadratic terms or not                                                                                               |
