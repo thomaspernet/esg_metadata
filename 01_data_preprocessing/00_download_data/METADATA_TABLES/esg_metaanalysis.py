@@ -60,12 +60,10 @@ var = (
             pd.to_numeric, errors='coerce'),
         critical_90=lambda x: x['critical_90'].apply(
             pd.to_numeric, errors='coerce'),
-        true_standard_error=lambda x: x['true_standard_error'].apply(
+        adjusted_standard_error=lambda x: x['adjusted_standard_error'].apply(
             pd.to_numeric, errors='coerce'),
-        true_t_value=lambda x: x['true_t_value'].apply(
+        adjusted_t_value=lambda x: x['adjusted_t_value'].apply(
             pd.to_numeric, errors='coerce'),
-        true_critical=lambda x: x['beta'] / x['true_standard_error']
-        #significant = lambda x: np.where(x['true_stars'].isin(['1_PERCENT','5_PERCENT','10_PERCENT']), "YES", "NO")
     )
     .loc[lambda x: ~x["table_refer"].isin([np.nan])]
     .drop(columns=[])
@@ -94,27 +92,8 @@ var = (
     )
 )
 
-# using true critical value
-var.loc[var['true_critical'] >= var['critical_99'], 'true_stars'] = "1_PERCENT"
-var.loc[(var['true_critical'] >= var['critical_95']) & (
-    var['true_critical'] < var['critical_99']), 'true_stars'] = "5_PERCENT"
-var.loc[(var['true_critical'] >= var['critical_90']) & (
-    var['true_critical'] < var['critical_95']), 'true_stars'] = "10_PERCENT"
-
-# using true t-value
-var.loc[(var['true_t_value'] >= var['critical_99']) & (~var['true_stars'].isin(
-    ['1_PERCENT', '5_PERCENT', '10_PERCENT'])), 'true_stars'] = "1_PERCENT"
-var.loc[(var['true_t_value'] >= var['critical_95']) & (var['true_t_value'] < var['critical_99']) & (
-    ~var['true_stars'].isin(['1_PERCENT', '5_PERCENT', '10_PERCENT'])), 'true_stars'] = "5_PERCENT"
-var.loc[(var['true_t_value'] >= var['critical_90']) & (var['true_t_value'] < var['critical_95']) & (
-    var['true_stars'].isin(['1_PERCENT', '5_PERCENT', '10_PERCENT'])), 'true_stars'] = "10_PERCENT"
-
-
 var = (
-    var.assign(
-        significant=lambda x: np.where(x['true_stars'].isin(
-            ['1_PERCENT', '5_PERCENT', '10_PERCENT']), "YES", "NO")
-    )
+    var
     .reindex(columns=['to_remove',
                       'id',
                       'incremental_id',
@@ -151,6 +130,7 @@ var = (
                       'star',
                       "sign_of_effect",
                       "target",
+                      "significant",
                       "sign_positive",
                       "sign_negative",
                       "sign_insignificant",
@@ -161,26 +141,19 @@ var = (
                       'sr',
                       'p_value',
                       't_value',
-                      'really_no_information',
-                      'critical_value',
                       'test_standard_error',
                       'test_p_value',
                       'test_t_value',
                       'should_t_value',
-                      'true_standard_error',
-                      'final_standard_error',
-                      'true_t_value',
+                      'adjusted_standard_error',
+                      'adjusted_t_value',
                       'to_check_final',
-                      'table_refer',
-                      'true_critical',
-                      'true_stars',
-                      'significant'])
+                      'table_refer'])
 )
 # READ DATA
 # SAVE LOCALLY
 input_path = os.path.join(parent_path, "00_data_catalog",
                           "temporary_local_data",  FILENAME_SPREADSHEET + ".csv")
-
 
 # preprocess data
 var.to_csv(input_path, index=False)
@@ -227,11 +200,11 @@ schema = [
         'Comment': 'check if t critial value and sign match'},
     {'Name': 'should_t_value', 'Type': 'string',
         'Comment': 'use sr as t value when mistake'},
-    {'Name': 'true_standard_error', 'Type': 'float',
+    {'Name': 'adjusted_standard_error', 'Type': 'float',
         'Comment': 'reconstructed standard error'},
     {'Name': 'final_standard_error', 'Type': 'float',
      'Comment': 'reconstructed standard error and use sr when true_standard_error is nan or error'},
-    {'Name': 'true_t_value', 'Type': 'float', 'Comment': 'reconstructed t value'},
+    {'Name': 'adjusted_t_value', 'Type': 'float', 'Comment': 'reconstructed t value'},
     {'Name': 'true_stars', 'Type': 'string', 'Comment': 'reconstructed stars'},
     {'Name': 'adjusted_dependent', 'Type': 'string',
         'Comment': 'reorganise dependent variable into smaller groups'},
