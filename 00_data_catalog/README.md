@@ -80,9 +80,9 @@
 | 24 | test_p_value              | string | check if sign and p value match                                                                                         |
 | 25 | test_t_value              | string | check if t critial value and sign match                                                                                 |
 | 26 | should_t_value            | string | use sr as t value when mistake                                                                                          |
-| 27 | true_standard_error       | float  | reconstructed standard error                                                                                            |
+| 27 | adjusted_standard_error   | float  | reconstructed standard error                                                                                            |
 | 28 | final_standard_error      | float  | reconstructed standard error and use sr when true_standard_error is nan or error                                        |
-| 29 | true_t_value              | float  | reconstructed t value                                                                                                   |
+| 29 | adjusted_t_value          | float  | reconstructed t value                                                                                                   |
 | 30 | true_stars                | string | reconstructed stars                                                                                                     |
 | 31 | adjusted_dependent        | string | reorganise dependent variable into smaller groups                                                                       |
 | 32 | adjusted_independent      | string | reorganise independent variable into smaller group                                                                      |
@@ -153,27 +153,30 @@
 | 30 | kyoto                                               | varchar(3)  | kyoto                                                                                                                                   |
 | 31 | financial_crisis                                    | varchar(3)  | financial crisis                                                                                                                        |
 | 32 | windows                                             | int         | windows                                                                                                                                 |
-| 33 | avg_windows                                         | int         | avg windows                                                                                                                             |
-| 34 | adjusted_model_name                                 | string      | Model name normalised                                                                                                                   |
-| 35 | adjusted_model                                      | string      | reorganise model variable into smaller group                                                                                            |
-| 36 | dependent                                           | string      | dependent variable                                                                                                                      |
-| 37 | adjusted_dependent                                  | string      | reorganise dependent variable into smaller groups                                                                                       |
-| 38 | independent                                         | string      | independent variables                                                                                                                   |
-| 39 | adjusted_independent                                | string      | reorganise independent variable into smaller group                                                                                      |
-| 40 | social                                              | varchar(3)  | if adjusted_independent in ENVIRONMENTAL AND SOCIAL, SOCIAL, CSP, CSR, ENVIRONMENTAL, SOCIAL and GOVERNANCE                             |
-| 41 | environmental                                       | varchar(3)  | if adjusted_independent in ENVIRONMENTAL, ENVIRONMENTAL AND SOCIAL, ENVIRONMENTAL, SOCIAL and GOVERNANCE                                |
-| 42 | governance                                          | varchar(3)  | if adjusted_independent in GOVERNANCE ENVIRONMENTAL, SOCIAL and GOVERNANCE                                                              |
-| 43 | lag                                                 | string      | the table contains lag or not                                                                                                           |
-| 44 | interaction_term                                    | string      | the table contains interaction terms or not                                                                                             |
-| 45 | quadratic_term                                      | string      | the table contains quadratic terms or not                                                                                               |
-| 46 | n                                                   | float       | number of observations                                                                                                                  |
-| 47 | r2                                                  | float       | R square                                                                                                                                |
-| 48 | beta                                                | float       | Beta coefficient                                                                                                                        |
-| 49 | sign_of_effect                                      | string      | if stars is not blank and beta > 0, then POSITIVE, if stars is not blank and beta < 0, then NEGATIVE else INSIGNIFICANT                 |
-| 50 | target                                              | string      | indicate wheither or not the coefficient is significant. based on stars                                                                 |
-| 51 | significant                                         | string      | is beta significant. Computed from reconstructed critical values, not the paper. From paper, see variable target                        |
-| 52 | critical_value                                      | double      | critical value                                                                                                                          |
-| 53 | final_standard_error                                | float       | reconstructed standard error and use sr when true_standard_error is nan or error                                                        |
-| 54 | to_check_final                                      | string      | Final check rows                                                                                                                        |
+| 33 | adjusted_model_name                                 | string      | Model name normalised                                                                                                                   |
+| 34 | adjusted_model                                      | string      | reorganise model variable into smaller group                                                                                            |
+| 35 | dependent                                           | string      | dependent variable                                                                                                                      |
+| 36 | adjusted_dependent                                  | string      | reorganise dependent variable into smaller groups                                                                                       |
+| 37 | independent                                         | string      | independent variables                                                                                                                   |
+| 38 | adjusted_independent                                | string      | reorganise independent variable into smaller group                                                                                      |
+| 39 | social                                              | string      | if adjusted_independent in ENVIRONMENTAL AND SOCIAL, SOCIAL, CSP, CSR, ENVIRONMENTAL, SOCIAL and GOVERNANCE                             |
+| 40 | environmental                                       | string      | if adjusted_independent in ENVIRONMENTAL, ENVIRONMENTAL AND SOCIAL, ENVIRONMENTAL, SOCIAL and GOVERNANCE                                |
+| 41 | governance                                          | string      | if adjusted_independent in GOVERNANCE ENVIRONMENTAL, SOCIAL and GOVERNANCE                                                              |
+| 42 | sign_of_effect                                      | string      | if stars is not blank and beta > 0, then POSITIVE, if stars is not blank and beta < 0, then NEGATIVE else INSIGNIFICANT                 |
+| 43 | significant                                         | string      | is beta significant. Computed from reconstructed critical values, not the paper. From paper, see variable target                        |
+| 44 | sign_positive                                       | string      | if sign_of_effect is POSITIVE then True                                                                                                 |
+| 45 | sign_negative                                       | string      | if sign_of_effect is NEGATIVE then True                                                                                                 |
+| 46 | sign_insignificant                                  | string      | if sign_of_effect is INSIGNIFICANT then True                                                                                            |
+| 47 | lag                                                 | string      | the table contains lag or not                                                                                                           |
+| 48 | interaction_term                                    | string      | the table contains interaction terms or not                                                                                             |
+| 49 | quadratic_term                                      | string      | the table contains quadratic terms or not                                                                                               |
+| 50 | n                                                   | float       | number of observations                                                                                                                  |
+| 51 | r2                                                  | float       | R square                                                                                                                                |
+| 52 | beta                                                | float       | Beta coefficient                                                                                                                        |
+| 53 | test_standard_error                                 | string      | check if sr really standard error by comparing beta divided by sr and critical values                                                   |
+| 54 | test_p_value                                        | string      | check if sign and p value match                                                                                                         |
+| 55 | test_t_value                                        | string      | check if t critial value and sign match                                                                                                 |
+| 56 | adjusted_standard_error                             | float       | reconstructed standard error                                                                                                            |
+| 57 | adjusted_t_value                                    | float       | reconstructed t value                                                                                                                   |
 
     

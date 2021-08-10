@@ -14302,7 +14302,7 @@ a.anchor-link {
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[43]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[1]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">awsPy.aws_authorization</span> <span class="kn">import</span> <span class="n">aws_connector</span>
@@ -14332,7 +14332,7 @@ a.anchor-link {
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[44]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[2]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">con</span> <span class="o">=</span> <span class="n">aws_connector</span><span class="o">.</span><span class="n">aws_instantiate</span><span class="p">(</span><span class="n">credential</span> <span class="o">=</span> <span class="n">path_cred</span><span class="p">,</span>
@@ -14351,7 +14351,7 @@ a.anchor-link {
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[45]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[3]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">pandas_setting</span> <span class="o">=</span> <span class="kc">True</span>
@@ -14385,7 +14385,7 @@ a.anchor-link {
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[46]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[4]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">DatabaseName</span> <span class="o">=</span> <span class="s1">&#39;esg&#39;</span>
@@ -14397,25 +14397,10 @@ a.anchor-link {
 </div>
 </div>
 
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-     <div class="CodeMirror cm-s-jupyter">
-<div class=" highlight hl-ipython3"><pre><span></span>       
-       
-</pre></div>
-
-     </div>
-</div>
-</div>
-</div>
-
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[47]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[5]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">query</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
@@ -14440,13 +14425,16 @@ a.anchor-link {
 <span class="s2">      &#39; &#39;</span>
 <span class="s2">    ) as publication_name, </span>
 <span class="s2">    cnrs_ranking, </span>
-<span class="s2">    peer_reviewed, </span>
-<span class="s2">    study_focused_on_social_environmental_behaviour, </span>
+<span class="s2">    UPPER(peer_reviewed) as peer_reviewed, </span>
+<span class="s2">    UPPER(study_focused_on_social_environmental_behaviour) as study_focused_on_social_environmental_behaviour, </span>
 <span class="s2">    type_of_data, </span>
-<span class="s2">    study_focusing_on_developing_or_developed_countries,</span>
-<span class="s2">    regions,</span>
+<span class="s2">    CASE WHEN regions = &#39;ARAB WORLD&#39; THEN &#39;WORLDWIDE&#39; ELSE regions END AS regions,</span>
+<span class="s2">    CASE WHEN study_focusing_on_developing_or_developed_countries = &#39;Europe&#39; THEN &#39;WORLDWIDE&#39; ELSE UPPER(study_focusing_on_developing_or_developed_countries) END AS study_focusing_on_developing_or_developed_countries,</span>
 <span class="s2">    first_date_of_observations,</span>
 <span class="s2">    last_date_of_observations,</span>
+<span class="s2">    CASE WHEN first_date_of_observations &gt;= 1997 THEN &#39;YES&#39; ELSE &#39;NO&#39; END AS kyoto,</span>
+<span class="s2">    CASE WHEN first_date_of_observations &gt;= 2009 THEN &#39;YES&#39; ELSE &#39;NO&#39; END AS financial_crisis,</span>
+<span class="s2">    last_date_of_observations - first_date_of_observations as windows,</span>
 <span class="s2">    adjusted_model_name,</span>
 <span class="s2">    adjusted_model,</span>
 <span class="s2">    dependent, </span>
@@ -14457,21 +14445,22 @@ a.anchor-link {
 <span class="s2">    environmental,</span>
 <span class="s2">    governance,</span>
 <span class="s2">    sign_of_effect,</span>
-<span class="s2">    target,</span>
+<span class="s2">    significant,</span>
+<span class="s2">    sign_positive,</span>
+<span class="s2">    sign_negative,</span>
+<span class="s2">    sign_insignificant,</span>
 <span class="s2">    lag, </span>
 <span class="s2">    interaction_term, </span>
 <span class="s2">    quadratic_term, </span>
 <span class="s2">    n, </span>
 <span class="s2">    r2, </span>
 <span class="s2">    beta, </span>
-<span class="s2">    to_remove, </span>
-<span class="s2">    critical_value, </span>
-<span class="s2">    true_standard_error, </span>
-<span class="s2">    final_standard_error,</span>
-<span class="s2">    true_t_value, </span>
-<span class="s2">    true_stars,  </span>
-<span class="s2">    significant,</span>
-<span class="s2">    to_check_final</span>
+<span class="s2">    to_remove,</span>
+<span class="s2">    test_standard_error,</span>
+<span class="s2">    test_p_value,</span>
+<span class="s2">    test_t_value,</span>
+<span class="s2">    adjusted_standard_error,</span>
+<span class="s2">    adjusted_t_value</span>
 <span class="s2">  FROM </span>
 <span class="s2">    esg.papers_meta_analysis_new </span>
 <span class="s2">    LEFT JOIN (</span>
@@ -14551,38 +14540,42 @@ a.anchor-link {
 <span class="s2">    publication_year, </span>
 <span class="s2">    publication_type, </span>
 <span class="s2">    cnrs_ranking, </span>
-<span class="s2">    UPPER(peer_reviewed) as peer_reviewed, </span>
-<span class="s2">    UPPER(study_focused_on_social_environmental_behaviour) as study_focused_on_social_environmental_behaviour, </span>
+<span class="s2">    peer_reviewed, </span>
+<span class="s2">    study_focused_on_social_environmental_behaviour, </span>
 <span class="s2">    type_of_data, </span>
-<span class="s2">    CASE WHEN regions = &#39;ARAB WORLD&#39; THEN &#39;WORLDWIDE&#39; ELSE regions END AS regions,</span>
-<span class="s2">       CASE WHEN study_focusing_on_developing_or_developed_countries = &#39;Europe&#39; THEN &#39;Worldwide&#39; ELSE study_focusing_on_developing_or_developed_countries END AS study_focusing_on_developing_or_developed_countries,</span>
+<span class="s2">    regions,</span>
+<span class="s2">    study_focusing_on_developing_or_developed_countries,</span>
 <span class="s2">    first_date_of_observations,</span>
 <span class="s2">    last_date_of_observations,</span>
-<span class="s2">    CASE WHEN first_date_of_observations &gt;= 1997 THEN &#39;YES&#39; ELSE &#39;NO&#39; END AS kyoto,</span>
-<span class="s2">    CASE WHEN first_date_of_observations &gt;= 2009 THEN &#39;YES&#39; ELSE &#39;NO&#39; END AS financial_crisis,</span>
-<span class="s2">    last_date_of_observations - first_date_of_observations as windows,</span>
-<span class="s2">    (last_date_of_observations - first_date_of_observations) / 2 avg_windows,</span>
+<span class="s2">    kyoto,</span>
+<span class="s2">    financial_crisis,</span>
+<span class="s2">    windows,</span>
 <span class="s2">    adjusted_model_name,</span>
-<span class="s2">    adjusted_model, </span>
+<span class="s2">    adjusted_model,</span>
 <span class="s2">    dependent, </span>
-<span class="s2">    adjusted_dependent, </span>
-<span class="s2">    independent, </span>
+<span class="s2">    adjusted_dependent,</span>
+<span class="s2">    independent,</span>
 <span class="s2">    adjusted_independent, </span>
-<span class="s2">    CASE WHEN social = &#39;True&#39; THEN &#39;YES&#39; ELSE &#39;NO&#39; END AS social,</span>
-<span class="s2">    CASE WHEN environmental = &#39;True&#39; THEN &#39;YES&#39; ELSE &#39;NO&#39; END AS environmental,</span>
-<span class="s2">    CASE WHEN governance = &#39;True&#39; THEN &#39;YES&#39; ELSE &#39;NO&#39; END AS governance,</span>
-<span class="s2">    UPPER(lag) as lag, </span>
-<span class="s2">    UPPER(interaction_term) as interaction_term, </span>
-<span class="s2">    UPPER(quadratic_term) as quadratic_term, </span>
+<span class="s2">    social,</span>
+<span class="s2">    environmental,</span>
+<span class="s2">    governance,</span>
+<span class="s2">    sign_of_effect,</span>
+<span class="s2">    significant,</span>
+<span class="s2">    sign_positive,</span>
+<span class="s2">    sign_negative,</span>
+<span class="s2">    sign_insignificant,</span>
+<span class="s2">    lag, </span>
+<span class="s2">    interaction_term, </span>
+<span class="s2">    quadratic_term, </span>
 <span class="s2">    n, </span>
 <span class="s2">    r2, </span>
 <span class="s2">    beta, </span>
-<span class="s2">    sign_of_effect,</span>
-<span class="s2">    target,</span>
-<span class="s2">    significant,</span>
-<span class="s2">    critical_value,</span>
-<span class="s2">    final_standard_error,</span>
-<span class="s2">    to_check_final </span>
+<span class="s2">    to_remove,</span>
+<span class="s2">    test_standard_error,</span>
+<span class="s2">    test_p_value,</span>
+<span class="s2">    test_t_value,</span>
+<span class="s2">    adjusted_standard_error,</span>
+<span class="s2">    adjusted_t_value </span>
 <span class="s2">FROM </span>
 <span class="s2">  merge </span>
 <span class="s2">  LEFT JOIN (</span>
@@ -14640,7 +14633,7 @@ a.anchor-link {
 <div class="jp-OutputArea-child">
 
     
-    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[47]:</div>
+    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[5]:</div>
 
 
 
@@ -14696,7 +14689,6 @@ a.anchor-link {
       <th>kyoto</th>
       <th>financial_crisis</th>
       <th>windows</th>
-      <th>avg_windows</th>
       <th>adjusted_model_name</th>
       <th>adjusted_model</th>
       <th>dependent</th>
@@ -14706,18 +14698,23 @@ a.anchor-link {
       <th>social</th>
       <th>environmental</th>
       <th>governance</th>
+      <th>sign_of_effect</th>
+      <th>significant</th>
+      <th>sign_positive</th>
+      <th>sign_negative</th>
+      <th>sign_insignificant</th>
       <th>lag</th>
       <th>interaction_term</th>
       <th>quadratic_term</th>
       <th>n</th>
       <th>r2</th>
       <th>beta</th>
-      <th>sign_of_effect</th>
-      <th>target</th>
-      <th>significant</th>
-      <th>critical_value</th>
-      <th>final_standard_error</th>
-      <th>to_check_final</th>
+      <th>to_remove.1</th>
+      <th>test_standard_error</th>
+      <th>test_p_value</th>
+      <th>test_t_value</th>
+      <th>adjusted_standard_error</th>
+      <th>adjusted_t_value</th>
       <th>weight</th>
     </tr>
   </thead>
@@ -14751,34 +14748,38 @@ a.anchor-link {
       <td>ENVIRONMENTAL SOCIAL AND GOVERNANCE</td>
       <td>Panel data</td>
       <td>EUROPE</td>
-      <td>Developed</td>
+      <td>DEVELOPED</td>
       <td>2002.0</td>
       <td>2017.0</td>
       <td>YES</td>
       <td>NO</td>
       <td>15.0</td>
-      <td>7.0</td>
       <td>GMM</td>
       <td>OTHER</td>
       <td>ROA</td>
       <td>ROA</td>
       <td>CSR</td>
       <td>CSR</td>
-      <td>YES</td>
-      <td>NO</td>
-      <td>NO</td>
+      <td>True</td>
+      <td>False</td>
+      <td>False</td>
+      <td>INSIGNIFICANT</td>
+      <td>INSIGNIFICANT</td>
+      <td>False</td>
+      <td>False</td>
+      <td>True</td>
       <td>NO</td>
       <td>NO</td>
       <td>NO</td>
       <td>469.0</td>
       <td>0.108</td>
       <td>0.0122</td>
-      <td>INSIGNIFICANT</td>
-      <td>NOT_SIGNIFICANT</td>
-      <td>NO</td>
-      <td>0.904</td>
+      <td>TO_KEEP</td>
+      <td>OK</td>
+      <td>NO_PV</td>
+      <td>NO_TV</td>
       <td>0.0135</td>
-      <td>NO</td>
+      <td>0.904</td>
       <td>12</td>
     </tr>
     <tr>
@@ -14810,34 +14811,38 @@ a.anchor-link {
       <td>ENVIRONMENTAL SOCIAL AND GOVERNANCE</td>
       <td>Panel data</td>
       <td>EUROPE</td>
-      <td>Developed</td>
+      <td>DEVELOPED</td>
       <td>2002.0</td>
       <td>2017.0</td>
       <td>YES</td>
       <td>NO</td>
       <td>15.0</td>
-      <td>7.0</td>
       <td>GMM</td>
       <td>OTHER</td>
       <td>ROA</td>
       <td>ROA</td>
       <td>CSR</td>
       <td>CSR</td>
-      <td>YES</td>
-      <td>NO</td>
-      <td>NO</td>
+      <td>True</td>
+      <td>False</td>
+      <td>False</td>
+      <td>POSITIVE</td>
+      <td>1_PERCENT</td>
+      <td>True</td>
+      <td>False</td>
+      <td>False</td>
       <td>NO</td>
       <td>NO</td>
       <td>NO</td>
       <td>469.0</td>
       <td>0.198</td>
       <td>1.2115</td>
-      <td>POSITIVE</td>
-      <td>SIGNIFICANT</td>
-      <td>YES</td>
-      <td>7.663</td>
+      <td>TO_KEEP</td>
+      <td>OK</td>
+      <td>NO_PV</td>
+      <td>NO_TV</td>
       <td>0.1581</td>
-      <td>NO</td>
+      <td>7.663</td>
       <td>12</td>
     </tr>
     <tr>
@@ -14869,34 +14874,38 @@ a.anchor-link {
       <td>ENVIRONMENTAL SOCIAL AND GOVERNANCE</td>
       <td>Panel data</td>
       <td>EUROPE</td>
-      <td>Developed</td>
+      <td>DEVELOPED</td>
       <td>2002.0</td>
       <td>2017.0</td>
       <td>YES</td>
       <td>NO</td>
       <td>15.0</td>
-      <td>7.0</td>
       <td>GMM</td>
       <td>OTHER</td>
       <td>ROE</td>
       <td>ROE</td>
       <td>CSR</td>
       <td>CSR</td>
-      <td>YES</td>
-      <td>NO</td>
-      <td>NO</td>
+      <td>True</td>
+      <td>False</td>
+      <td>False</td>
+      <td>POSITIVE</td>
+      <td>1_PERCENT</td>
+      <td>True</td>
+      <td>False</td>
+      <td>False</td>
       <td>NO</td>
       <td>NO</td>
       <td>NO</td>
       <td>469.0</td>
       <td>0.857</td>
       <td>0.3959</td>
-      <td>POSITIVE</td>
-      <td>SIGNIFICANT</td>
-      <td>YES</td>
-      <td>4.949</td>
+      <td>TO_KEEP</td>
+      <td>OK</td>
+      <td>NO_PV</td>
+      <td>NO_TV</td>
       <td>0.0800</td>
-      <td>NO</td>
+      <td>4.949</td>
       <td>12</td>
     </tr>
     <tr>
@@ -14928,34 +14937,38 @@ a.anchor-link {
       <td>ENVIRONMENTAL SOCIAL AND GOVERNANCE</td>
       <td>Panel data</td>
       <td>EUROPE</td>
-      <td>Developed</td>
+      <td>DEVELOPED</td>
       <td>2002.0</td>
       <td>2017.0</td>
       <td>YES</td>
       <td>NO</td>
       <td>15.0</td>
-      <td>7.0</td>
       <td>GMM</td>
       <td>OTHER</td>
       <td>ROE</td>
       <td>ROE</td>
       <td>CSR</td>
       <td>CSR</td>
-      <td>YES</td>
-      <td>NO</td>
-      <td>NO</td>
+      <td>True</td>
+      <td>False</td>
+      <td>False</td>
+      <td>POSITIVE</td>
+      <td>1_PERCENT</td>
+      <td>True</td>
+      <td>False</td>
+      <td>False</td>
       <td>NO</td>
       <td>NO</td>
       <td>NO</td>
       <td>469.0</td>
       <td>0.375</td>
       <td>6.8766</td>
-      <td>POSITIVE</td>
-      <td>SIGNIFICANT</td>
-      <td>YES</td>
-      <td>12.546</td>
+      <td>TO_KEEP</td>
+      <td>OK</td>
+      <td>NO_PV</td>
+      <td>NO_TV</td>
       <td>0.5481</td>
-      <td>NO</td>
+      <td>12.546</td>
       <td>12</td>
     </tr>
     <tr>
@@ -14987,34 +15000,38 @@ a.anchor-link {
       <td>ENVIRONMENTAL SOCIAL AND GOVERNANCE</td>
       <td>Panel data</td>
       <td>EUROPE</td>
-      <td>Developed</td>
+      <td>DEVELOPED</td>
       <td>2002.0</td>
       <td>2017.0</td>
       <td>YES</td>
       <td>NO</td>
       <td>15.0</td>
-      <td>7.0</td>
       <td>GMM</td>
       <td>OTHER</td>
       <td>TobinQ</td>
       <td>TOBIN_Q</td>
       <td>CSR</td>
       <td>CSR</td>
-      <td>YES</td>
-      <td>NO</td>
-      <td>NO</td>
+      <td>True</td>
+      <td>False</td>
+      <td>False</td>
+      <td>NEGATIVE</td>
+      <td>10_PERCENT</td>
+      <td>False</td>
+      <td>True</td>
+      <td>False</td>
       <td>NO</td>
       <td>NO</td>
       <td>NO</td>
       <td>467.0</td>
       <td>0.539</td>
       <td>-0.5037</td>
-      <td>NEGATIVE</td>
-      <td>SIGNIFICANT</td>
-      <td>NO</td>
-      <td>-2.017</td>
+      <td>TO_KEEP</td>
+      <td>OK</td>
+      <td>NO_PV</td>
+      <td>NO_TV</td>
       <td>0.2497</td>
-      <td>NO</td>
+      <td>-2.017</td>
       <td>12</td>
     </tr>
   </tbody>
@@ -15031,7 +15048,7 @@ a.anchor-link {
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[48]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[6]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">output</span><span class="o">.</span><span class="n">shape</span>
@@ -15050,13 +15067,13 @@ a.anchor-link {
 <div class="jp-OutputArea-child">
 
     
-    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[48]:</div>
+    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[6]:</div>
 
 
 
 
 <div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain">
-<pre>(701, 56)</pre>
+<pre>(701, 60)</pre>
 </div>
 
 </div>
@@ -15068,7 +15085,7 @@ a.anchor-link {
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[49]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[7]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">output</span><span class="o">.</span><span class="n">describe</span><span class="p">()</span>
@@ -15087,7 +15104,7 @@ a.anchor-link {
 <div class="jp-OutputArea-child">
 
     
-    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[49]:</div>
+    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[7]:</div>
 
 
 
@@ -15125,12 +15142,11 @@ a.anchor-link {
       <th>first_date_of_observations</th>
       <th>last_date_of_observations</th>
       <th>windows</th>
-      <th>avg_windows</th>
       <th>n</th>
       <th>r2</th>
       <th>beta</th>
-      <th>critical_value</th>
-      <th>final_standard_error</th>
+      <th>adjusted_standard_error</th>
+      <th>adjusted_t_value</th>
       <th>weight</th>
     </tr>
   </thead>
@@ -15152,12 +15168,11 @@ a.anchor-link {
       <td>689.000000</td>
       <td>689.000000</td>
       <td>689.000000</td>
-      <td>689.000000</td>
       <td>692.000000</td>
       <td>590.000000</td>
       <td>698.000000</td>
-      <td>469.000000</td>
-      <td>561.000000</td>
+      <td>613.000000</td>
+      <td>584.000000</td>
       <td>701.000000</td>
     </tr>
     <tr>
@@ -15177,12 +15192,11 @@ a.anchor-link {
       <td>2002.126270</td>
       <td>2009.747460</td>
       <td>7.621190</td>
-      <td>3.557329</td>
       <td>1507.518786</td>
       <td>1.330399</td>
       <td>2.518595</td>
-      <td>33.744486</td>
-      <td>2.042177</td>
+      <td>1.867075</td>
+      <td>27.307029</td>
       <td>19.610556</td>
     </tr>
     <tr>
@@ -15202,12 +15216,11 @@ a.anchor-link {
       <td>6.877036</td>
       <td>6.084442</td>
       <td>4.628986</td>
-      <td>2.285567</td>
       <td>3134.446149</td>
       <td>7.279848</td>
       <td>57.714197</td>
-      <td>519.895914</td>
-      <td>26.749121</td>
+      <td>25.597382</td>
+      <td>465.988332</td>
       <td>19.628430</td>
     </tr>
     <tr>
@@ -15227,12 +15240,11 @@ a.anchor-link {
       <td>1972.000000</td>
       <td>1986.000000</td>
       <td>0.000000</td>
-      <td>0.000000</td>
       <td>20.000000</td>
       <td>-0.014500</td>
       <td>-355.000000</td>
-      <td>-28.897000</td>
       <td>-9.180000</td>
+      <td>-28.897000</td>
       <td>1.000000</td>
     </tr>
     <tr>
@@ -15252,12 +15264,11 @@ a.anchor-link {
       <td>1999.000000</td>
       <td>2006.000000</td>
       <td>4.000000</td>
-      <td>2.000000</td>
       <td>183.250000</td>
       <td>0.130000</td>
       <td>-0.006000</td>
-      <td>-0.128000</td>
-      <td>0.004000</td>
+      <td>0.003500</td>
+      <td>-0.112500</td>
       <td>6.000000</td>
     </tr>
     <tr>
@@ -15277,12 +15288,11 @@ a.anchor-link {
       <td>2004.000000</td>
       <td>2011.000000</td>
       <td>6.000000</td>
-      <td>3.000000</td>
       <td>564.000000</td>
       <td>0.259000</td>
       <td>0.008000</td>
-      <td>0.471000</td>
-      <td>0.049096</td>
+      <td>0.046206</td>
+      <td>0.613500</td>
       <td>12.000000</td>
     </tr>
     <tr>
@@ -15302,12 +15312,11 @@ a.anchor-link {
       <td>2007.000000</td>
       <td>2014.000000</td>
       <td>10.000000</td>
-      <td>5.000000</td>
       <td>937.000000</td>
       <td>0.444800</td>
       <td>0.152750</td>
-      <td>2.160000</td>
-      <td>0.523557</td>
+      <td>0.485000</td>
+      <td>2.017250</td>
       <td>24.000000</td>
     </tr>
     <tr>
@@ -15327,12 +15336,11 @@ a.anchor-link {
       <td>2018.000000</td>
       <td>2018.000000</td>
       <td>29.000000</td>
-      <td>14.000000</td>
       <td>26482.000000</td>
       <td>57.310000</td>
       <td>1451.910000</td>
-      <td>10307.000000</td>
       <td>628.720000</td>
+      <td>10307.000000</td>
       <td>70.000000</td>
     </tr>
   </tbody>
@@ -15349,7 +15357,7 @@ a.anchor-link {
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[50]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[8]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">output</span><span class="p">[</span><span class="s1">&#39;weight&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">describe</span><span class="p">()</span>
@@ -15368,7 +15376,7 @@ a.anchor-link {
 <div class="jp-OutputArea-child">
 
     
-    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[50]:</div>
+    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[8]:</div>
 
 
 
@@ -15394,7 +15402,7 @@ Name: weight, dtype: float64</pre>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[51]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[9]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="c1">#output[output.duplicated(subset = [&#39;id&#39;, &#39;beta&#39;,</span>
@@ -15417,7 +15425,7 @@ Name: weight, dtype: float64</pre>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[52]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[10]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">output</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="s1">&#39;rank&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">])][</span><span class="s1">&#39;publication_name&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span>
@@ -15436,7 +15444,7 @@ Name: weight, dtype: float64</pre>
 <div class="jp-OutputArea-child">
 
     
-    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[52]:</div>
+    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[10]:</div>
 
 
 
@@ -15473,7 +15481,7 @@ Name: weight, dtype: float64</pre>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[53]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[11]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">output</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">sort_values</span><span class="p">()</span>
@@ -15492,15 +15500,15 @@ Name: weight, dtype: float64</pre>
 <div class="jp-OutputArea-child">
 
     
-    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[53]:</div>
+    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[11]:</div>
 
 
 
 
 <div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain">
-<pre>dependent                                                2
-independent                                              2
+<pre>independent                                              2
 adjusted_dependent                                       2
+dependent                                                2
 beta                                                     3
 table_refer                                              4
 quadratic_term                                           5
@@ -15511,27 +15519,26 @@ publication_type                                         8
 type_of_data                                             8
 n                                                        9
 study_focusing_on_developing_or_developed_countries     10
+windows                                                 12
 last_date_of_observations                               12
 first_date_of_observations                              12
-avg_windows                                             12
-windows                                                 12
 adjusted_independent                                    26
 peer_reviewed                                           26
-cites_doc_2years                                       104
-citable_docs_3years                                    104
-total_cites_3years                                     104
+adjusted_standard_error                                 88
 total_refs                                             104
+citable_docs_3years                                    104
 total_docs_3years                                      104
 total_docs_2020                                        104
 h_index                                                104
+total_cites_3years                                     104
 sjr_best_quartile                                      104
 sjr                                                    104
 rank                                                   104
 country                                                104
+cites_doc_2years                                       104
 r2                                                     111
-final_standard_error                                   140
+adjusted_t_value                                       117
 image                                                  163
-critical_value                                         232
 dtype: int64</pre>
 </div>
 
@@ -15563,7 +15570,7 @@ dtype: int64</pre>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[54]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[12]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">make_clickable</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
@@ -15578,7 +15585,7 @@ dtype: int64</pre>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[55]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[13]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="p">(</span>
@@ -15604,27 +15611,27 @@ dtype: int64</pre>
 <div class="jp-OutputArea-child">
 
     
-    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[55]:</div>
+    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[13]:</div>
 
 
 
 <div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html">
 <style  type="text/css" >
-</style><table id="T_a7bd418e_f9a2_11eb_ae51_9b80a2c758a0" ><thead>    <tr>        <th class="blank level0" ></th>        <th class="col_heading level0 col0" >paper_name</th>        <th class="col_heading level0 col1" >url_excel</th>    </tr></thead><tbody>
+</style><table id="T_7b68acec_f9af_11eb_8d74_61041cdc4f11" ><thead>    <tr>        <th class="blank level0" ></th>        <th class="col_heading level0 col0" >paper_name</th>        <th class="col_heading level0 col1" >url_excel</th>    </tr></thead><tbody>
                 <tr>
-                        <th id="T_a7bd418e_f9a2_11eb_ae51_9b80a2c758a0level0_row0" class="row_heading level0 row0" >385</th>
-                        <td id="T_a7bd418e_f9a2_11eb_ae51_9b80a2c758a0row0_col0" class="data row0 col0" >How does corporate social responsibility contribute to firm financial performance? The mediating role of competitive advantage reputation and customer satisfaction</td>
-                        <td id="T_a7bd418e_f9a2_11eb_ae51_9b80a2c758a0row0_col1" class="data row0 col1" ><a href="nan">nan</a></td>
+                        <th id="T_7b68acec_f9af_11eb_8d74_61041cdc4f11level0_row0" class="row_heading level0 row0" >385</th>
+                        <td id="T_7b68acec_f9af_11eb_8d74_61041cdc4f11row0_col0" class="data row0 col0" >How does corporate social responsibility contribute to firm financial performance? The mediating role of competitive advantage reputation and customer satisfaction</td>
+                        <td id="T_7b68acec_f9af_11eb_8d74_61041cdc4f11row0_col1" class="data row0 col1" ><a href="nan">nan</a></td>
             </tr>
             <tr>
-                        <th id="T_a7bd418e_f9a2_11eb_ae51_9b80a2c758a0level0_row1" class="row_heading level0 row1" >397</th>
-                        <td id="T_a7bd418e_f9a2_11eb_ae51_9b80a2c758a0row1_col0" class="data row1 col0" >L’impact de la responsabilité sociale (RSE) sur la performance financière des entreprises (PFE) au Cameroun</td>
-                        <td id="T_a7bd418e_f9a2_11eb_ae51_9b80a2c758a0row1_col1" class="data row1 col1" ><a href="nan">nan</a></td>
+                        <th id="T_7b68acec_f9af_11eb_8d74_61041cdc4f11level0_row1" class="row_heading level0 row1" >397</th>
+                        <td id="T_7b68acec_f9af_11eb_8d74_61041cdc4f11row1_col0" class="data row1 col0" >L’impact de la responsabilité sociale (RSE) sur la performance financière des entreprises (PFE) au Cameroun</td>
+                        <td id="T_7b68acec_f9af_11eb_8d74_61041cdc4f11row1_col1" class="data row1 col1" ><a href="nan">nan</a></td>
             </tr>
             <tr>
-                        <th id="T_a7bd418e_f9a2_11eb_ae51_9b80a2c758a0level0_row2" class="row_heading level0 row2" >451</th>
-                        <td id="T_a7bd418e_f9a2_11eb_ae51_9b80a2c758a0row2_col0" class="data row2 col0" >Does Corporate Social Responsibility Pay Off in Times of Crisis? An Alternate Perspective on the Relationship between Financial and Corporate Social Performance</td>
-                        <td id="T_a7bd418e_f9a2_11eb_ae51_9b80a2c758a0row2_col1" class="data row2 col1" ><a href="nan">nan</a></td>
+                        <th id="T_7b68acec_f9af_11eb_8d74_61041cdc4f11level0_row2" class="row_heading level0 row2" >451</th>
+                        <td id="T_7b68acec_f9af_11eb_8d74_61041cdc4f11row2_col0" class="data row2 col0" >Does Corporate Social Responsibility Pay Off in Times of Crisis? An Alternate Perspective on the Relationship between Financial and Corporate Social Performance</td>
+                        <td id="T_7b68acec_f9af_11eb_8d74_61041cdc4f11row2_col1" class="data row2 col1" ><a href="nan">nan</a></td>
             </tr>
     </tbody></table>
 </div>
@@ -15653,7 +15660,7 @@ dtype: int64</pre>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[56]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[14]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="p">(</span>
@@ -15679,22 +15686,22 @@ dtype: int64</pre>
 <div class="jp-OutputArea-child">
 
     
-    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[56]:</div>
+    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[14]:</div>
 
 
 
 <div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html">
 <style  type="text/css" >
-</style><table id="T_a7c25ca0_f9a2_11eb_ae51_9b80a2c758a0" ><thead>    <tr>        <th class="blank level0" ></th>        <th class="col_heading level0 col0" >paper_name</th>        <th class="col_heading level0 col1" >url_excel</th>    </tr></thead><tbody>
+</style><table id="T_7b6b1da6_f9af_11eb_8d74_61041cdc4f11" ><thead>    <tr>        <th class="blank level0" ></th>        <th class="col_heading level0 col0" >paper_name</th>        <th class="col_heading level0 col1" >url_excel</th>    </tr></thead><tbody>
                 <tr>
-                        <th id="T_a7c25ca0_f9a2_11eb_ae51_9b80a2c758a0level0_row0" class="row_heading level0 row0" >391</th>
-                        <td id="T_a7c25ca0_f9a2_11eb_ae51_9b80a2c758a0row0_col0" class="data row0 col0" >Corporate social responsibility and financial performance in Islamic banks</td>
-                        <td id="T_a7c25ca0_f9a2_11eb_ae51_9b80a2c758a0row0_col1" class="data row0 col1" ><a href="nan">nan</a></td>
+                        <th id="T_7b6b1da6_f9af_11eb_8d74_61041cdc4f11level0_row0" class="row_heading level0 row0" >391</th>
+                        <td id="T_7b6b1da6_f9af_11eb_8d74_61041cdc4f11row0_col0" class="data row0 col0" >Corporate social responsibility and financial performance in Islamic banks</td>
+                        <td id="T_7b6b1da6_f9af_11eb_8d74_61041cdc4f11row0_col1" class="data row0 col1" ><a href="nan">nan</a></td>
             </tr>
             <tr>
-                        <th id="T_a7c25ca0_f9a2_11eb_ae51_9b80a2c758a0level0_row1" class="row_heading level0 row1" >593</th>
-                        <td id="T_a7c25ca0_f9a2_11eb_ae51_9b80a2c758a0row1_col0" class="data row1 col0" >Corporate social responsibility and financial performance: the ‘‘virtuous circle’’ revisited</td>
-                        <td id="T_a7c25ca0_f9a2_11eb_ae51_9b80a2c758a0row1_col1" class="data row1 col1" ><a href="nan">nan</a></td>
+                        <th id="T_7b6b1da6_f9af_11eb_8d74_61041cdc4f11level0_row1" class="row_heading level0 row1" >593</th>
+                        <td id="T_7b6b1da6_f9af_11eb_8d74_61041cdc4f11row1_col0" class="data row1 col0" >Corporate social responsibility and financial performance: the ‘‘virtuous circle’’ revisited</td>
+                        <td id="T_7b6b1da6_f9af_11eb_8d74_61041cdc4f11row1_col1" class="data row1 col1" ><a href="nan">nan</a></td>
             </tr>
     </tbody></table>
 </div>
@@ -15735,7 +15742,7 @@ dtype: int64</pre>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[57]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[15]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="p">(</span>
@@ -15761,37 +15768,37 @@ dtype: int64</pre>
 <div class="jp-OutputArea-child">
 
     
-    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[57]:</div>
+    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[15]:</div>
 
 
 
 <div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html">
 <style  type="text/css" >
-</style><table id="T_a7c82c48_f9a2_11eb_ae51_9b80a2c758a0" ><thead>    <tr>        <th class="blank level0" ></th>        <th class="col_heading level0 col0" >paper_name</th>        <th class="col_heading level0 col1" >url_excel</th>    </tr></thead><tbody>
+</style><table id="T_7b6d66ba_f9af_11eb_8d74_61041cdc4f11" ><thead>    <tr>        <th class="blank level0" ></th>        <th class="col_heading level0 col0" >paper_name</th>        <th class="col_heading level0 col1" >url_excel</th>    </tr></thead><tbody>
                 <tr>
-                        <th id="T_a7c82c48_f9a2_11eb_ae51_9b80a2c758a0level0_row0" class="row_heading level0 row0" >397</th>
-                        <td id="T_a7c82c48_f9a2_11eb_ae51_9b80a2c758a0row0_col0" class="data row0 col0" >L’impact de la responsabilité sociale (RSE) sur la performance financière des entreprises (PFE) au Cameroun</td>
-                        <td id="T_a7c82c48_f9a2_11eb_ae51_9b80a2c758a0row0_col1" class="data row0 col1" ><a href="nan">nan</a></td>
+                        <th id="T_7b6d66ba_f9af_11eb_8d74_61041cdc4f11level0_row0" class="row_heading level0 row0" >397</th>
+                        <td id="T_7b6d66ba_f9af_11eb_8d74_61041cdc4f11row0_col0" class="data row0 col0" >L’impact de la responsabilité sociale (RSE) sur la performance financière des entreprises (PFE) au Cameroun</td>
+                        <td id="T_7b6d66ba_f9af_11eb_8d74_61041cdc4f11row0_col1" class="data row0 col1" ><a href="nan">nan</a></td>
             </tr>
             <tr>
-                        <th id="T_a7c82c48_f9a2_11eb_ae51_9b80a2c758a0level0_row1" class="row_heading level0 row1" >440</th>
-                        <td id="T_a7c82c48_f9a2_11eb_ae51_9b80a2c758a0row1_col0" class="data row1 col0" >Looking for evidence of the relationship between CSR and CFP in an Emerging Market</td>
-                        <td id="T_a7c82c48_f9a2_11eb_ae51_9b80a2c758a0row1_col1" class="data row1 col1" ><a href="nan">nan</a></td>
+                        <th id="T_7b6d66ba_f9af_11eb_8d74_61041cdc4f11level0_row1" class="row_heading level0 row1" >440</th>
+                        <td id="T_7b6d66ba_f9af_11eb_8d74_61041cdc4f11row1_col0" class="data row1 col0" >Looking for evidence of the relationship between CSR and CFP in an Emerging Market</td>
+                        <td id="T_7b6d66ba_f9af_11eb_8d74_61041cdc4f11row1_col1" class="data row1 col1" ><a href="nan">nan</a></td>
             </tr>
             <tr>
-                        <th id="T_a7c82c48_f9a2_11eb_ae51_9b80a2c758a0level0_row2" class="row_heading level0 row2" >562</th>
-                        <td id="T_a7c82c48_f9a2_11eb_ae51_9b80a2c758a0row2_col0" class="data row2 col0" >The Relationship of CSR and Financial Performance: New Evidence From Indonesian Companies</td>
-                        <td id="T_a7c82c48_f9a2_11eb_ae51_9b80a2c758a0row2_col1" class="data row2 col1" ><a href="nan">nan</a></td>
+                        <th id="T_7b6d66ba_f9af_11eb_8d74_61041cdc4f11level0_row2" class="row_heading level0 row2" >562</th>
+                        <td id="T_7b6d66ba_f9af_11eb_8d74_61041cdc4f11row2_col0" class="data row2 col0" >The Relationship of CSR and Financial Performance: New Evidence From Indonesian Companies</td>
+                        <td id="T_7b6d66ba_f9af_11eb_8d74_61041cdc4f11row2_col1" class="data row2 col1" ><a href="nan">nan</a></td>
             </tr>
             <tr>
-                        <th id="T_a7c82c48_f9a2_11eb_ae51_9b80a2c758a0level0_row3" class="row_heading level0 row3" >625</th>
-                        <td id="T_a7c82c48_f9a2_11eb_ae51_9b80a2c758a0row3_col0" class="data row3 col0" >Exploring the moderating effect of financial performance on the relationship between corporate environmental responsibility and institutional investors: some Egyptian evidence</td>
-                        <td id="T_a7c82c48_f9a2_11eb_ae51_9b80a2c758a0row3_col1" class="data row3 col1" ><a href="nan">nan</a></td>
+                        <th id="T_7b6d66ba_f9af_11eb_8d74_61041cdc4f11level0_row3" class="row_heading level0 row3" >625</th>
+                        <td id="T_7b6d66ba_f9af_11eb_8d74_61041cdc4f11row3_col0" class="data row3 col0" >Exploring the moderating effect of financial performance on the relationship between corporate environmental responsibility and institutional investors: some Egyptian evidence</td>
+                        <td id="T_7b6d66ba_f9af_11eb_8d74_61041cdc4f11row3_col1" class="data row3 col1" ><a href="nan">nan</a></td>
             </tr>
             <tr>
-                        <th id="T_a7c82c48_f9a2_11eb_ae51_9b80a2c758a0level0_row4" class="row_heading level0 row4" >636</th>
-                        <td id="T_a7c82c48_f9a2_11eb_ae51_9b80a2c758a0row4_col0" class="data row4 col0" >STRATEGIC USE OF CSR AS A SIGNAL FOR GOOD MANAGEMENT</td>
-                        <td id="T_a7c82c48_f9a2_11eb_ae51_9b80a2c758a0row4_col1" class="data row4 col1" ><a href="nan">nan</a></td>
+                        <th id="T_7b6d66ba_f9af_11eb_8d74_61041cdc4f11level0_row4" class="row_heading level0 row4" >636</th>
+                        <td id="T_7b6d66ba_f9af_11eb_8d74_61041cdc4f11row4_col0" class="data row4 col0" >STRATEGIC USE OF CSR AS A SIGNAL FOR GOOD MANAGEMENT</td>
+                        <td id="T_7b6d66ba_f9af_11eb_8d74_61041cdc4f11row4_col1" class="data row4 col1" ><a href="nan">nan</a></td>
             </tr>
     </tbody></table>
 </div>
@@ -15813,7 +15820,7 @@ dtype: int64</pre>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[58]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[16]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="p">(</span>
@@ -15840,37 +15847,37 @@ dtype: int64</pre>
 <div class="jp-OutputArea-child">
 
     
-    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[58]:</div>
+    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[16]:</div>
 
 
 
 <div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html">
 <style  type="text/css" >
-</style><table id="T_a7cd8f4e_f9a2_11eb_ae51_9b80a2c758a0" ><thead>    <tr>        <th class="blank level0" ></th>        <th class="col_heading level0 col0" >paper_name</th>        <th class="col_heading level0 col1" >url_google_spreadsheet</th>    </tr></thead><tbody>
+</style><table id="T_7b6f00d8_f9af_11eb_8d74_61041cdc4f11" ><thead>    <tr>        <th class="blank level0" ></th>        <th class="col_heading level0 col0" >paper_name</th>        <th class="col_heading level0 col1" >url_google_spreadsheet</th>    </tr></thead><tbody>
                 <tr>
-                        <th id="T_a7cd8f4e_f9a2_11eb_ae51_9b80a2c758a0level0_row0" class="row_heading level0 row0" >25</th>
-                        <td id="T_a7cd8f4e_f9a2_11eb_ae51_9b80a2c758a0row0_col0" class="data row0 col0" >The heterogeneous effects of CSR dimensions on financial performance   a new approach for CSR measurement</td>
-                        <td id="T_a7cd8f4e_f9a2_11eb_ae51_9b80a2c758a0row0_col1" class="data row0 col1" ><a href="nan">nan</a></td>
+                        <th id="T_7b6f00d8_f9af_11eb_8d74_61041cdc4f11level0_row0" class="row_heading level0 row0" >25</th>
+                        <td id="T_7b6f00d8_f9af_11eb_8d74_61041cdc4f11row0_col0" class="data row0 col0" >The heterogeneous effects of CSR dimensions on financial performance   a new approach for CSR measurement</td>
+                        <td id="T_7b6f00d8_f9af_11eb_8d74_61041cdc4f11row0_col1" class="data row0 col1" ><a href="nan">nan</a></td>
             </tr>
             <tr>
-                        <th id="T_a7cd8f4e_f9a2_11eb_ae51_9b80a2c758a0level0_row1" class="row_heading level0 row1" >121</th>
-                        <td id="T_a7cd8f4e_f9a2_11eb_ae51_9b80a2c758a0row1_col0" class="data row1 col0" >Environmental Social and Governance (ESG) Scores and Financial Performance of Multilatinas: Moderating Effects of Geographic International Diversification and Financial Slack</td>
-                        <td id="T_a7cd8f4e_f9a2_11eb_ae51_9b80a2c758a0row1_col1" class="data row1 col1" ><a href="nan">nan</a></td>
+                        <th id="T_7b6f00d8_f9af_11eb_8d74_61041cdc4f11level0_row1" class="row_heading level0 row1" >121</th>
+                        <td id="T_7b6f00d8_f9af_11eb_8d74_61041cdc4f11row1_col0" class="data row1 col0" >Environmental Social and Governance (ESG) Scores and Financial Performance of Multilatinas: Moderating Effects of Geographic International Diversification and Financial Slack</td>
+                        <td id="T_7b6f00d8_f9af_11eb_8d74_61041cdc4f11row1_col1" class="data row1 col1" ><a href="nan">nan</a></td>
             </tr>
             <tr>
-                        <th id="T_a7cd8f4e_f9a2_11eb_ae51_9b80a2c758a0level0_row2" class="row_heading level0 row2" >398</th>
-                        <td id="T_a7cd8f4e_f9a2_11eb_ae51_9b80a2c758a0row2_col0" class="data row2 col0" >L’impact de la responsabilité sociale (RSE) sur la performance financière des entreprises (PFE) au Cameroun</td>
-                        <td id="T_a7cd8f4e_f9a2_11eb_ae51_9b80a2c758a0row2_col1" class="data row2 col1" ><a href="nan">nan</a></td>
+                        <th id="T_7b6f00d8_f9af_11eb_8d74_61041cdc4f11level0_row2" class="row_heading level0 row2" >398</th>
+                        <td id="T_7b6f00d8_f9af_11eb_8d74_61041cdc4f11row2_col0" class="data row2 col0" >L’impact de la responsabilité sociale (RSE) sur la performance financière des entreprises (PFE) au Cameroun</td>
+                        <td id="T_7b6f00d8_f9af_11eb_8d74_61041cdc4f11row2_col1" class="data row2 col1" ><a href="nan">nan</a></td>
             </tr>
             <tr>
-                        <th id="T_a7cd8f4e_f9a2_11eb_ae51_9b80a2c758a0level0_row3" class="row_heading level0 row3" >412</th>
-                        <td id="T_a7cd8f4e_f9a2_11eb_ae51_9b80a2c758a0row3_col0" class="data row3 col0" >The CSR-Firm Performance Missing Link: Complementarity Between Environmental Social and Business Behavior Criteria?</td>
-                        <td id="T_a7cd8f4e_f9a2_11eb_ae51_9b80a2c758a0row3_col1" class="data row3 col1" ><a href="nan">nan</a></td>
+                        <th id="T_7b6f00d8_f9af_11eb_8d74_61041cdc4f11level0_row3" class="row_heading level0 row3" >412</th>
+                        <td id="T_7b6f00d8_f9af_11eb_8d74_61041cdc4f11row3_col0" class="data row3 col0" >The CSR-Firm Performance Missing Link: Complementarity Between Environmental Social and Business Behavior Criteria?</td>
+                        <td id="T_7b6f00d8_f9af_11eb_8d74_61041cdc4f11row3_col1" class="data row3 col1" ><a href="nan">nan</a></td>
             </tr>
             <tr>
-                        <th id="T_a7cd8f4e_f9a2_11eb_ae51_9b80a2c758a0level0_row4" class="row_heading level0 row4" >448</th>
-                        <td id="T_a7cd8f4e_f9a2_11eb_ae51_9b80a2c758a0row4_col0" class="data row4 col0" >CORPORATE SOCIAL RESPONSIBILITY AND SHAREHOLDER REACTION the environmental awareness of investors</td>
-                        <td id="T_a7cd8f4e_f9a2_11eb_ae51_9b80a2c758a0row4_col1" class="data row4 col1" ><a href="nan">nan</a></td>
+                        <th id="T_7b6f00d8_f9af_11eb_8d74_61041cdc4f11level0_row4" class="row_heading level0 row4" >448</th>
+                        <td id="T_7b6f00d8_f9af_11eb_8d74_61041cdc4f11row4_col0" class="data row4 col0" >CORPORATE SOCIAL RESPONSIBILITY AND SHAREHOLDER REACTION the environmental awareness of investors</td>
+                        <td id="T_7b6f00d8_f9af_11eb_8d74_61041cdc4f11row4_col1" class="data row4 col1" ><a href="nan">nan</a></td>
             </tr>
     </tbody></table>
 </div>
@@ -15892,7 +15899,7 @@ dtype: int64</pre>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[59]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[17]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="ch">#!pip install --upgrade git+git://github.com/thomaspernet/GoogleDrive-python</span>
@@ -15906,7 +15913,7 @@ dtype: int64</pre>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[60]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[18]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">GoogleDrivePy.google_drive</span> <span class="kn">import</span> <span class="n">connect_drive</span>
@@ -15921,7 +15928,7 @@ dtype: int64</pre>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[61]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[19]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="k">try</span><span class="p">:</span>
@@ -15938,7 +15945,7 @@ dtype: int64</pre>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[62]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[20]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">s3</span><span class="o">.</span><span class="n">download_file</span><span class="p">(</span><span class="n">key</span> <span class="o">=</span> <span class="s2">&quot;CREDS/Financial_dependency_pollution/creds/token.pickle&quot;</span><span class="p">,</span> <span class="n">path_local</span> <span class="o">=</span> <span class="s2">&quot;creds&quot;</span><span class="p">)</span>
@@ -15952,7 +15959,7 @@ dtype: int64</pre>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[63]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[21]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">auth</span> <span class="o">=</span> <span class="n">authorization_service</span><span class="o">.</span><span class="n">get_authorization</span><span class="p">(</span>
@@ -15975,7 +15982,7 @@ dtype: int64</pre>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[64]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[22]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">shutil</span>
@@ -15990,7 +15997,7 @@ dtype: int64</pre>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[65]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[23]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">FILENAME_SPREADSHEET</span> <span class="o">=</span> <span class="s2">&quot;METADATA_MODEL&quot;</span>
@@ -16005,7 +16012,7 @@ dtype: int64</pre>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[66]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[24]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">drive</span><span class="o">.</span><span class="n">add_data_to_spreadsheet</span><span class="p">(</span>
@@ -16033,7 +16040,7 @@ dtype: int64</pre>
 
 
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
-<pre>Range MODEL_DATA!A1:BE705 has been updated.
+<pre>Range MODEL_DATA!A1:BI705 has been updated.
 </pre>
 </div>
 </div>
@@ -16059,7 +16066,7 @@ dtype: int64</pre>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[67]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[25]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">s3_output</span> <span class="o">=</span> <span class="s1">&#39;DATA/FINANCE/ESG/ESG_CFP&#39;</span>
@@ -16080,7 +16087,7 @@ dtype: int64</pre>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[68]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[26]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="k">try</span><span class="p">:</span>
@@ -16110,7 +16117,7 @@ dtype: int64</pre>
 
 
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
-<pre>{&#39;ResponseMetadata&#39;: {&#39;RequestId&#39;: &#39;23ad7efc-0bd8-44fa-9b34-b607f09e675c&#39;, &#39;HTTPStatusCode&#39;: 200, &#39;HTTPHeaders&#39;: {&#39;date&#39;: &#39;Tue, 10 Aug 2021 06:17:40 GMT&#39;, &#39;content-type&#39;: &#39;application/x-amz-json-1.1&#39;, &#39;content-length&#39;: &#39;2&#39;, &#39;connection&#39;: &#39;keep-alive&#39;, &#39;x-amzn-requestid&#39;: &#39;23ad7efc-0bd8-44fa-9b34-b607f09e675c&#39;}, &#39;RetryAttempts&#39;: 0}}
+<pre>{&#39;ResponseMetadata&#39;: {&#39;RequestId&#39;: &#39;20eb7ac8-2542-4ff8-a680-0fd5ed92032d&#39;, &#39;HTTPStatusCode&#39;: 200, &#39;HTTPHeaders&#39;: {&#39;date&#39;: &#39;Tue, 10 Aug 2021 07:49:30 GMT&#39;, &#39;content-type&#39;: &#39;application/x-amz-json-1.1&#39;, &#39;content-length&#39;: &#39;2&#39;, &#39;connection&#39;: &#39;keep-alive&#39;, &#39;x-amzn-requestid&#39;: &#39;20eb7ac8-2542-4ff8-a680-0fd5ed92032d&#39;}, &#39;RetryAttempts&#39;: 0}}
 </pre>
 </div>
 </div>
@@ -16128,7 +16135,7 @@ dtype: int64</pre>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[69]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[27]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">s3</span><span class="o">.</span><span class="n">remove_all_bucket</span><span class="p">(</span><span class="n">path_remove</span> <span class="o">=</span> <span class="n">s3_output</span><span class="p">)</span>
@@ -16147,7 +16154,7 @@ dtype: int64</pre>
 <div class="jp-OutputArea-child">
 
     
-    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[69]:</div>
+    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[27]:</div>
 
 
 
@@ -16165,7 +16172,7 @@ dtype: int64</pre>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[70]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[28]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="o">%%time</span>
@@ -16192,13 +16199,16 @@ dtype: int64</pre>
 <span class="s2">      &#39; &#39;</span>
 <span class="s2">    ) as publication_name, </span>
 <span class="s2">    cnrs_ranking, </span>
-<span class="s2">    peer_reviewed, </span>
-<span class="s2">    study_focused_on_social_environmental_behaviour, </span>
+<span class="s2">    UPPER(peer_reviewed) as peer_reviewed, </span>
+<span class="s2">    UPPER(study_focused_on_social_environmental_behaviour) as study_focused_on_social_environmental_behaviour, </span>
 <span class="s2">    type_of_data, </span>
-<span class="s2">    study_focusing_on_developing_or_developed_countries,</span>
-<span class="s2">    regions,</span>
+<span class="s2">    CASE WHEN regions = &#39;ARAB WORLD&#39; THEN &#39;WORLDWIDE&#39; ELSE regions END AS regions,</span>
+<span class="s2">    CASE WHEN study_focusing_on_developing_or_developed_countries = &#39;Europe&#39; THEN &#39;WORLDWIDE&#39; ELSE UPPER(study_focusing_on_developing_or_developed_countries) END AS study_focusing_on_developing_or_developed_countries,</span>
 <span class="s2">    first_date_of_observations,</span>
 <span class="s2">    last_date_of_observations,</span>
+<span class="s2">    CASE WHEN first_date_of_observations &gt;= 1997 THEN &#39;YES&#39; ELSE &#39;NO&#39; END AS kyoto,</span>
+<span class="s2">    CASE WHEN first_date_of_observations &gt;= 2009 THEN &#39;YES&#39; ELSE &#39;NO&#39; END AS financial_crisis,</span>
+<span class="s2">    last_date_of_observations - first_date_of_observations as windows,</span>
 <span class="s2">    adjusted_model_name,</span>
 <span class="s2">    adjusted_model,</span>
 <span class="s2">    dependent, </span>
@@ -16209,21 +16219,22 @@ dtype: int64</pre>
 <span class="s2">    environmental,</span>
 <span class="s2">    governance,</span>
 <span class="s2">    sign_of_effect,</span>
-<span class="s2">    target,</span>
+<span class="s2">    significant,</span>
+<span class="s2">    sign_positive,</span>
+<span class="s2">    sign_negative,</span>
+<span class="s2">    sign_insignificant,</span>
 <span class="s2">    lag, </span>
 <span class="s2">    interaction_term, </span>
 <span class="s2">    quadratic_term, </span>
 <span class="s2">    n, </span>
 <span class="s2">    r2, </span>
 <span class="s2">    beta, </span>
-<span class="s2">    to_remove, </span>
-<span class="s2">    critical_value, </span>
-<span class="s2">    true_standard_error, </span>
-<span class="s2">    final_standard_error,</span>
-<span class="s2">    true_t_value, </span>
-<span class="s2">    true_stars,  </span>
-<span class="s2">    significant,</span>
-<span class="s2">    to_check_final</span>
+<span class="s2">    to_remove,</span>
+<span class="s2">    test_standard_error,</span>
+<span class="s2">    test_p_value,</span>
+<span class="s2">    test_t_value,</span>
+<span class="s2">    adjusted_standard_error,</span>
+<span class="s2">    adjusted_t_value</span>
 <span class="s2">  FROM </span>
 <span class="s2">    esg.papers_meta_analysis_new </span>
 <span class="s2">    LEFT JOIN (</span>
@@ -16306,35 +16317,38 @@ dtype: int64</pre>
 <span class="s2">    peer_reviewed, </span>
 <span class="s2">    study_focused_on_social_environmental_behaviour, </span>
 <span class="s2">    type_of_data, </span>
-<span class="s2">    CASE WHEN regions = &#39;ARAB WORLD&#39; THEN &#39;WORLDWIDE&#39; ELSE regions END AS regions,</span>
-<span class="s2">       CASE WHEN study_focusing_on_developing_or_developed_countries = &#39;Europe&#39; THEN &#39;Worldwide&#39; ELSE study_focusing_on_developing_or_developed_countries END AS study_focusing_on_developing_or_developed_countries,</span>
+<span class="s2">    regions,</span>
+<span class="s2">    study_focusing_on_developing_or_developed_countries,</span>
 <span class="s2">    first_date_of_observations,</span>
 <span class="s2">    last_date_of_observations,</span>
-<span class="s2">    CASE WHEN first_date_of_observations &gt;= 1997 THEN &#39;YES&#39; ELSE &#39;NO&#39; END AS kyoto,</span>
-<span class="s2">    CASE WHEN first_date_of_observations &gt;= 2009 THEN &#39;YES&#39; ELSE &#39;NO&#39; END AS financial_crisis,</span>
-<span class="s2">    last_date_of_observations - first_date_of_observations as windows,</span>
-<span class="s2">    (last_date_of_observations - first_date_of_observations) / 2 avg_windows,</span>
+<span class="s2">    kyoto,</span>
+<span class="s2">    financial_crisis,</span>
+<span class="s2">    windows,</span>
 <span class="s2">    adjusted_model_name,</span>
-<span class="s2">    adjusted_model, </span>
+<span class="s2">    adjusted_model,</span>
 <span class="s2">    dependent, </span>
-<span class="s2">    adjusted_dependent, </span>
-<span class="s2">    independent, </span>
+<span class="s2">    adjusted_dependent,</span>
+<span class="s2">    independent,</span>
 <span class="s2">    adjusted_independent, </span>
-<span class="s2">    CASE WHEN social = &#39;True&#39; THEN &#39;YES&#39; ELSE &#39;NO&#39; END AS social,</span>
-<span class="s2">    CASE WHEN environmental = &#39;True&#39; THEN &#39;YES&#39; ELSE &#39;NO&#39; END AS environmental,</span>
-<span class="s2">    CASE WHEN governance = &#39;True&#39; THEN &#39;YES&#39; ELSE &#39;NO&#39; END AS governance,</span>
+<span class="s2">    social,</span>
+<span class="s2">    environmental,</span>
+<span class="s2">    governance,</span>
+<span class="s2">    sign_of_effect,</span>
+<span class="s2">    significant,</span>
+<span class="s2">    sign_positive,</span>
+<span class="s2">    sign_negative,</span>
+<span class="s2">    sign_insignificant,</span>
 <span class="s2">    lag, </span>
 <span class="s2">    interaction_term, </span>
 <span class="s2">    quadratic_term, </span>
 <span class="s2">    n, </span>
 <span class="s2">    r2, </span>
 <span class="s2">    beta, </span>
-<span class="s2">    sign_of_effect,</span>
-<span class="s2">    target,</span>
-<span class="s2">    significant,</span>
-<span class="s2">    critical_value,</span>
-<span class="s2">    final_standard_error,</span>
-<span class="s2">    to_check_final </span>
+<span class="s2">    test_standard_error,</span>
+<span class="s2">    test_p_value,</span>
+<span class="s2">    test_t_value,</span>
+<span class="s2">    adjusted_standard_error,</span>
+<span class="s2">    adjusted_t_value </span>
 <span class="s2">FROM </span>
 <span class="s2">  merge </span>
 <span class="s2">  LEFT JOIN (</span>
@@ -16389,8 +16403,8 @@ dtype: int64</pre>
 
 
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
-<pre>CPU times: user 161 ms, sys: 2.94 ms, total: 164 ms
-Wall time: 4.12 s
+<pre>CPU times: user 126 ms, sys: 0 ns, total: 126 ms
+Wall time: 3.15 s
 </pre>
 </div>
 </div>
@@ -16398,16 +16412,16 @@ Wall time: 4.12 s
 <div class="jp-OutputArea-child">
 
     
-    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[70]:</div>
+    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[28]:</div>
 
 
 
 
 <div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain">
 <pre>{&#39;Results&#39;: {&#39;State&#39;: &#39;SUCCEEDED&#39;,
-  &#39;SubmissionDateTime&#39;: datetime.datetime(2021, 8, 10, 6, 17, 40, 452000, tzinfo=tzlocal()),
-  &#39;CompletionDateTime&#39;: datetime.datetime(2021, 8, 10, 6, 17, 42, 966000, tzinfo=tzlocal())},
- &#39;QueryID&#39;: &#39;65c6d135-9b02-4a18-923d-59b76643cf67&#39;}</pre>
+  &#39;SubmissionDateTime&#39;: datetime.datetime(2021, 8, 10, 7, 49, 30, 388000, tzinfo=tzlocal()),
+  &#39;CompletionDateTime&#39;: datetime.datetime(2021, 8, 10, 7, 49, 32, 672000, tzinfo=tzlocal())},
+ &#39;QueryID&#39;: &#39;fe05cb78-3d49-473f-91f0-3da2ecfc6d9a&#39;}</pre>
 </div>
 
 </div>
@@ -16419,7 +16433,7 @@ Wall time: 4.12 s
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[71]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[29]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">query_count</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
@@ -16448,7 +16462,7 @@ Wall time: 4.12 s
 <div class="jp-OutputArea-child">
 
     
-    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[71]:</div>
+    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[29]:</div>
 
 
 
@@ -16536,10 +16550,10 @@ Wall time: 4.12 s
 ]</code></pre>
 
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[72]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[30]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">load_ext</span> autoreload
@@ -16557,28 +16571,6 @@ Wall time: 4.12 s
 </div>
 </div>
 
-<div class="jp-Cell-outputWrapper">
-
-
-<div class="jp-OutputArea jp-Cell-outputArea">
-
-<div class="jp-OutputArea-child">
-
-    
-    <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-
-
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
-<pre>The autoreload extension is already loaded. To reload it, use:
-  %reload_ext autoreload
-</pre>
-</div>
-</div>
-
-</div>
-
-</div>
-
 </div>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
@@ -16588,7 +16580,7 @@ Wall time: 4.12 s
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[73]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[31]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">list_input</span><span class="p">,</span>  <span class="n">schema</span> <span class="o">=</span> <span class="n">update_glue_github</span><span class="o">.</span><span class="n">automatic_update</span><span class="p">(</span>
@@ -16608,7 +16600,7 @@ Wall time: 4.12 s
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[74]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[32]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">description</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
@@ -16644,7 +16636,7 @@ Wall time: 4.12 s
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[75]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[33]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">update_glue_github</span><span class="o">.</span><span class="n">update_glue_github</span><span class="p">(</span><span class="n">client</span> <span class="o">=</span> <span class="n">client</span><span class="p">,</span><span class="n">dic_information</span> <span class="o">=</span> <span class="n">dic_information</span><span class="p">)</span>
@@ -16686,7 +16678,7 @@ Wall time: 4.12 s
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[76]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[34]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">update_glue_github</span><span class="o">.</span><span class="n">find_duplicates</span><span class="p">(</span>
@@ -16763,7 +16755,7 @@ Wall time: 4.12 s
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[77]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[35]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">update_glue_github</span><span class="o">.</span><span class="n">count_missing</span><span class="p">(</span><span class="n">client</span> <span class="o">=</span> <span class="n">client</span><span class="p">,</span> <span class="n">name_json</span> <span class="o">=</span> <span class="n">name_json</span><span class="p">,</span> <span class="n">bucket</span> <span class="o">=</span> <span class="n">bucket</span><span class="p">,</span><span class="n">TableName</span> <span class="o">=</span> <span class="n">table_name</span><span class="p">)</span>
@@ -16788,321 +16780,336 @@ Wall time: 4.12 s
 
 <div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output " data-mime-type="text/html">
 <style  type="text/css" >
-#T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row0_col1{
+#T_873f38f6_f9af_11eb_8d74_61041cdc4f11row0_col1{
             width:  10em;
              height:  80%;
             background:  linear-gradient(90deg,#d65f5f 100.0%, transparent 100.0%);
-        }#T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row1_col1{
+        }#T_873f38f6_f9af_11eb_8d74_61041cdc4f11row1_col1{
             width:  10em;
              height:  80%;
-            background:  linear-gradient(90deg,#d65f5f 33.1%, transparent 33.1%);
-        }#T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row2_col1{
-            width:  10em;
-             height:  80%;
-            background:  linear-gradient(90deg,#d65f5f 20.0%, transparent 20.0%);
-        }#T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row3_col1{
+            background:  linear-gradient(90deg,#d65f5f 16.7%, transparent 16.7%);
+        }#T_873f38f6_f9af_11eb_8d74_61041cdc4f11row2_col1{
             width:  10em;
              height:  80%;
             background:  linear-gradient(90deg,#d65f5f 15.8%, transparent 15.8%);
-        }#T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row4_col1,#T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row5_col1,#T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row6_col1,#T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row7_col1,#T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row8_col1,#T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row9_col1,#T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row10_col1,#T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row11_col1,#T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row12_col1,#T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row13_col1,#T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row14_col1{
+        }#T_873f38f6_f9af_11eb_8d74_61041cdc4f11row3_col1,#T_873f38f6_f9af_11eb_8d74_61041cdc4f11row4_col1,#T_873f38f6_f9af_11eb_8d74_61041cdc4f11row5_col1,#T_873f38f6_f9af_11eb_8d74_61041cdc4f11row6_col1,#T_873f38f6_f9af_11eb_8d74_61041cdc4f11row7_col1,#T_873f38f6_f9af_11eb_8d74_61041cdc4f11row8_col1,#T_873f38f6_f9af_11eb_8d74_61041cdc4f11row9_col1,#T_873f38f6_f9af_11eb_8d74_61041cdc4f11row10_col1,#T_873f38f6_f9af_11eb_8d74_61041cdc4f11row11_col1,#T_873f38f6_f9af_11eb_8d74_61041cdc4f11row12_col1,#T_873f38f6_f9af_11eb_8d74_61041cdc4f11row13_col1{
             width:  10em;
              height:  80%;
             background:  linear-gradient(90deg,#d65f5f 14.8%, transparent 14.8%);
-        }#T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row15_col1,#T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row16_col1,#T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row17_col1,#T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row18_col1{
+        }#T_873f38f6_f9af_11eb_8d74_61041cdc4f11row14_col1{
+            width:  10em;
+             height:  80%;
+            background:  linear-gradient(90deg,#d65f5f 12.6%, transparent 12.6%);
+        }#T_873f38f6_f9af_11eb_8d74_61041cdc4f11row15_col1,#T_873f38f6_f9af_11eb_8d74_61041cdc4f11row16_col1,#T_873f38f6_f9af_11eb_8d74_61041cdc4f11row17_col1{
             width:  10em;
              height:  80%;
             background:  linear-gradient(90deg,#d65f5f 1.7%, transparent 1.7%);
-        }#T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row19_col1{
+        }#T_873f38f6_f9af_11eb_8d74_61041cdc4f11row18_col1{
             width:  10em;
              height:  80%;
             background:  linear-gradient(90deg,#d65f5f 1.3%, transparent 1.3%);
-        }#T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row20_col1{
+        }#T_873f38f6_f9af_11eb_8d74_61041cdc4f11row19_col1{
             width:  10em;
              height:  80%;
             background:  linear-gradient(90deg,#d65f5f 0.4%, transparent 0.4%);
-        }#T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row21_col1,#T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row22_col1,#T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row23_col1,#T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row24_col1,#T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row25_col1,#T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row26_col1,#T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row27_col1,#T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row28_col1,#T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row29_col1,#T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row30_col1,#T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row31_col1,#T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row32_col1,#T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row33_col1,#T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row34_col1,#T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row35_col1,#T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row36_col1,#T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row37_col1,#T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row38_col1,#T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row39_col1,#T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row40_col1,#T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row41_col1,#T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row42_col1,#T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row43_col1,#T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row44_col1,#T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row45_col1,#T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row46_col1,#T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row47_col1,#T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row48_col1,#T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row49_col1,#T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row50_col1,#T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row51_col1,#T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row52_col1,#T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row53_col1,#T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row54_col1,#T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row55_col1{
+        }#T_873f38f6_f9af_11eb_8d74_61041cdc4f11row20_col1,#T_873f38f6_f9af_11eb_8d74_61041cdc4f11row21_col1,#T_873f38f6_f9af_11eb_8d74_61041cdc4f11row22_col1,#T_873f38f6_f9af_11eb_8d74_61041cdc4f11row23_col1,#T_873f38f6_f9af_11eb_8d74_61041cdc4f11row24_col1,#T_873f38f6_f9af_11eb_8d74_61041cdc4f11row25_col1,#T_873f38f6_f9af_11eb_8d74_61041cdc4f11row26_col1,#T_873f38f6_f9af_11eb_8d74_61041cdc4f11row27_col1,#T_873f38f6_f9af_11eb_8d74_61041cdc4f11row28_col1,#T_873f38f6_f9af_11eb_8d74_61041cdc4f11row29_col1,#T_873f38f6_f9af_11eb_8d74_61041cdc4f11row30_col1,#T_873f38f6_f9af_11eb_8d74_61041cdc4f11row31_col1,#T_873f38f6_f9af_11eb_8d74_61041cdc4f11row32_col1,#T_873f38f6_f9af_11eb_8d74_61041cdc4f11row33_col1,#T_873f38f6_f9af_11eb_8d74_61041cdc4f11row34_col1,#T_873f38f6_f9af_11eb_8d74_61041cdc4f11row35_col1,#T_873f38f6_f9af_11eb_8d74_61041cdc4f11row36_col1,#T_873f38f6_f9af_11eb_8d74_61041cdc4f11row37_col1,#T_873f38f6_f9af_11eb_8d74_61041cdc4f11row38_col1,#T_873f38f6_f9af_11eb_8d74_61041cdc4f11row39_col1,#T_873f38f6_f9af_11eb_8d74_61041cdc4f11row40_col1,#T_873f38f6_f9af_11eb_8d74_61041cdc4f11row41_col1,#T_873f38f6_f9af_11eb_8d74_61041cdc4f11row42_col1,#T_873f38f6_f9af_11eb_8d74_61041cdc4f11row43_col1,#T_873f38f6_f9af_11eb_8d74_61041cdc4f11row44_col1,#T_873f38f6_f9af_11eb_8d74_61041cdc4f11row45_col1,#T_873f38f6_f9af_11eb_8d74_61041cdc4f11row46_col1,#T_873f38f6_f9af_11eb_8d74_61041cdc4f11row47_col1,#T_873f38f6_f9af_11eb_8d74_61041cdc4f11row48_col1,#T_873f38f6_f9af_11eb_8d74_61041cdc4f11row49_col1,#T_873f38f6_f9af_11eb_8d74_61041cdc4f11row50_col1,#T_873f38f6_f9af_11eb_8d74_61041cdc4f11row51_col1,#T_873f38f6_f9af_11eb_8d74_61041cdc4f11row52_col1,#T_873f38f6_f9af_11eb_8d74_61041cdc4f11row53_col1,#T_873f38f6_f9af_11eb_8d74_61041cdc4f11row54_col1,#T_873f38f6_f9af_11eb_8d74_61041cdc4f11row55_col1,#T_873f38f6_f9af_11eb_8d74_61041cdc4f11row56_col1,#T_873f38f6_f9af_11eb_8d74_61041cdc4f11row57_col1,#T_873f38f6_f9af_11eb_8d74_61041cdc4f11row58_col1{
             width:  10em;
              height:  80%;
-        }</style><table id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0" ><thead>    <tr>        <th class="blank level0" ></th>        <th class="col_heading level0 col0" >total_missing</th>        <th class="col_heading level0 col1" >total_missing_pct</th>    </tr></thead><tbody>
+        }</style><table id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11" ><thead>    <tr>        <th class="blank level0" ></th>        <th class="col_heading level0 col0" >total_missing</th>        <th class="col_heading level0 col1" >total_missing_pct</th>    </tr></thead><tbody>
                 <tr>
-                        <th id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0level0_row0" class="row_heading level0 row0" >nb_obs</th>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row0_col0" class="data row0 col0" >701</td>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row0_col1" class="data row0 col1" >100.00%</td>
+                        <th id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11level0_row0" class="row_heading level0 row0" >nb_obs</th>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row0_col0" class="data row0 col0" >701</td>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row0_col1" class="data row0 col1" >100.00%</td>
             </tr>
             <tr>
-                        <th id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0level0_row1" class="row_heading level0 row1" >critical_value</th>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row1_col0" class="data row1 col0" >232</td>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row1_col1" class="data row1 col1" >33.10%</td>
+                        <th id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11level0_row1" class="row_heading level0 row1" >adjusted_t_value</th>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row1_col0" class="data row1 col0" >117</td>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row1_col1" class="data row1 col1" >16.69%</td>
             </tr>
             <tr>
-                        <th id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0level0_row2" class="row_heading level0 row2" >final_standard_error</th>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row2_col0" class="data row2 col0" >140</td>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row2_col1" class="data row2 col1" >19.97%</td>
+                        <th id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11level0_row2" class="row_heading level0 row2" >r2</th>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row2_col0" class="data row2 col0" >111</td>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row2_col1" class="data row2 col1" >15.83%</td>
             </tr>
             <tr>
-                        <th id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0level0_row3" class="row_heading level0 row3" >r2</th>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row3_col0" class="data row3 col0" >111</td>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row3_col1" class="data row3 col1" >15.83%</td>
+                        <th id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11level0_row3" class="row_heading level0 row3" >total_cites_3years</th>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row3_col0" class="data row3 col0" >104</td>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row3_col1" class="data row3 col1" >14.84%</td>
             </tr>
             <tr>
-                        <th id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0level0_row4" class="row_heading level0 row4" >sjr_best_quartile</th>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row4_col0" class="data row4 col0" >104</td>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row4_col1" class="data row4 col1" >14.84%</td>
+                        <th id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11level0_row4" class="row_heading level0 row4" >country</th>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row4_col0" class="data row4 col0" >104</td>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row4_col1" class="data row4 col1" >14.84%</td>
             </tr>
             <tr>
-                        <th id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0level0_row5" class="row_heading level0 row5" >country</th>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row5_col0" class="data row5 col0" >104</td>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row5_col1" class="data row5 col1" >14.84%</td>
+                        <th id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11level0_row5" class="row_heading level0 row5" >cites_doc_2years</th>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row5_col0" class="data row5 col0" >104</td>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row5_col1" class="data row5 col1" >14.84%</td>
             </tr>
             <tr>
-                        <th id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0level0_row6" class="row_heading level0 row6" >cites_doc_2years</th>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row6_col0" class="data row6 col0" >104</td>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row6_col1" class="data row6 col1" >14.84%</td>
+                        <th id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11level0_row6" class="row_heading level0 row6" >citable_docs_3years</th>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row6_col0" class="data row6 col0" >104</td>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row6_col1" class="data row6 col1" >14.84%</td>
             </tr>
             <tr>
-                        <th id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0level0_row7" class="row_heading level0 row7" >citable_docs_3years</th>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row7_col0" class="data row7 col0" >104</td>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row7_col1" class="data row7 col1" >14.84%</td>
+                        <th id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11level0_row7" class="row_heading level0 row7" >rank</th>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row7_col0" class="data row7 col0" >104</td>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row7_col1" class="data row7 col1" >14.84%</td>
             </tr>
             <tr>
-                        <th id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0level0_row8" class="row_heading level0 row8" >total_refs</th>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row8_col0" class="data row8 col0" >104</td>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row8_col1" class="data row8 col1" >14.84%</td>
+                        <th id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11level0_row8" class="row_heading level0 row8" >sjr</th>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row8_col0" class="data row8 col0" >104</td>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row8_col1" class="data row8 col1" >14.84%</td>
             </tr>
             <tr>
-                        <th id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0level0_row9" class="row_heading level0 row9" >total_docs_3years</th>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row9_col0" class="data row9 col0" >104</td>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row9_col1" class="data row9 col1" >14.84%</td>
+                        <th id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11level0_row9" class="row_heading level0 row9" >sjr_best_quartile</th>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row9_col0" class="data row9 col0" >104</td>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row9_col1" class="data row9 col1" >14.84%</td>
             </tr>
             <tr>
-                        <th id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0level0_row10" class="row_heading level0 row10" >total_docs_2020</th>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row10_col0" class="data row10 col0" >104</td>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row10_col1" class="data row10 col1" >14.84%</td>
+                        <th id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11level0_row10" class="row_heading level0 row10" >h_index</th>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row10_col0" class="data row10 col0" >104</td>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row10_col1" class="data row10 col1" >14.84%</td>
             </tr>
             <tr>
-                        <th id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0level0_row11" class="row_heading level0 row11" >h_index</th>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row11_col0" class="data row11 col0" >104</td>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row11_col1" class="data row11 col1" >14.84%</td>
+                        <th id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11level0_row11" class="row_heading level0 row11" >total_docs_2020</th>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row11_col0" class="data row11 col0" >104</td>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row11_col1" class="data row11 col1" >14.84%</td>
             </tr>
             <tr>
-                        <th id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0level0_row12" class="row_heading level0 row12" >total_cites_3years</th>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row12_col0" class="data row12 col0" >104</td>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row12_col1" class="data row12 col1" >14.84%</td>
+                        <th id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11level0_row12" class="row_heading level0 row12" >total_docs_3years</th>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row12_col0" class="data row12 col0" >104</td>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row12_col1" class="data row12 col1" >14.84%</td>
             </tr>
             <tr>
-                        <th id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0level0_row13" class="row_heading level0 row13" >sjr</th>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row13_col0" class="data row13 col0" >104</td>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row13_col1" class="data row13 col1" >14.84%</td>
+                        <th id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11level0_row13" class="row_heading level0 row13" >total_refs</th>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row13_col0" class="data row13 col0" >104</td>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row13_col1" class="data row13 col1" >14.84%</td>
             </tr>
             <tr>
-                        <th id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0level0_row14" class="row_heading level0 row14" >rank</th>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row14_col0" class="data row14 col0" >104</td>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row14_col1" class="data row14 col1" >14.84%</td>
+                        <th id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11level0_row14" class="row_heading level0 row14" >adjusted_standard_error</th>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row14_col0" class="data row14 col0" >88</td>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row14_col1" class="data row14 col1" >12.55%</td>
             </tr>
             <tr>
-                        <th id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0level0_row15" class="row_heading level0 row15" >windows</th>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row15_col0" class="data row15 col0" >12</td>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row15_col1" class="data row15 col1" >1.71%</td>
+                        <th id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11level0_row15" class="row_heading level0 row15" >last_date_of_observations</th>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row15_col0" class="data row15 col0" >12</td>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row15_col1" class="data row15 col1" >1.71%</td>
             </tr>
             <tr>
-                        <th id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0level0_row16" class="row_heading level0 row16" >last_date_of_observations</th>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row16_col0" class="data row16 col0" >12</td>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row16_col1" class="data row16 col1" >1.71%</td>
+                        <th id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11level0_row16" class="row_heading level0 row16" >windows</th>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row16_col0" class="data row16 col0" >12</td>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row16_col1" class="data row16 col1" >1.71%</td>
             </tr>
             <tr>
-                        <th id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0level0_row17" class="row_heading level0 row17" >first_date_of_observations</th>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row17_col0" class="data row17 col0" >12</td>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row17_col1" class="data row17 col1" >1.71%</td>
+                        <th id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11level0_row17" class="row_heading level0 row17" >first_date_of_observations</th>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row17_col0" class="data row17 col0" >12</td>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row17_col1" class="data row17 col1" >1.71%</td>
             </tr>
             <tr>
-                        <th id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0level0_row18" class="row_heading level0 row18" >avg_windows</th>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row18_col0" class="data row18 col0" >12</td>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row18_col1" class="data row18 col1" >1.71%</td>
+                        <th id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11level0_row18" class="row_heading level0 row18" >n</th>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row18_col0" class="data row18 col0" >9</td>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row18_col1" class="data row18 col1" >1.28%</td>
             </tr>
             <tr>
-                        <th id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0level0_row19" class="row_heading level0 row19" >n</th>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row19_col0" class="data row19 col0" >9</td>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row19_col1" class="data row19 col1" >1.28%</td>
+                        <th id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11level0_row19" class="row_heading level0 row19" >beta</th>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row19_col0" class="data row19 col0" >3</td>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row19_col1" class="data row19 col1" >0.43%</td>
             </tr>
             <tr>
-                        <th id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0level0_row20" class="row_heading level0 row20" >beta</th>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row20_col0" class="data row20 col0" >3</td>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row20_col1" class="data row20 col1" >0.43%</td>
+                        <th id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11level0_row20" class="row_heading level0 row20" >publication_name</th>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row20_col0" class="data row20 col0" >0</td>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row20_col1" class="data row20 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0level0_row21" class="row_heading level0 row21" >target</th>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row21_col0" class="data row21 col0" >0</td>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row21_col1" class="data row21 col1" >0.00%</td>
+                        <th id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11level0_row21" class="row_heading level0 row21" >lag</th>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row21_col0" class="data row21 col0" >0</td>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row21_col1" class="data row21 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0level0_row22" class="row_heading level0 row22" >significant</th>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row22_col0" class="data row22 col0" >0</td>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row22_col1" class="data row22 col1" >0.00%</td>
+                        <th id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11level0_row22" class="row_heading level0 row22" >environmental</th>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row22_col0" class="data row22 col0" >0</td>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row22_col1" class="data row22 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0level0_row23" class="row_heading level0 row23" >quadratic_term</th>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row23_col0" class="data row23 col0" >0</td>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row23_col1" class="data row23 col1" >0.00%</td>
+                        <th id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11level0_row23" class="row_heading level0 row23" >governance</th>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row23_col0" class="data row23 col0" >0</td>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row23_col1" class="data row23 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0level0_row24" class="row_heading level0 row24" >interaction_term</th>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row24_col0" class="data row24 col0" >0</td>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row24_col1" class="data row24 col1" >0.00%</td>
+                        <th id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11level0_row24" class="row_heading level0 row24" >sign_of_effect</th>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row24_col0" class="data row24 col0" >0</td>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row24_col1" class="data row24 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0level0_row25" class="row_heading level0 row25" >lag</th>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row25_col0" class="data row25 col0" >0</td>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row25_col1" class="data row25 col1" >0.00%</td>
+                        <th id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11level0_row25" class="row_heading level0 row25" >significant</th>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row25_col0" class="data row25 col0" >0</td>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row25_col1" class="data row25 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0level0_row26" class="row_heading level0 row26" >sign_of_effect</th>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row26_col0" class="data row26 col0" >0</td>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row26_col1" class="data row26 col1" >0.00%</td>
+                        <th id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11level0_row26" class="row_heading level0 row26" >sign_positive</th>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row26_col0" class="data row26 col0" >0</td>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row26_col1" class="data row26 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0level0_row27" class="row_heading level0 row27" >environmental</th>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row27_col0" class="data row27 col0" >0</td>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row27_col1" class="data row27 col1" >0.00%</td>
+                        <th id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11level0_row27" class="row_heading level0 row27" >sign_negative</th>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row27_col0" class="data row27 col0" >0</td>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row27_col1" class="data row27 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0level0_row28" class="row_heading level0 row28" >social</th>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row28_col0" class="data row28 col0" >0</td>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row28_col1" class="data row28 col1" >0.00%</td>
+                        <th id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11level0_row28" class="row_heading level0 row28" >sign_insignificant</th>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row28_col0" class="data row28 col0" >0</td>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row28_col1" class="data row28 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0level0_row29" class="row_heading level0 row29" >adjusted_independent</th>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row29_col0" class="data row29 col0" >0</td>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row29_col1" class="data row29 col1" >0.00%</td>
+                        <th id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11level0_row29" class="row_heading level0 row29" >interaction_term</th>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row29_col0" class="data row29 col0" >0</td>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row29_col1" class="data row29 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0level0_row30" class="row_heading level0 row30" >independent</th>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row30_col0" class="data row30 col0" >0</td>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row30_col1" class="data row30 col1" >0.00%</td>
+                        <th id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11level0_row30" class="row_heading level0 row30" >adjusted_independent</th>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row30_col0" class="data row30 col0" >0</td>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row30_col1" class="data row30 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0level0_row31" class="row_heading level0 row31" >adjusted_model</th>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row31_col0" class="data row31 col0" >0</td>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row31_col1" class="data row31 col1" >0.00%</td>
+                        <th id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11level0_row31" class="row_heading level0 row31" >quadratic_term</th>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row31_col0" class="data row31 col0" >0</td>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row31_col1" class="data row31 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0level0_row32" class="row_heading level0 row32" >adjusted_dependent</th>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row32_col0" class="data row32 col0" >0</td>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row32_col1" class="data row32 col1" >0.00%</td>
+                        <th id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11level0_row32" class="row_heading level0 row32" >row_id_google_spreadsheet</th>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row32_col0" class="data row32 col0" >0</td>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row32_col1" class="data row32 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0level0_row33" class="row_heading level0 row33" >dependent</th>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row33_col0" class="data row33 col0" >0</td>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row33_col1" class="data row33 col1" >0.00%</td>
+                        <th id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11level0_row33" class="row_heading level0 row33" >test_standard_error</th>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row33_col0" class="data row33 col0" >0</td>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row33_col1" class="data row33 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0level0_row34" class="row_heading level0 row34" >governance</th>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row34_col0" class="data row34 col0" >0</td>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row34_col1" class="data row34 col1" >0.00%</td>
+                        <th id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11level0_row34" class="row_heading level0 row34" >test_p_value</th>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row34_col0" class="data row34 col0" >0</td>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row34_col1" class="data row34 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0level0_row35" class="row_heading level0 row35" >study_focusing_on_developing_or_developed_countries</th>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row35_col0" class="data row35 col0" >0</td>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row35_col1" class="data row35 col1" >0.00%</td>
+                        <th id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11level0_row35" class="row_heading level0 row35" >test_t_value</th>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row35_col0" class="data row35 col0" >0</td>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row35_col1" class="data row35 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0level0_row36" class="row_heading level0 row36" >adjusted_model_name</th>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row36_col0" class="data row36 col0" >0</td>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row36_col1" class="data row36 col1" >0.00%</td>
+                        <th id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11level0_row36" class="row_heading level0 row36" >row_id_excel</th>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row36_col0" class="data row36 col0" >0</td>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row36_col1" class="data row36 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0level0_row37" class="row_heading level0 row37" >financial_crisis</th>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row37_col0" class="data row37 col0" >0</td>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row37_col1" class="data row37 col1" >0.00%</td>
+                        <th id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11level0_row37" class="row_heading level0 row37" >social</th>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row37_col0" class="data row37 col0" >0</td>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row37_col1" class="data row37 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0level0_row38" class="row_heading level0 row38" >id</th>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row38_col0" class="data row38 col0" >0</td>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row38_col1" class="data row38 col1" >0.00%</td>
+                        <th id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11level0_row38" class="row_heading level0 row38" >independent</th>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row38_col0" class="data row38 col0" >0</td>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row38_col1" class="data row38 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0level0_row39" class="row_heading level0 row39" >image</th>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row39_col0" class="data row39 col0" >0</td>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row39_col1" class="data row39 col1" >0.00%</td>
+                        <th id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11level0_row39" class="row_heading level0 row39" >paper_name</th>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row39_col0" class="data row39 col0" >0</td>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row39_col1" class="data row39 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0level0_row40" class="row_heading level0 row40" >row_id_excel</th>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row40_col0" class="data row40 col0" >0</td>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row40_col1" class="data row40 col1" >0.00%</td>
+                        <th id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11level0_row40" class="row_heading level0 row40" >adjusted_dependent</th>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row40_col0" class="data row40 col0" >0</td>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row40_col1" class="data row40 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0level0_row41" class="row_heading level0 row41" >row_id_google_spreadsheet</th>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row41_col0" class="data row41 col0" >0</td>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row41_col1" class="data row41 col1" >0.00%</td>
+                        <th id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11level0_row41" class="row_heading level0 row41" >incremental_id</th>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row41_col0" class="data row41 col0" >0</td>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row41_col1" class="data row41 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0level0_row42" class="row_heading level0 row42" >table_refer</th>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row42_col0" class="data row42 col0" >0</td>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row42_col1" class="data row42 col1" >0.00%</td>
+                        <th id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11level0_row42" class="row_heading level0 row42" >publication_year</th>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row42_col0" class="data row42 col0" >0</td>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row42_col1" class="data row42 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0level0_row43" class="row_heading level0 row43" >incremental_id</th>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row43_col0" class="data row43 col0" >0</td>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row43_col1" class="data row43 col1" >0.00%</td>
+                        <th id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11level0_row43" class="row_heading level0 row43" >publication_type</th>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row43_col0" class="data row43 col0" >0</td>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row43_col1" class="data row43 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0level0_row44" class="row_heading level0 row44" >paper_name</th>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row44_col0" class="data row44 col0" >0</td>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row44_col1" class="data row44 col1" >0.00%</td>
+                        <th id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11level0_row44" class="row_heading level0 row44" >cnrs_ranking</th>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row44_col0" class="data row44 col0" >0</td>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row44_col1" class="data row44 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0level0_row45" class="row_heading level0 row45" >publication_name</th>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row45_col0" class="data row45 col0" >0</td>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row45_col1" class="data row45 col1" >0.00%</td>
+                        <th id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11level0_row45" class="row_heading level0 row45" >peer_reviewed</th>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row45_col0" class="data row45 col0" >0</td>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row45_col1" class="data row45 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0level0_row46" class="row_heading level0 row46" >publication_year</th>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row46_col0" class="data row46 col0" >0</td>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row46_col1" class="data row46 col1" >0.00%</td>
+                        <th id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11level0_row46" class="row_heading level0 row46" >study_focused_on_social_environmental_behaviour</th>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row46_col0" class="data row46 col0" >0</td>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row46_col1" class="data row46 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0level0_row47" class="row_heading level0 row47" >publication_type</th>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row47_col0" class="data row47 col0" >0</td>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row47_col1" class="data row47 col1" >0.00%</td>
+                        <th id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11level0_row47" class="row_heading level0 row47" >type_of_data</th>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row47_col0" class="data row47 col0" >0</td>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row47_col1" class="data row47 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0level0_row48" class="row_heading level0 row48" >cnrs_ranking</th>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row48_col0" class="data row48 col0" >0</td>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row48_col1" class="data row48 col1" >0.00%</td>
+                        <th id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11level0_row48" class="row_heading level0 row48" >regions</th>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row48_col0" class="data row48 col0" >0</td>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row48_col1" class="data row48 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0level0_row49" class="row_heading level0 row49" >peer_reviewed</th>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row49_col0" class="data row49 col0" >0</td>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row49_col1" class="data row49 col1" >0.00%</td>
+                        <th id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11level0_row49" class="row_heading level0 row49" >study_focusing_on_developing_or_developed_countries</th>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row49_col0" class="data row49 col0" >0</td>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row49_col1" class="data row49 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0level0_row50" class="row_heading level0 row50" >study_focused_on_social_environmental_behaviour</th>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row50_col0" class="data row50 col0" >0</td>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row50_col1" class="data row50 col1" >0.00%</td>
+                        <th id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11level0_row50" class="row_heading level0 row50" >to_remove</th>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row50_col0" class="data row50 col0" >0</td>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row50_col1" class="data row50 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0level0_row51" class="row_heading level0 row51" >type_of_data</th>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row51_col0" class="data row51 col0" >0</td>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row51_col1" class="data row51 col1" >0.00%</td>
+                        <th id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11level0_row51" class="row_heading level0 row51" >image</th>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row51_col0" class="data row51 col0" >0</td>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row51_col1" class="data row51 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0level0_row52" class="row_heading level0 row52" >regions</th>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row52_col0" class="data row52 col0" >0</td>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row52_col1" class="data row52 col1" >0.00%</td>
+                        <th id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11level0_row52" class="row_heading level0 row52" >kyoto</th>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row52_col0" class="data row52 col0" >0</td>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row52_col1" class="data row52 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0level0_row53" class="row_heading level0 row53" >to_remove</th>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row53_col0" class="data row53 col0" >0</td>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row53_col1" class="data row53 col1" >0.00%</td>
+                        <th id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11level0_row53" class="row_heading level0 row53" >financial_crisis</th>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row53_col0" class="data row53 col0" >0</td>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row53_col1" class="data row53 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0level0_row54" class="row_heading level0 row54" >kyoto</th>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row54_col0" class="data row54 col0" >0</td>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row54_col1" class="data row54 col1" >0.00%</td>
+                        <th id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11level0_row54" class="row_heading level0 row54" >table_refer</th>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row54_col0" class="data row54 col0" >0</td>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row54_col1" class="data row54 col1" >0.00%</td>
             </tr>
             <tr>
-                        <th id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0level0_row55" class="row_heading level0 row55" >to_check_final</th>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row55_col0" class="data row55 col0" >0</td>
-                        <td id="T_b3f783c4_f9a2_11eb_ae51_9b80a2c758a0row55_col1" class="data row55 col1" >0.00%</td>
+                        <th id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11level0_row55" class="row_heading level0 row55" >adjusted_model_name</th>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row55_col0" class="data row55 col0" >0</td>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row55_col1" class="data row55 col1" >0.00%</td>
+            </tr>
+            <tr>
+                        <th id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11level0_row56" class="row_heading level0 row56" >adjusted_model</th>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row56_col0" class="data row56 col0" >0</td>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row56_col1" class="data row56 col1" >0.00%</td>
+            </tr>
+            <tr>
+                        <th id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11level0_row57" class="row_heading level0 row57" >dependent</th>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row57_col0" class="data row57 col0" >0</td>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row57_col1" class="data row57 col1" >0.00%</td>
+            </tr>
+            <tr>
+                        <th id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11level0_row58" class="row_heading level0 row58" >id</th>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row58_col0" class="data row58 col0" >0</td>
+                        <td id="T_873f38f6_f9af_11eb_8d74_61041cdc4f11row58_col1" class="data row58 col1" >0.00%</td>
             </tr>
     </tbody></table>
 </div>
@@ -17123,7 +17130,7 @@ Wall time: 4.12 s
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[78]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[36]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">create_schema</span><span class="o">.</span><span class="n">make_data_schema_github</span><span class="p">(</span><span class="n">name_json</span> <span class="o">=</span> <span class="n">name_json</span><span class="p">)</span>
@@ -17175,7 +17182,7 @@ jupyter nbconvert --to html Template_analysis_from_lambda-2020-11-22-08-12-20.ip
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[79]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[37]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">boto3</span>
@@ -17196,7 +17203,7 @@ jupyter nbconvert --to html Template_analysis_from_lambda-2020-11-22-08-12-20.ip
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[80]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[38]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">primary_key</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
@@ -17212,7 +17219,7 @@ jupyter nbconvert --to html Template_analysis_from_lambda-2020-11-22-08-12-20.ip
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[81]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[39]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">payload</span> <span class="o">=</span> <span class="p">{</span>
@@ -17245,7 +17252,7 @@ jupyter nbconvert --to html Template_analysis_from_lambda-2020-11-22-08-12-20.ip
 <div class="jp-OutputArea-child">
 
     
-    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[81]:</div>
+    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[39]:</div>
 
 
 
@@ -17272,7 +17279,7 @@ jupyter nbconvert --to html Template_analysis_from_lambda-2020-11-22-08-12-20.ip
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[82]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[40]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="c1">#response = client_lambda.invoke(</span>
@@ -17297,7 +17304,7 @@ jupyter nbconvert --to html Template_analysis_from_lambda-2020-11-22-08-12-20.ip
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[41]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">os</span><span class="o">,</span> <span class="nn">time</span><span class="o">,</span> <span class="nn">shutil</span><span class="o">,</span> <span class="nn">urllib</span><span class="o">,</span> <span class="nn">ipykernel</span><span class="o">,</span> <span class="nn">json</span>
@@ -17310,10 +17317,10 @@ jupyter nbconvert --to html Template_analysis_from_lambda-2020-11-22-08-12-20.ip
 </div>
 </div>
 
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[42]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">create_report</span><span class="o">.</span><span class="n">create_report</span><span class="p">(</span><span class="n">extension</span> <span class="o">=</span> <span class="s2">&quot;html&quot;</span><span class="p">,</span> <span class="n">keep_code</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">notebookname</span> <span class="o">=</span>  <span class="n">notebookname</span><span class="p">)</span>
@@ -17324,10 +17331,32 @@ jupyter nbconvert --to html Template_analysis_from_lambda-2020-11-22-08-12-20.ip
 </div>
 </div>
 
+<div class="jp-Cell-outputWrapper">
+
+
+<div class="jp-OutputArea jp-Cell-outputArea">
+
+<div class="jp-OutputArea-child">
+
+    
+    <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+
+
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
+<pre>Report Available at this adress:
+ /home/ec2-user/esg_metadata/01_data_preprocessing/01_transform_tables/Reports/00_meta_analysis.html
+</pre>
+</div>
+</div>
+
+</div>
+
+</div>
+
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[43]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">create_schema</span><span class="o">.</span><span class="n">create_schema</span><span class="p">(</span><span class="n">name_json</span><span class="p">,</span> <span class="n">path_save_image</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parent_path</span><span class="p">,</span> <span class="s1">&#39;utils&#39;</span><span class="p">))</span>
@@ -17341,7 +17370,7 @@ jupyter nbconvert --to html Template_analysis_from_lambda-2020-11-22-08-12-20.ip
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[44]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="c1">### Update TOC in Github</span>
