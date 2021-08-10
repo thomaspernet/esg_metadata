@@ -156,20 +156,24 @@ SELECT
        publication_year, publication_type, cnrs_ranking, peer_reviewed,
        study_focused_on_social_environmental_behaviour, type_of_data,
        first_date_of_observations, last_date_of_observations,
-       windows, avg_windows, adjusted_model_name,
+       windows, adjusted_model_name,
        adjusted_model, dependent, adjusted_dependent, independent,
        adjusted_independent, 
-       CASE WHEN social = 'True' THEN 'YES' ELSE 'NO' END AS social,
-       CASE WHEN environmental = 'True' THEN 'YES' ELSE 'NO' END AS environmental,
-       CASE WHEN governance = 'True' THEN 'YES' ELSE 'NO' END AS governance,
-       CASE WHEN financial_crisis = True THEN 'YES' ELSE 'NO' END AS financial_crisis,
-       CASE WHEN kyoto = True THEN 'YES' ELSE 'NO' END AS kyoto,
-       CASE WHEN regions = 'ARAB WORLD' THEN 'WORLDWIDE' ELSE regions END AS regions,
-       CASE WHEN study_focusing_on_developing_or_developed_countries = 'Europe' THEN 'Worldwide' ELSE study_focusing_on_developing_or_developed_countries END AS study_focusing_on_developing_or_developed_countries,
+       social,
+       environmental,
+       governance,
+       financial_crisis,
+       kyoto,
+       regions,
+       study_focusing_on_developing_or_developed_countries,
        lag,
        interaction_term, quadratic_term, n, r2, beta,
-       sign_of_effect,target, significant, final_standard_error,
-       to_check_final, weight
+       sign_of_effect,
+       adjusted_t_value,
+       adjusted_standard_error,
+       target,
+       p_value_significant,
+       weight
 FROM 
   test 
   LEFT JOIN (
@@ -313,7 +317,7 @@ mutate(
     kyoto =relevel(as.factor(kyoto), ref = 'NO'),
     target =relevel(as.factor(target), ref = 'NOT_SIGNIFICANT'),
     study_focusing_on_developing_or_developed_countries =relevel(
-        as.factor(study_focusing_on_developing_or_developed_countries), ref = 'Worldwide'),
+        as.factor(study_focusing_on_developing_or_developed_countries), ref = 'WORLDWIDE'),
     regions =relevel(as.factor(regions), ref = 'WORLDWIDE'),
     cnrs_ranking =relevel(as.factor(cnrs_ranking), ref = '0'),
 )
@@ -501,6 +505,142 @@ stargazer(list_final, type = "text",
           omit = "id", style = "qje")
 ```
 
+<!-- #region kernel="SoS" -->
+## Model OLS: 
+
+- Remove 10 outliers -> critical value more than 1K -> high leverage and does not represent the true data
+- Standard error robust
+
+### Computation t-value
+
+* construct should_t_value   equals to “TO_CHECK” → if test_standard_error   = “TO_CHECK” and adjusted_model  is not PANEL or POOLED (use panel because panel use clustered/robust standard error no direct computation), then check if switch standard error and t-stat, so use column sr has t-stat and compare with critical value. If match critical value, and equals to stars  then OK, else “TO_CHECK”
+* Construct adjusted_standard_error : if test_standard_error  is OK and should_t_value  is NO_NEED_TO_CHECK then use sr , else leave blank
+* Construct **adjusted_t_value**: 
+  * ⚠️ critical value (the raw data has a column for the t_value which is similar, but the variable adjusted_t_value is reconstructed based on known t_value or in case of unknown t_value then from standard error or p-value: 
+    * If test_t_value is equals to TO_CHECK or OK then use t_value ← We use the value reported in the paper, not the one reconstructed
+    * ELSE if test_standard_error is equal to NO_SE and test_p_value is equal to OK then we can compute the critical value using the t-inverse function. 
+      * Ex: round(T.INV(1-X114, I114) where X114 is the p-value, so we want to get the right tail. If p-value is .05, the the right tail is .95.
+    * ELSE beta / standard error 
+    * Note, if critical value cannot be computed, it is because of one of the following reason
+      *  p-value is 0, then cannot compute the critical value
+      * standard error is 0, cannot divide by 0
+      * missing standard error, t-value or p-value
+<!-- #endregion -->
+
+```sos kernel="SoS"
+df['adjusted_t_value'].describe()
+```
+
+<!-- #region kernel="SoS" -->
+Model 1: No absolute value
+
+Interested in the magnitude of the t-student critical value
+<!-- #endregion -->
+
+```sos kernel="R"
+t_0 <- glm(adjusted_t_value ~ environmental,
+           data = df_final %>% filter(adjusted_t_value < 10),
+           family=gaussian(identity))
+t_1 <- glm(adjusted_t_value ~social,
+           data = df_final %>% filter(adjusted_t_value < 10) , family=gaussian(identity))
+t_2 <- glm(adjusted_t_value ~ governance ,
+           data = df_final %>% filter(adjusted_t_value < 10) , family=gaussian(identity))
+
+### add model
+t_3 <- glm(adjusted_t_value ~ environmental+
+           adjusted_model  ,
+           data = df_final  %>%filter(adjusted_t_value < 10) ,
+           family=gaussian(identity))
+          
+t_4 <- glm(adjusted_t_value ~ social+
+           adjusted_model,
+           data = df_final %>% filter(adjusted_t_value < 10) , family=gaussian(identity))
+t_5 <- glm(adjusted_t_value ~ governance
+           +adjusted_model,
+           data = df_final  %>%filter(adjusted_t_value < 10) , family=gaussian(identity))
+
+### add kyoto and financial crisis
+t_6 <- glm(adjusted_t_value ~ environmental+
+           adjusted_model  
+                + kyoto 
+                + financial_crisis,
+           data = df_final  %>%filter(adjusted_t_value < 10) ,
+           family=gaussian(identity))
+          
+t_7 <- glm(adjusted_t_value ~ social+
+           adjusted_model    
+                + kyoto 
+                + financial_crisis,
+           data = df_final  %>%filter(adjusted_t_value < 10) ,family=gaussian(identity))
+t_8 <- glm(adjusted_t_value ~ governance
+           +adjusted_model
+                + kyoto 
+                + financial_crisis,
+           data = df_final  %>%filter(adjusted_t_value < 10) , family=gaussian(identity))
+
+
+list_final = list(t_0, t_1, t_2, t_3, t_4, t_5, t_6, t_7, t_8)
+stargazer(list_final, type = "text", 
+  se = lapply(list_final,
+              se_robust),
+          omit = "id", style = "qje")
+```
+
+<!-- #region kernel="R" -->
+Model 2: absolute value
+
+Interested in the factors leading to larger t-student critical value, hence significant coefficient
+<!-- #endregion -->
+
+```sos kernel="R"
+t_0 <- glm(abs(adjusted_t_value) ~ environmental,
+           data = df_final %>%filter(adjusted_t_value < 10),
+           family=gaussian(identity))
+t_1 <- glm(abs(adjusted_t_value) ~social,
+           data = df_final %>%filter(adjusted_t_value < 10), family=gaussian(identity))
+t_2 <- glm(abs(adjusted_t_value) ~ governance ,
+           data = df_final %>%filter(adjusted_t_value < 10), family=gaussian(identity))
+
+### add model
+t_3 <- glm(abs(adjusted_t_value) ~ environmental+
+           adjusted_model  ,
+           data = df_final %>%filter(adjusted_t_value < 10),
+           family=gaussian(identity))
+          
+t_4 <- glm(abs(adjusted_t_value) ~ social+
+           adjusted_model,
+           data = df_final %>%filter(adjusted_t_value < 10), family=gaussian(identity))
+t_5 <- glm(abs(adjusted_t_value) ~ governance
+           +adjusted_model,
+           data = df_final %>%filter(adjusted_t_value < 10), family=gaussian(identity))
+
+### add kyoto and financial crisis
+t_6 <- glm(abs(adjusted_t_value) ~ environmental+
+           adjusted_model  
+                + kyoto 
+                + financial_crisis,
+           data = df_final %>%filter(adjusted_t_value < 10),
+           family=gaussian(identity))
+          
+t_7 <- glm(abs(adjusted_t_value) ~ social+
+           adjusted_model    
+                + kyoto 
+                + financial_crisis,
+           data = df_final %>%filter(adjusted_t_value < 10),family=gaussian(identity))
+t_8 <- glm(abs(adjusted_t_value) ~ governance
+           +adjusted_model
+                + kyoto 
+                + financial_crisis,
+           data = df_final %>%filter(adjusted_t_value < 10), family=gaussian(identity))
+
+
+list_final = list(t_0, t_1, t_2, t_3, t_4, t_5, t_6, t_7, t_8)
+stargazer(list_final, type = "text", 
+  se = lapply(list_final,
+              se_robust),
+          omit = "id", style = "qje")
+```
+
 <!-- #region kernel="R" -->
 # Table 2: Paper control
 
@@ -594,6 +734,138 @@ stargazer(list_final, type = "text",
   se = lapply(list_final,
               se_robust),
           coef=list_final.rrr,
+          omit = "id", style = "qje")
+```
+
+<!-- #region kernel="R" -->
+## OLS
+<!-- #endregion -->
+
+```sos kernel="R"
+t_0 <- glm(adjusted_t_value ~ environmental+
+           adjusted_model  
+                + kyoto 
+                + financial_crisis
+           + publication_year
+           + first_date_of_observations
+           + last_date_of_observations
+           ,
+           data = df_final  %>%filter(adjusted_t_value < 10) ,
+           family=gaussian(identity))
+t_1 <- glm(adjusted_t_value ~ social+
+           adjusted_model    
+                + kyoto 
+                + financial_crisis
+           + publication_year
+           + first_date_of_observations
+           + last_date_of_observations,
+           data = df_final  %>%filter(adjusted_t_value < 10) , family=gaussian(identity))
+
+t_2 <- glm(adjusted_t_value ~ governance
+           +adjusted_model
+            + kyoto 
+            + financial_crisis
+           + publication_year
+           + first_date_of_observations
+           + last_date_of_observations,
+           data = df_final  %>%filter(adjusted_t_value < 10) , family=gaussian(identity))
+
+
+### window 
+t_3 <- glm(adjusted_t_value ~ environmental+
+           adjusted_model  
+           + kyoto 
+           + financial_crisis
+           + publication_year
+           + windows,
+           data = df_final  %>%filter(adjusted_t_value < 10) ,
+           family=gaussian(identity))
+t_4 <- glm(adjusted_t_value ~ social+
+           adjusted_model    
+           + kyoto 
+           + financial_crisis
+           + publication_year
+           + windows,
+           data = df_final  %>%filter(adjusted_t_value < 10) , family=gaussian(identity))
+
+t_5 <- glm(adjusted_t_value ~ governance
+           +adjusted_model
+           + kyoto 
+           + financial_crisis
+           + publication_year
+           + windows,
+           data = df_final  %>%filter(adjusted_t_value < 10) , family=gaussian(identity))
+
+
+list_final = list(t_0, t_1, t_2,t_3, t_4, t_5)
+
+stargazer(list_final, type = "text", 
+  se = lapply(list_final,
+              se_robust),
+          omit = "id", style = "qje")
+```
+
+```sos kernel="R"
+t_0 <- glm(abs(adjusted_t_value) ~ environmental+
+           adjusted_model  
+                + kyoto 
+                + financial_crisis
+           + publication_year
+           + first_date_of_observations
+           + last_date_of_observations
+           ,
+           data = df_final  %>%filter(adjusted_t_value < 10) ,
+           family=gaussian(identity))
+t_1 <- glm(abs(adjusted_t_value) ~ social+
+           adjusted_model    
+                + kyoto 
+                + financial_crisis
+           + publication_year
+           + first_date_of_observations
+           + last_date_of_observations,
+           data = df_final  %>%filter(adjusted_t_value < 10) , family=gaussian(identity))
+
+t_2 <- glm(abs(adjusted_t_value) ~ governance
+           +adjusted_model
+            + kyoto 
+            + financial_crisis
+           + publication_year
+           + first_date_of_observations
+           + last_date_of_observations,
+           data = df_final  %>%filter(adjusted_t_value < 10) , family=gaussian(identity))
+
+
+### window 
+t_3 <- glm(abs(adjusted_t_value) ~ environmental+
+           adjusted_model  
+           + kyoto 
+           + financial_crisis
+           + publication_year
+           + windows,
+           data = df_final  %>%filter(adjusted_t_value < 10) ,
+           family=gaussian(identity))
+t_4 <- glm(abs(adjusted_t_value) ~ social+
+           adjusted_model    
+           + kyoto 
+           + financial_crisis
+           + publication_year
+           + windows,
+           data = df_final  %>%filter(adjusted_t_value < 10) , family=gaussian(identity))
+
+t_5 <- glm(abs(adjusted_t_value) ~ governance
+           +adjusted_model
+           + kyoto 
+           + financial_crisis
+           + publication_year
+           + windows,
+           data = df_final  %>%filter(adjusted_t_value < 10) , family=gaussian(identity))
+
+
+list_final = list(t_0, t_1, t_2,t_3, t_4, t_5)
+
+stargazer(list_final, type = "text", 
+  se = lapply(list_final,
+              se_robust),
           omit = "id", style = "qje")
 ```
 
@@ -708,6 +980,186 @@ stargazer(list_final, type = "text",
 ```
 
 <!-- #region kernel="R" -->
+## OLS
+<!-- #endregion -->
+
+```sos kernel="R"
+### lag
+t_0 <- glm(adjusted_t_value ~ environmental+
+           adjusted_model  
+                + kyoto 
+                + financial_crisis
+           + lag
+           ,
+           data = df_final  %>%filter(adjusted_t_value < 10) ,
+           family=gaussian(identity))
+
+t_1 <- glm(adjusted_t_value ~ social+
+           adjusted_model    
+                + kyoto 
+                + financial_crisis
+           + lag,
+           data = df_final  %>%filter(adjusted_t_value < 10) ,
+           family=gaussian(identity))
+
+t_2 <- glm(adjusted_t_value ~ governance
+           +adjusted_model
+            + kyoto 
+            + financial_crisis
+           + lag,
+           data = df_final  %>%filter(adjusted_t_value < 10) ,
+           family=gaussian(identity))
+
+
+### interaction_term 
+t_3 <- glm(adjusted_t_value ~ environmental+
+           adjusted_model  
+           + kyoto 
+           + financial_crisis
+           + interaction_term,
+           data = df_final  %>%filter(adjusted_t_value < 10) ,
+           family=gaussian(identity))
+
+t_4 <- glm(adjusted_t_value ~ social+
+           adjusted_model    
+           + kyoto 
+           + financial_crisis
+           + interaction_term,
+           data = df_final  %>%filter(adjusted_t_value < 10) ,
+           family=gaussian(identity))
+
+t_5 <- glm(adjusted_t_value ~ governance
+           +adjusted_model
+           + kyoto 
+           + financial_crisis
+           + interaction_term,
+           data = df_final  %>%filter(adjusted_t_value < 10) ,
+           family=gaussian(identity))
+
+
+### quadratic_term
+t_6 <- glm(adjusted_t_value ~ environmental+
+           adjusted_model  
+           + kyoto 
+           + financial_crisis
+           + quadratic_term,
+           data = df_final  %>%filter(adjusted_t_value < 10) ,
+           family=gaussian(identity))
+
+t_7 <- glm(adjusted_t_value ~ social+
+           adjusted_model    
+           + kyoto 
+           + financial_crisis
+           + quadratic_term,
+           data = df_final  %>%filter(adjusted_t_value < 10) ,
+           family=gaussian(identity))
+
+t_8 <- glm(adjusted_t_value ~ governance
+           +adjusted_model
+           + kyoto 
+           + financial_crisis
+           + quadratic_term,
+           data = df_final  %>%filter(adjusted_t_value < 10) ,
+           family=gaussian(identity))
+
+
+list_final = list(t_0, t_1, t_2,t_3, t_4, t_5, t_6,t_7, t_8)
+
+stargazer(list_final, type = "text", 
+  se = lapply(list_final,
+              se_robust),
+          omit = "id", style = "qje")
+```
+
+```sos kernel="R"
+### lag
+t_0 <- glm(abs(adjusted_t_value) ~ environmental+
+           adjusted_model  
+                + kyoto 
+                + financial_crisis
+           + lag
+           ,
+           data = df_final  %>%filter(adjusted_t_value < 10) ,
+           family=gaussian(identity))
+
+t_1 <- glm(abs(adjusted_t_value) ~ social+
+           adjusted_model    
+                + kyoto 
+                + financial_crisis
+           + lag,
+           data = df_final  %>%filter(adjusted_t_value < 10) ,
+           family=gaussian(identity))
+
+t_2 <- glm(abs(adjusted_t_value) ~ governance
+           +adjusted_model
+            + kyoto 
+            + financial_crisis
+           + lag,
+           data = df_final  %>%filter(adjusted_t_value < 10) ,
+           family=gaussian(identity))
+
+
+### interaction_term 
+t_3 <- glm(abs(adjusted_t_value) ~ environmental+
+           adjusted_model  
+           + kyoto 
+           + financial_crisis
+           + interaction_term,
+           data = df_final  %>%filter(adjusted_t_value < 10) ,
+           family=gaussian(identity))
+
+t_4 <- glm(abs(adjusted_t_value) ~ social+
+           adjusted_model    
+           + kyoto 
+           + financial_crisis
+           + interaction_term,
+           data = df_final  %>%filter(adjusted_t_value < 10) ,
+           family=gaussian(identity))
+
+t_5 <- glm(abs(adjusted_t_value) ~ governance
+           +adjusted_model
+           + kyoto 
+           + financial_crisis
+           + interaction_term,
+           data = df_final  %>%filter(adjusted_t_value < 10) ,
+           family=gaussian(identity))
+
+
+### quadratic_term
+t_6 <- glm(abs(adjusted_t_value) ~ environmental+
+           adjusted_model  
+           + kyoto 
+           + financial_crisis
+           + quadratic_term,
+           data = df_final  %>%filter(adjusted_t_value < 10) ,
+           family=gaussian(identity))
+
+t_7 <- glm(abs(adjusted_t_value) ~ social+
+           adjusted_model    
+           + kyoto 
+           + financial_crisis
+           + quadratic_term,
+           data = df_final  %>%filter(adjusted_t_value < 10) ,
+           family=gaussian(identity))
+
+t_8 <- glm(abs(adjusted_t_value) ~ governance
+           +adjusted_model
+           + kyoto 
+           + financial_crisis
+           + quadratic_term,
+           data = df_final  %>%filter(adjusted_t_value < 10) ,
+           family=gaussian(identity))
+
+
+list_final = list(t_0, t_1, t_2,t_3, t_4, t_5, t_6,t_7, t_8)
+
+stargazer(list_final, type = "text", 
+  se = lapply(list_final,
+              se_robust),
+          omit = "id", style = "qje")
+```
+
+<!-- #region kernel="R" -->
 # Table 3: Region
 
 - regions
@@ -801,6 +1253,134 @@ stargazer(list_final, type = "text",
   se = lapply(list_final,
               se_robust),
           coef=list_final.rrr,
+          omit = "id", style = "qje")
+```
+
+<!-- #region kernel="R" -->
+## OLS
+<!-- #endregion -->
+
+```sos kernel="R"
+### regions
+t_0 <- glm(adjusted_t_value ~ environmental+
+           adjusted_model  
+                + kyoto 
+                + financial_crisis
+           + regions
+           ,
+           data = df_final  %>%filter(adjusted_t_value < 10) ,
+           family=gaussian(identity))
+
+t_1 <- glm(adjusted_t_value ~ social+
+           adjusted_model    
+                + kyoto 
+                + financial_crisis
+           + regions,
+           data = df_final  %>%filter(adjusted_t_value < 10) ,
+           family=gaussian(identity))
+
+t_2 <- glm(adjusted_t_value ~ governance
+           +adjusted_model
+            + kyoto 
+            + financial_crisis
+           + regions,
+           data = df_final  %>%filter(adjusted_t_value < 10) ,
+           family=gaussian(identity))
+
+
+### study_focusing_on_developing_or_developed_countries 
+t_3 <- glm(adjusted_t_value ~ environmental+
+           adjusted_model  
+           + kyoto 
+           + financial_crisis
+           + study_focusing_on_developing_or_developed_countries,
+           data = df_final  %>%filter(adjusted_t_value < 10) ,
+           family=gaussian(identity))
+
+t_4 <- glm(adjusted_t_value ~ social+
+           adjusted_model    
+           + kyoto 
+           + financial_crisis
+           + study_focusing_on_developing_or_developed_countries,
+           data = df_final  %>%filter(adjusted_t_value < 10) ,
+           family=gaussian(identity))
+
+t_5 <- glm(adjusted_t_value ~ governance
+           +adjusted_model
+           + kyoto 
+           + financial_crisis
+           + study_focusing_on_developing_or_developed_countries,
+           data = df_final  %>%filter(adjusted_t_value < 10) ,
+           family=gaussian(identity))
+
+
+
+list_final = list(t_0, t_1, t_2,t_3, t_4, t_5)
+stargazer(list_final, type = "text", 
+  se = lapply(list_final,
+              se_robust),
+          omit = "id", style = "qje")
+```
+
+```sos kernel="R"
+### regions
+t_0 <- glm(abs(adjusted_t_value) ~ environmental+
+           adjusted_model  
+                + kyoto 
+                + financial_crisis
+           + regions
+           ,
+           data = df_final  %>%filter(adjusted_t_value < 10) ,
+           family=gaussian(identity))
+
+t_1 <- glm(abs(adjusted_t_value) ~ social+
+           adjusted_model    
+                + kyoto 
+                + financial_crisis
+           + regions,
+           data = df_final  %>%filter(adjusted_t_value < 10) ,
+           family=gaussian(identity))
+
+t_2 <- glm(abs(adjusted_t_value) ~ governance
+           +adjusted_model
+            + kyoto 
+            + financial_crisis
+           + regions,
+           data = df_final  %>%filter(adjusted_t_value < 10) ,
+           family=gaussian(identity))
+
+
+### study_focusing_on_developing_or_developed_countries 
+t_3 <- glm(abs(adjusted_t_value) ~ environmental+
+           adjusted_model  
+           + kyoto 
+           + financial_crisis
+           + study_focusing_on_developing_or_developed_countries,
+           data = df_final  %>%filter(adjusted_t_value < 10) ,
+           family=gaussian(identity))
+
+t_4 <- glm(abs(adjusted_t_value) ~ social+
+           adjusted_model    
+           + kyoto 
+           + financial_crisis
+           + study_focusing_on_developing_or_developed_countries,
+           data = df_final  %>%filter(adjusted_t_value < 10) ,
+           family=gaussian(identity))
+
+t_5 <- glm(abs(adjusted_t_value) ~ governance
+           +adjusted_model
+           + kyoto 
+           + financial_crisis
+           + study_focusing_on_developing_or_developed_countries,
+           data = df_final  %>%filter(adjusted_t_value < 10) ,
+           family=gaussian(identity))
+
+
+
+list_final = list(t_0, t_1, t_2,t_3, t_4, t_5)
+stargazer(list_final, type = "text", 
+  se = lapply(list_final,
+              se_robust),
           omit = "id", style = "qje")
 ```
 
@@ -973,6 +1553,236 @@ stargazer(list_final, type = "text",
   se = lapply(list_final,
               se_robust),
           coef=list_final.rrr,
+          omit = "id", style = "qje")
+```
+
+<!-- #region kernel="R" -->
+## OLS
+<!-- #endregion -->
+
+```sos kernel="R"
+### sjr
+t_0 <- glm(adjusted_t_value ~ environmental+
+           adjusted_model  
+                + kyoto 
+                + financial_crisis
+           + sjr
+           ,
+           data = df_final  %>%filter(adjusted_t_value < 10) ,
+           family=gaussian(identity))
+
+t_1 <- glm(adjusted_t_value ~ social+
+           adjusted_model    
+                + kyoto 
+                + financial_crisis
+           + sjr,
+           data = df_final  %>%filter(adjusted_t_value < 10) ,
+           family=gaussian(identity))
+
+t_2 <- glm(adjusted_t_value ~ governance
+           +adjusted_model
+            + kyoto 
+            + financial_crisis
+           + sjr,
+           data = df_final  %>%filter(adjusted_t_value < 10) ,
+           family=gaussian(identity))
+
+
+### sjr_best_quartile 
+t_3 <- glm(adjusted_t_value ~ environmental+
+           adjusted_model  
+           + kyoto 
+           + financial_crisis
+           + sjr_best_quartile ,
+           data = df_final  %>%filter(adjusted_t_value < 10) ,
+           family=gaussian(identity))
+
+t_4 <- glm(adjusted_t_value ~ social+
+           adjusted_model    
+           + kyoto 
+           + financial_crisis
+           + sjr_best_quartile,
+           data = df_final  %>%filter(adjusted_t_value < 10) ,
+           family=gaussian(identity))
+
+t_5 <- glm(adjusted_t_value ~ governance
+           +adjusted_model
+           + kyoto 
+           + financial_crisis
+           + sjr_best_quartile,
+           data = df_final  %>%filter(adjusted_t_value < 10) ,
+           family=gaussian(identity))
+
+
+### cnrs_ranking
+t_6 <- glm(adjusted_t_value ~ environmental+
+           adjusted_model  
+           + kyoto 
+           + financial_crisis
+           + cnrs_ranking,
+           data = df_final  %>%filter(adjusted_t_value < 10) ,
+           family=gaussian(identity))
+
+t_7 <- glm(adjusted_t_value ~ social+
+           adjusted_model    
+           + kyoto 
+           + financial_crisis
+           + cnrs_ranking,
+           data = df_final  %>%filter(adjusted_t_value < 10) ,
+           family=gaussian(identity))
+
+t_8 <- glm(adjusted_t_value ~ governance
+           +adjusted_model
+           + kyoto 
+           + financial_crisis
+           + cnrs_ranking,
+           data = df_final  %>%filter(adjusted_t_value < 10) ,
+           family=gaussian(identity))
+
+
+### h_index
+t_9 <- glm(adjusted_t_value ~ environmental+
+           adjusted_model  
+           + kyoto 
+           + financial_crisis
+           + h_index,
+           data = df_final  %>%filter(adjusted_t_value < 10) ,
+           family=gaussian(identity))
+
+t_10 <- glm(adjusted_t_value ~ social+
+           adjusted_model    
+           + kyoto 
+           + financial_crisis
+           + h_index,
+           data = df_final  %>%filter(adjusted_t_value < 10) ,
+           family=gaussian(identity))
+
+t_11 <- glm(adjusted_t_value ~ governance
+           +adjusted_model
+           + kyoto 
+           + financial_crisis
+           + h_index,
+           data = df_final  %>%filter(adjusted_t_value < 10) ,
+           family=gaussian(identity))
+
+
+list_final = list(t_0, t_1, t_2,t_3, t_4, t_5, t_6,t_7, t_8, t_9,t_10, t_11)
+stargazer(list_final, type = "text", 
+  se = lapply(list_final,
+              se_robust),
+          omit = "id", style = "qje")
+```
+
+```sos kernel="R"
+### sjr
+t_0 <- glm(abs(adjusted_t_value) ~ environmental+
+           adjusted_model  
+                + kyoto 
+                + financial_crisis
+           + sjr
+           ,
+           data = df_final  %>%filter(adjusted_t_value < 10) ,
+           family=gaussian(identity))
+
+t_1 <- glm(abs(adjusted_t_value) ~ social+
+           adjusted_model    
+                + kyoto 
+                + financial_crisis
+           + sjr,
+           data = df_final  %>%filter(adjusted_t_value < 10) ,
+           family=gaussian(identity))
+
+t_2 <- glm(abs(adjusted_t_value) ~ governance
+           +adjusted_model
+            + kyoto 
+            + financial_crisis
+           + sjr,
+           data = df_final  %>%filter(adjusted_t_value < 10) ,
+           family=gaussian(identity))
+
+
+### sjr_best_quartile 
+t_3 <- glm(abs(adjusted_t_value) ~ environmental+
+           adjusted_model  
+           + kyoto 
+           + financial_crisis
+           + sjr_best_quartile ,
+           data = df_final  %>%filter(adjusted_t_value < 10) ,
+           family=gaussian(identity))
+
+t_4 <- glm(abs(adjusted_t_value) ~ social+
+           adjusted_model    
+           + kyoto 
+           + financial_crisis
+           + sjr_best_quartile,
+           data = df_final  %>%filter(adjusted_t_value < 10) ,
+           family=gaussian(identity))
+
+t_5 <- glm(abs(adjusted_t_value) ~ governance
+           +adjusted_model
+           + kyoto 
+           + financial_crisis
+           + sjr_best_quartile,
+           data = df_final  %>%filter(adjusted_t_value < 10) ,
+           family=gaussian(identity))
+
+
+### cnrs_ranking
+t_6 <- glm(abs(adjusted_t_value) ~ environmental+
+           adjusted_model  
+           + kyoto 
+           + financial_crisis
+           + cnrs_ranking,
+           data = df_final  %>%filter(adjusted_t_value < 10) ,
+           family=gaussian(identity))
+
+t_7 <- glm(abs(adjusted_t_value) ~ social+
+           adjusted_model    
+           + kyoto 
+           + financial_crisis
+           + cnrs_ranking,
+           data = df_final  %>%filter(adjusted_t_value < 10) ,
+           family=gaussian(identity))
+
+t_8 <- glm(abs(adjusted_t_value) ~ governance
+           +adjusted_model
+           + kyoto 
+           + financial_crisis
+           + cnrs_ranking,
+           data = df_final  %>%filter(adjusted_t_value < 10) ,
+           family=gaussian(identity))
+
+
+### h_index
+t_9 <- glm(abs(adjusted_t_value) ~ environmental+
+           adjusted_model  
+           + kyoto 
+           + financial_crisis
+           + h_index,
+           data = df_final  %>%filter(adjusted_t_value < 10) ,
+           family=gaussian(identity))
+
+t_10 <- glm(abs(adjusted_t_value) ~ social+
+           adjusted_model    
+           + kyoto 
+           + financial_crisis
+           + h_index,
+           data = df_final  %>%filter(adjusted_t_value < 10) ,
+           family=gaussian(identity))
+
+t_11 <- glm(abs(adjusted_t_value) ~ governance
+           +adjusted_model
+           + kyoto 
+           + financial_crisis
+           + h_index,
+           data = df_final  %>%filter(adjusted_t_value < 10) ,
+           family=gaussian(identity))
+
+
+list_final = list(t_0, t_1, t_2,t_3, t_4, t_5, t_6,t_7, t_8, t_9,t_10, t_11)
+stargazer(list_final, type = "text", 
+  se = lapply(list_final,
+              se_robust),
           omit = "id", style = "qje")
 ```
 
