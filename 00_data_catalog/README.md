@@ -146,12 +146,12 @@
 | 23 | peer_reviewed                                       | string      | peer reviewed                                                                                                                           |
 | 24 | study_focused_on_social_environmental_behaviour     | string      | study focused on social environmental behaviour                                                                                         |
 | 25 | type_of_data                                        | string      | type of data                                                                                                                            |
-| 26 | study_focusing_on_developing_or_developed_countries | string      | study focusing on developing or developed countries                                                                                     |
-| 27 | regions                                             | varchar(16) | regions                                                                                                                                 |
+| 26 | regions                                             | varchar(16) | regions                                                                                                                                 |
+| 27 | study_focusing_on_developing_or_developed_countries | string      | study focusing on developing or developed countries                                                                                     |
 | 28 | first_date_of_observations                          | int         | first date of observations                                                                                                              |
 | 29 | last_date_of_observations                           | int         | last date of observations                                                                                                               |
-| 30 | kyoto                                               | boolean     | kyoto                                                                                                                                   |
-| 31 | financial_crisis                                    | boolean     | financial crisis                                                                                                                        |
+| 30 | kyoto                                               | varchar(3)  | kyoto                                                                                                                                   |
+| 31 | financial_crisis                                    | varchar(3)  | financial crisis                                                                                                                        |
 | 32 | windows                                             | int         | windows                                                                                                                                 |
 | 33 | avg_windows                                         | int         | avg windows                                                                                                                             |
 | 34 | adjusted_model_name                                 | string      | Model name normalised                                                                                                                   |
@@ -160,9 +160,9 @@
 | 37 | adjusted_dependent                                  | string      | reorganise dependent variable into smaller groups                                                                                       |
 | 38 | independent                                         | string      | independent variables                                                                                                                   |
 | 39 | adjusted_independent                                | string      | reorganise independent variable into smaller group                                                                                      |
-| 40 | social                                              | string      | if adjusted_independent in ENVIRONMENTAL AND SOCIAL, SOCIAL, CSP, CSR, ENVIRONMENTAL, SOCIAL and GOVERNANCE                             |
-| 41 | environmental                                       | string      | if adjusted_independent in ENVIRONMENTAL, ENVIRONMENTAL AND SOCIAL, ENVIRONMENTAL, SOCIAL and GOVERNANCE                                |
-| 42 | governance                                          | string      | if adjusted_independent in GOVERNANCE ENVIRONMENTAL, SOCIAL and GOVERNANCE                                                              |
+| 40 | social                                              | varchar(3)  | if adjusted_independent in ENVIRONMENTAL AND SOCIAL, SOCIAL, CSP, CSR, ENVIRONMENTAL, SOCIAL and GOVERNANCE                             |
+| 41 | environmental                                       | varchar(3)  | if adjusted_independent in ENVIRONMENTAL, ENVIRONMENTAL AND SOCIAL, ENVIRONMENTAL, SOCIAL and GOVERNANCE                                |
+| 42 | governance                                          | varchar(3)  | if adjusted_independent in GOVERNANCE ENVIRONMENTAL, SOCIAL and GOVERNANCE                                                              |
 | 43 | lag                                                 | string      | the table contains lag or not                                                                                                           |
 | 44 | interaction_term                                    | string      | the table contains interaction terms or not                                                                                             |
 | 45 | quadratic_term                                      | string      | the table contains quadratic terms or not                                                                                               |
@@ -172,7 +172,8 @@
 | 49 | sign_of_effect                                      | string      | if stars is not blank and beta > 0, then POSITIVE, if stars is not blank and beta < 0, then NEGATIVE else INSIGNIFICANT                 |
 | 50 | target                                              | string      | indicate wheither or not the coefficient is significant. based on stars                                                                 |
 | 51 | significant                                         | string      | is beta significant. Computed from reconstructed critical values, not the paper. From paper, see variable target                        |
-| 52 | final_standard_error                                | float       | reconstructed standard error and use sr when true_standard_error is nan or error                                                        |
-| 53 | to_check_final                                      | string      | Final check rows                                                                                                                        |
+| 52 | critical_value                                      | double      | critical value                                                                                                                          |
+| 53 | final_standard_error                                | float       | reconstructed standard error and use sr when true_standard_error is nan or error                                                        |
+| 54 | to_check_final                                      | string      | Final check rows                                                                                                                        |
 
     

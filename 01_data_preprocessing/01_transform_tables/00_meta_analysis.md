@@ -124,6 +124,12 @@ s3_output_example = 'SQL_OUTPUT_ATHENA'
 ```
 
 ```python
+
+       
+       
+```
+
+```python
 query = """
 WITH merge AS (
   SELECT 
@@ -257,15 +263,15 @@ SELECT
     publication_year, 
     publication_type, 
     cnrs_ranking, 
-    peer_reviewed, 
-    study_focused_on_social_environmental_behaviour, 
+    UPPER(peer_reviewed) as peer_reviewed, 
+    UPPER(study_focused_on_social_environmental_behaviour) as study_focused_on_social_environmental_behaviour, 
     type_of_data, 
-    study_focusing_on_developing_or_developed_countries, 
-    regions,
+    CASE WHEN regions = 'ARAB WORLD' THEN 'WORLDWIDE' ELSE regions END AS regions,
+       CASE WHEN study_focusing_on_developing_or_developed_countries = 'Europe' THEN 'Worldwide' ELSE study_focusing_on_developing_or_developed_countries END AS study_focusing_on_developing_or_developed_countries,
     first_date_of_observations,
     last_date_of_observations,
-    CASE WHEN first_date_of_observations >= 1997 THEN TRUE ELSE FALSE END AS kyoto,
-    CASE WHEN first_date_of_observations >= 2009 THEN TRUE ELSE FALSE END AS financial_crisis,
+    CASE WHEN first_date_of_observations >= 1997 THEN 'YES' ELSE 'NO' END AS kyoto,
+    CASE WHEN first_date_of_observations >= 2009 THEN 'YES' ELSE 'NO' END AS financial_crisis,
     last_date_of_observations - first_date_of_observations as windows,
     (last_date_of_observations - first_date_of_observations) / 2 avg_windows,
     adjusted_model_name,
@@ -274,18 +280,19 @@ SELECT
     adjusted_dependent, 
     independent, 
     adjusted_independent, 
-    social,
-    environmental,
-    governance,
-    lag, 
-    interaction_term, 
-    quadratic_term, 
+    CASE WHEN social = 'True' THEN 'YES' ELSE 'NO' END AS social,
+    CASE WHEN environmental = 'True' THEN 'YES' ELSE 'NO' END AS environmental,
+    CASE WHEN governance = 'True' THEN 'YES' ELSE 'NO' END AS governance,
+    UPPER(lag) as lag, 
+    UPPER(interaction_term) as interaction_term, 
+    UPPER(quadratic_term) as quadratic_term, 
     n, 
     r2, 
     beta, 
     sign_of_effect,
     target,
     significant,
+    critical_value,
     final_standard_error,
     to_check_final 
 FROM 
@@ -675,15 +682,15 @@ SELECT
     publication_year, 
     publication_type, 
     cnrs_ranking, 
-    peer_reviewed, 
-    study_focused_on_social_environmental_behaviour, 
+    UPPER(peer_reviewed) as peer_reviewed, 
+    UPPER(study_focused_on_social_environmental_behaviour) as study_focused_on_social_environmental_behaviour, 
     type_of_data, 
-    study_focusing_on_developing_or_developed_countries, 
-    regions,
+    CASE WHEN regions = 'ARAB WORLD' THEN 'WORLDWIDE' ELSE regions END AS regions,
+       CASE WHEN study_focusing_on_developing_or_developed_countries = 'Europe' THEN 'Worldwide' ELSE study_focusing_on_developing_or_developed_countries END AS study_focusing_on_developing_or_developed_countries,
     first_date_of_observations,
     last_date_of_observations,
-    CASE WHEN first_date_of_observations >= 1997 THEN TRUE ELSE FALSE END AS kyoto,
-    CASE WHEN first_date_of_observations >= 2000 THEN TRUE ELSE FALSE END AS financial_crisis,
+    CASE WHEN first_date_of_observations >= 1997 THEN 'YES' ELSE 'NO' END AS kyoto,
+    CASE WHEN first_date_of_observations >= 2009 THEN 'YES' ELSE 'NO' END AS financial_crisis,
     last_date_of_observations - first_date_of_observations as windows,
     (last_date_of_observations - first_date_of_observations) / 2 avg_windows,
     adjusted_model_name,
@@ -692,18 +699,19 @@ SELECT
     adjusted_dependent, 
     independent, 
     adjusted_independent, 
-    social,
-    environmental,
-    governance,
-    lag, 
-    interaction_term, 
-    quadratic_term, 
+    CASE WHEN social = 'True' THEN 'YES' ELSE 'NO' END AS social,
+    CASE WHEN environmental = 'True' THEN 'YES' ELSE 'NO' END AS environmental,
+    CASE WHEN governance = 'True' THEN 'YES' ELSE 'NO' END AS governance,
+    UPPER(lag) as lag, 
+    UPPER(interaction_term) as interaction_term, 
+    UPPER(quadratic_term) as quadratic_term, 
     n, 
     r2, 
     beta, 
     sign_of_effect,
     target,
     significant,
+    critical_value,
     final_standard_error,
     to_check_final 
 FROM 
@@ -964,13 +972,13 @@ payload
 ```
 
 ```python
-response = client_lambda.invoke(
-    FunctionName='RunNotebook',
-    InvocationType='RequestResponse',
-    LogType='Tail',
-    Payload=json.dumps(payload),
-)
-response
+#response = client_lambda.invoke(
+#    FunctionName='RunNotebook',
+#    InvocationType='RequestResponse',
+#    LogType='Tail',
+#    Payload=json.dumps(payload),
+#)
+#response
 ```
 
 # Generation report
