@@ -50,6 +50,9 @@ var = (
         to_dataframe=True)
     .apply(pd.to_numeric, errors='ignore')
     .assign(
+        lag = lambda x: x['lag'].str.upper(),
+        interaction_term = lambda x: x['interaction_term'].str.upper(),
+        quadratic_term = lambda x: x['quadratic_term'].str.upper(),
         id=lambda x: x['id'].ffill().astype(int),
         n=lambda x: x['n'].apply(pd.to_numeric, errors='coerce'),
         sr=lambda x: x['sr'].apply(pd.to_numeric, errors='coerce'),
@@ -79,16 +82,16 @@ var = (
             'CSP',
             'CSR',
             'ENVIRONMENTAL, SOCIAL and GOVERNANCE'
-        ]), True, False),
+        ]), "TRUE", "FALSE"),
         environmental=lambda x: np.where(x['adjusted_independent'].isin([
             'ENVIRONMENTAL AND SOCIAL',
             'ENVIRONMENTAL',
             'ENVIRONMENTAL, SOCIAL and GOVERNANCE'
-        ]), True, False),
+        ]), "TRUE", "FALSE"),
         governance=lambda x: np.where(x['adjusted_independent'].isin([
             'GOVERNANCE',
             'ENVIRONMENTAL, SOCIAL and GOVERNANCE'
-        ]), True, False)
+        ]), "TRUE", "FALSE")
     )
 )
 
