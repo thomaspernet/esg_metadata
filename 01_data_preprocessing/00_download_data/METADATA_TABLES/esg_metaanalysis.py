@@ -136,7 +136,6 @@ var = (
                       "p_value_significant",
                       "sign_positive",
                       "sign_negative",
-                      "sign_significant",
                       'deg_freedom',
                       'critical_99',
                       'critical_95',
