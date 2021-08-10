@@ -228,6 +228,70 @@ pd.DataFrame(schema)
 ```
 
 <!-- #region kernel="SoS" -->
+### Save data to Google Spreadsheet
+
+Data is in [METADATA_MODEL-FINAL_DATA](https://docs.google.com/spreadsheets/d/13gpRy93l7POWGe-rKjytt7KWOcD1oSLACngTEpuqCTg/edit#gid=1219457110)
+<!-- #endregion -->
+
+```sos kernel="SoS"
+#!pip install --upgrade git+git://github.com/thomaspernet/GoogleDrive-python
+```
+
+```sos kernel="python3"
+from GoogleDrivePy.google_drive import connect_drive
+from GoogleDrivePy.google_authorization import authorization_service
+```
+
+```sos kernel="python3"
+try:
+    os.mkdir("creds")
+except:
+    pass
+```
+
+```sos kernel="SoS"
+s3.download_file(key = "CREDS/Financial_dependency_pollution/creds/token.pickle", path_local = "creds")
+```
+
+```sos kernel="python3"
+import os
+auth = authorization_service.get_authorization(
+    #path_credential_gcp=os.path.join(parent_path, "creds", "service.json"),
+    path_credential_drive=os.path.join(os.getcwd(), "creds"),
+    verbose=False,
+    scope=['https://www.googleapis.com/auth/spreadsheets.readonly',
+           "https://www.googleapis.com/auth/drive"]
+)
+gd_auth = auth.authorization_drive(path_secret=os.path.join(
+    os.getcwd(), "creds", "credentials.json"))
+drive = connect_drive.drive_operations(gd_auth)
+```
+
+```sos kernel="python3"
+import shutil
+shutil.rmtree(os.path.join(os.getcwd(),"creds"))
+```
+
+```sos kernel="python3"
+FILENAME_SPREADSHEET = "METADATA_MODEL"
+spreadsheet_id = drive.find_file_id(FILENAME_SPREADSHEET, to_print=False)
+```
+
+```sos kernel="python3"
+import pandas as pd
+from pathlib import Path
+path_local = os.path.join(str(Path(os.getcwd()).parent.parent.parent), 
+                              "00_data_catalog/temporary_local_data")
+output = pd.read_csv( os.path.join(path_local, 'df_meta_analysis_esg_cfp' + '.csv'))
+drive.add_data_to_spreadsheet(
+    data =output.fillna(""),
+    sheetID =spreadsheet_id,
+    sheetName = "FINAL_DATA",
+    detectRange = True,
+    rangeData = None)
+```
+
+<!-- #region kernel="SoS" -->
 ## unbalanced ID
 <!-- #endregion -->
 
@@ -355,10 +419,6 @@ GLM does not clustered the standard error so, we compute it by hand
 se_robust <- function(x)
   coeftest(x, vcov. = sandwich::sandwich
           )[, 2]
-se_robust_clustered <- function(x)
-  coeftest(x,
-         vcov. = vcovCL(t_2, cluster = df_final %>% filter(adjusted_model != 'TO_REMOVE') %>% select(id), type = "HC0")
-        )[, 2]
 ```
 
 <!-- #region kernel="R" -->
@@ -405,20 +465,16 @@ $$
 - adjusted_model: https://docs.google.com/spreadsheets/d/1d66_CVtWni7wmKlIMcpaoanvT2ghmjbXARiHgnLWvUw/edit#gid=793443705&range=B34
 - adjusted_dependent: https://docs.google.com/spreadsheets/d/1d66_CVtWni7wmKlIMcpaoanvT2ghmjbXARiHgnLWvUw/edit#gid=450174628&range=B59
 - Region:
-```
-CASE WHEN regions_of_selected_firms in (
-        'Cameroon', 'Egypt', 'Libya', 'Morocco', 
-        'Nigeria'
-      ) THEN 'AFRICA' WHEN regions_of_selected_firms in ('GCC countries') THEN 'ARAB WORLD' WHEN regions_of_selected_firms in (
-        'India', 'Indonesia', 'Taiwan', 'Vietnam', 
+    - AFRICA: 'Cameroon', 'Egypt', 'Libya', 'Morocco', 'Nigeria'
+    - ASIA AND PACIFIC:  'India', 'Indonesia', 'Taiwan', 'Vietnam', 
         'Australia', 'China', 'Iran', 'Malaysia', 
         'Pakistan', 'South Korea', 'Bangladesh'
-      ) THEN 'ASIA AND PACIFIC' WHEN regions_of_selected_firms in (
-        'Spain', '20 European countries', 
+    - EUROPE: 'Spain', '20 European countries', 
         'United Kingdom', 'France', 'Germany, Italy, the Netherlands and United Kingdom', 
         'Turkey', 'UK'
-      ) THEN 'EUROPE' WHEN regions_of_selected_firms in ('Latin America', 'Brazil') THEN 'LATIN AMERICA' WHEN regions_of_selected_firms in ('USA', 'US', 'U.S.', 'Canada') THEN 'NORTH AMERICA' ELSE 'WORLDWIDE' END AS regions
-```
+    - LATIN AMERICA: 'Latin America', 'Brazil'
+    - NORTH AMERICA: 'USA', 'US', 'U.S.', 'Canada'
+    - ELSE WORLDWIDE
 - Kyoto first_date_of_observations >= 1997 THEN TRUE ELSE FALSE ,
 - Financial crisis first_date_of_observations >= 2009 THEN TRUE ELSE FALSE 
 - windows: last_date_of_observations - first_date_of_observations
@@ -768,7 +824,6 @@ list_final = list(t_0, t_1, t_2, t_3, t_4, t_5)
 stargazer(list_final, type = "text", 
   se = lapply(list_final,
               se_robust),
-          coef=list_final.rrr,
           style = "qje")
 ```
 
@@ -861,7 +916,6 @@ list_final = list(t_0, t_1, t_2, t_3, t_4, t_5)
 stargazer(list_final, type = "text", 
   se = lapply(list_final,
               se_robust),
-          coef=list_final.rrr,
           style = "qje")
 ```
 
@@ -960,7 +1014,6 @@ list_final = list(t_0, t_1, t_2, t_3, t_4, t_5)
 stargazer(list_final, type = "text", 
   se = lapply(list_final,
               se_robust),
-          coef=list_final.rrr,
           style = "qje")
 ```
 
@@ -1053,7 +1106,6 @@ list_final = list(t_0, t_1, t_2, t_3, t_4, t_5)
 stargazer(list_final, type = "text", 
   se = lapply(list_final,
               se_robust),
-          coef=list_final.rrr,
           style = "qje")
 ```
 
@@ -1061,40 +1113,124 @@ stargazer(list_final, type = "text",
 # Statistics
 
 ## Target
+
 <!-- #endregion -->
 
 ```sos kernel="SoS"
-(
-    pd.concat(
-        [
-            (df.groupby("environmental").agg({"target": "value_counts"}).unstack(0)).rename(columns = {'target':'environment'}),
-            (df.groupby("social").agg({"target": "value_counts"}).unstack(0)).rename(columns = {'target':'social'}),
-            (df.groupby("governance").agg({"target": "value_counts"}).unstack(0)).rename(columns = {'target':'governance'}),
-        ],
-        axis=1,
-    )
-    .T
-    .reset_index()
-    .rename(columns = {'environmental':'is_dummy', 'level_0':'origin'})
-    .set_index(['origin','is_dummy'])
-    .assign(pct_significant = lambda x: x[('SIGNIFICANT')]/x.sum(axis= 1))
-    #
-    #
+pd.concat(
+    [
+        pd.concat(
+            [
+                (
+                    pd.concat(
+                        [
+                            (
+                                df.groupby("environmental")
+                                .agg({"target": "value_counts"})
+                                .unstack(0)
+                            ).rename(columns={"target": "environment"}),
+                            (
+                                df.groupby("social")
+                                .agg({"target": "value_counts"})
+                                .unstack(0)
+                            ).rename(columns={"target": "social"}),
+                            (
+                                df.groupby("governance")
+                                .agg({"target": "value_counts"})
+                                .unstack(0)
+                            ).rename(columns={"target": "governance"}),
+                        ],
+                        axis=1,
+                    )
+                    .T.reset_index()
+                    .rename(columns={"environmental": "is_dummy", "level_0": "origin"})
+                    .set_index(["origin", "is_dummy"])
+                    .assign(
+                        pct_significant=lambda x: x[("SIGNIFICANT")] / x.sum(axis=1)
+                    )
+                )
+            ],
+            axis=1,
+            keys=["count"],
+        ),
+        pd.concat(
+            [
+                (
+                    pd.concat(
+                        [
+                            (
+                                df.groupby(["environmental", "target"])
+                                .agg({"id": "nunique"})
+                                .rename(columns={"id": "environment"})
+                                .unstack(0)
+                            ),
+                            (
+                                df.groupby(["social", "target"])
+                                .agg({"id": "nunique"})
+                                .rename(columns={"id": "social"})
+                                .unstack(0)
+                            ),
+                            (
+                                df.groupby(["governance", "target"])
+                                .agg({"id": "nunique"})
+                                .rename(columns={"id": "governance"})
+                                .unstack(0)
+                            ),
+                        ],
+                        axis=1,
+                    )
+                    .T.reset_index()
+                    .rename(columns={"environmental": "is_dummy", "level_0": "origin"})
+                    .set_index(["origin", "is_dummy"])
+                    .assign(
+                        pct_significant=lambda x: x[("SIGNIFICANT")] / x.sum(axis=1)
+                    )
+                )
+            ],
+            axis=1,
+            keys=["paper count"],
+        ),
+    ],
+    axis=1,
 )
-
-
 ```
 
 ```sos kernel="SoS"
-(
-    df
-    .groupby('adjusted_model')
-    .agg(
-    {
-        'target':'value_counts'
-    })
-    .unstack(-1)
-    .assign(pct_significant = lambda x: x[('target','SIGNIFICANT')]/x.sum(axis= 1))
+pd.concat(
+    [
+        pd.concat(
+            [
+                (
+                    df.groupby("adjusted_model")
+                    .agg({"target": "value_counts"})
+                    .unstack(-1)
+                    .assign(
+                        pct_significant=lambda x: x[("target", "SIGNIFICANT")]
+                        / x.sum(axis=1)
+                    )
+                )
+            ],
+            axis=1,
+            keys=["count"],
+        ),
+        pd.concat(
+            [
+                (
+                    df.groupby(["adjusted_model", "target"])
+                    .agg({"id": "nunique"})
+                    .rename(columns={"id": "adjusted_model"})
+                    .unstack(-1)
+                    .assign(
+                        pct_significant=lambda x: x[("adjusted_model", "SIGNIFICANT")]
+                        / x.sum(axis=1)
+                    )
+                )
+            ],
+            axis=1,
+            keys=["paper count"],
+        ),
+    ],
+    axis=1,
 )
 ```
 
@@ -1104,7 +1240,6 @@ stargazer(list_final, type = "text",
         [
             (df.groupby("kyoto").agg({"target": "value_counts"}).unstack(0)).rename(columns = {'target':'kyoto'}),
             (df.groupby("financial_crisis").agg({"target": "value_counts"}).unstack(0)).rename(columns = {'target':'financial_crisis'}),
-            #(df.groupby("governance").agg({"target": "value_counts"}).unstack(0)).rename(columns = {'target':'governance'}),
         ],
         axis=1,
     )
@@ -1113,6 +1248,74 @@ stargazer(list_final, type = "text",
     .rename(columns = {'kyoto':'is_dummy', 'level_0':'origin'})
     .set_index(['origin','is_dummy'])
     .assign(pct_significant = lambda x: x[('SIGNIFICANT')]/x.sum(axis= 1))
+)
+```
+
+```sos kernel="SoS"
+pd.concat(
+    [
+        pd.concat(
+            [
+                (
+                    pd.concat(
+                        [
+                            (
+                                df.groupby("kyoto")
+                                .agg({"target": "value_counts"})
+                                .unstack(0)
+                            ).rename(columns={"target": "kyoto"}),
+                            (
+                                df.groupby("financial_crisis")
+                                .agg({"target": "value_counts"})
+                                .unstack(0)
+                            ).rename(columns={"target": "financial_crisis"}),
+                        ],
+                        axis=1,
+                    )
+                    .T.reset_index()
+                    .rename(columns={"kyoto": "is_dummy", "level_0": "origin"})
+                    .set_index(["origin", "is_dummy"])
+                    .assign(
+                        pct_significant=lambda x: x[("SIGNIFICANT")] / x.sum(axis=1)
+                    )
+                )
+            ],
+            axis=1,
+            keys=["count"],
+        ),
+        pd.concat(
+            [
+                (
+                    pd.concat(
+                        [
+                            (
+                                df.groupby(["kyoto", "target"])
+                                .agg({"id": "nunique"})
+                                .rename(columns={"id": "kyoto"})
+                                .unstack(0)
+                            ),
+                            (
+                                df.groupby(["financial_crisis", "target"])
+                                .agg({"id": "nunique"})
+                                .rename(columns={"id": "financial_crisis"})
+                                .unstack(0)
+                            ),
+                        ],
+                        axis=1,
+                    )
+                    .T.reset_index()
+                    .rename(columns={"kyoto": "is_dummy", "level_0": "origin"})
+                    .set_index(["origin", "is_dummy"])
+                    .assign(
+                        pct_significant=lambda x: x[("SIGNIFICANT")] / x.sum(axis=1)
+                    )
+                )
+            ],
+            axis=1,
+            keys=["paper count"],
+        ),
+    ],
+    axis=1,
 )
 ```
 
@@ -1155,6 +1358,85 @@ stargazer(list_final, type = "text",
 )
 ```
 
+```sos kernel="SoS"
+pd.concat(
+    [
+        pd.concat(
+            [
+                (
+                    pd.concat(
+                        [
+                            (
+                                df.groupby("lag")
+                                .agg({"target": "value_counts"})
+                                .unstack(0)
+                            ).rename(columns={"target": "lag"}),
+                            (
+                                df.groupby("interaction_term")
+                                .agg({"target": "value_counts"})
+                                .unstack(0)
+                            ).rename(columns={"target": "interaction_term"}),
+                            (
+                                df.groupby("quadratic_term")
+                                .agg({"target": "value_counts"})
+                                .unstack(0)
+                            ).rename(columns={"target": "quadratic_term"}),
+                        ],
+                        axis=1,
+                    )
+                    .T.reset_index()
+                    .rename(columns={"lag": "is_dummy", "level_0": "origin"})
+                    .set_index(["origin", "is_dummy"])
+                    .assign(
+                        pct_significant=lambda x: x[("SIGNIFICANT")] / x.sum(axis=1)
+                    )
+                )
+            ],
+            axis=1,
+            keys=["count"],
+        ),
+        pd.concat(
+            [
+                (
+                    pd.concat(
+                        [
+                            (
+                                df.groupby(["lag", "target"])
+                                .agg({"id": "nunique"})
+                                .rename(columns={"id": "lag"})
+                                .unstack(0)
+                            ),
+                            (
+                                df.groupby(["interaction_term", "target"])
+                                .agg({"id": "nunique"})
+                                .rename(columns={"id": "interaction_term"})
+                                .unstack(0)
+                            ),
+                            (
+                                df.groupby(["quadratic_term", "target"])
+                                .agg({"id": "nunique"})
+                                .rename(columns={"id": "quadratic_term"})
+                                .unstack(0)
+                            ),
+                        ],
+                        axis=1,
+                    )
+                    .T.reset_index()
+                    .rename(columns={"lag": "is_dummy", "level_0": "origin"})
+                    .set_index(["origin", "is_dummy"])
+                    .assign(
+                        pct_significant=lambda x: x[("SIGNIFICANT")] / x.sum(axis=1)
+                    )
+                )
+            ],
+            axis=1,
+            keys=["paper count"],
+        ),
+    ],
+    axis=1,
+)
+```
+
 <!-- #region kernel="R" -->
 ##  Region
 
@@ -1165,28 +1447,41 @@ Comparison group: "WORLDWIDE"
 <!-- #endregion -->
 
 ```sos kernel="SoS"
-(
-    df
-    .groupby('regions')
-    .agg(
-    {
-        'target':'value_counts'
-    })
-    .unstack(-1)
-    .assign(pct_significant = lambda x: x[('target','SIGNIFICANT')]/x.sum(axis= 1))
-)
-```
-
-```sos kernel="SoS"
-(
-    df
-    .groupby('study_focusing_on_developing_or_developed_countries')
-    .agg(
-    {
-        'target':'value_counts'
-    })
-    .unstack(-1)
-    .assign(pct_significant = lambda x: x[('target','SIGNIFICANT')]/x.sum(axis= 1))
+pd.concat(
+    [
+        pd.concat(
+            [
+                (
+                    df.groupby("regions")
+                    .agg({"target": "value_counts"})
+                    .unstack(-1)
+                    .assign(
+                        pct_significant=lambda x: x[("target", "SIGNIFICANT")]
+                        / x.sum(axis=1)
+                    )
+                )
+            ],
+            axis=1,
+            keys=["count"],
+        ),
+        pd.concat(
+            [
+                (
+                    df.groupby(["regions", "target"])
+                    .agg({"id": "nunique"})
+                    .rename(columns={"id": "regions"})
+                    .unstack(-1)
+                    .assign(
+                        pct_significant=lambda x: x[("regions", "SIGNIFICANT")]
+                        / x.sum(axis=1)
+                    )
+                )
+            ],
+            axis=1,
+            keys=["paper count"],
+        ),
+    ],
+    axis=1,
 )
 ```
 
@@ -1213,28 +1508,41 @@ Comparison group: "WORLDWIDE"
 ```
 
 ```sos kernel="SoS"
-(
-    df
-    .groupby('sjr_best_quartile')
-    .agg(
-    {
-        'target':'value_counts'
-    })
-    .unstack(-1)
-    .assign(pct_significant = lambda x: x[('target','SIGNIFICANT')]/x.sum(axis= 1))
-)
-```
-
-```sos kernel="SoS"
-(
-    df
-    .groupby('cnrs_ranking')
-    .agg(
-    {
-        'target':'value_counts'
-    })
-    .unstack(-1)
-    .assign(pct_significant = lambda x: x[('target','SIGNIFICANT')]/x.sum(axis= 1))
+pd.concat(
+    [
+        pd.concat(
+            [
+                (
+                    df.groupby("cnrs_ranking")
+                    .agg({"target": "value_counts"})
+                    .unstack(-1)
+                    .assign(
+                        pct_significant=lambda x: x[("target", "SIGNIFICANT")]
+                        / x.sum(axis=1)
+                    )
+                )
+            ],
+            axis=1,
+            keys=["count"],
+        ),
+        pd.concat(
+            [
+                (
+                    df.groupby(["cnrs_ranking", "target"])
+                    .agg({"id": "nunique"})
+                    .rename(columns={"id": "cnrs_ranking"})
+                    .unstack(-1)
+                    .assign(
+                        pct_significant=lambda x: x[("cnrs_ranking", "SIGNIFICANT")]
+                        / x.sum(axis=1)
+                    )
+                )
+            ],
+            axis=1,
+            keys=["paper count"],
+        ),
+    ],
+    axis=1,
 )
 ```
 
