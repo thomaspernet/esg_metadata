@@ -82,16 +82,16 @@ var = (
             'CSP',
             'CSR',
             'ENVIRONMENTAL, SOCIAL and GOVERNANCE'
-        ]), "TRUE", "FALSE"),
+        ]), "YES", "NO"),
         environmental=lambda x: np.where(x['adjusted_independent'].isin([
             'ENVIRONMENTAL AND SOCIAL',
             'ENVIRONMENTAL',
             'ENVIRONMENTAL, SOCIAL and GOVERNANCE'
-        ]), "TRUE", "FALSE"),
+        ]), "YES", "NO"),
         governance=lambda x: np.where(x['adjusted_independent'].isin([
             'GOVERNANCE',
             'ENVIRONMENTAL, SOCIAL and GOVERNANCE'
-        ]), "TRUE", "FALSE")
+        ]), "YES", "NO")
     )
 )
 
