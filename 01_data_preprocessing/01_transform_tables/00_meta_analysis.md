@@ -392,10 +392,10 @@ def make_clickable(val):
 (
     output
     .loc[lambda x: x['first_date_of_observations'].isin([np.nan])]
-    .reindex(columns = ['paper_name', 'url_excel'])
+    .reindex(columns = ['paper_name', 'row_id_excel'])
     .drop_duplicates()
     .style
-    .format(make_clickable, subset = ['url_excel'])
+    .format(make_clickable, subset = ['row_id_excel'])
 )
 ```
 
@@ -410,10 +410,10 @@ def make_clickable(val):
 (
     output
     .loc[lambda x: x['study_focusing_on_developing_or_developed_countries'].isin([np.nan])]
-    .reindex(columns = ['paper_name', 'url_excel'])
+    .reindex(columns = ['paper_name', 'row_id_excel'])
     .drop_duplicates()
     .style
-    .format(make_clickable, subset = ['url_excel'])
+    .format(make_clickable, subset = ['row_id_excel'])
 )
 ```
 
@@ -434,10 +434,10 @@ def make_clickable(val):
 (
     output
     .loc[lambda x: x['peer_reviewed'].isin([np.nan])]
-    .reindex(columns = ['paper_name', 'url_excel'])
+    .reindex(columns = ['paper_name', 'row_id_excel'])
     .drop_duplicates()
     .style
-    .format(make_clickable, subset = ['url_excel'])
+    .format(make_clickable, subset = ['row_id_excel'])
 )
 ```
 
@@ -449,11 +449,11 @@ def make_clickable(val):
 (
     output
     .loc[lambda x: x['adjusted_independent'].isin([np.nan])]
-    .reindex(columns = ['paper_name', 'url_google_spreadsheet'])
+    .reindex(columns = ['paper_name', 'row_id_google_spreadsheet'])
     .drop_duplicates()
     .head(5)
     .style
-    .format(make_clickable, subset = ['url_google_spreadsheet'])
+    .format(make_clickable, subset = ['row_id_google_spreadsheet'])
 )
 ```
 
