@@ -313,6 +313,56 @@ df['weight'].describe()
 df['adjusted_t_value'].describe()
 ```
 
+<!-- #region kernel="SoS" -->
+## Validation text
+
+"our final database includes 588 studies, divided into 51 journals, 90 titles and 87 different first authors. It is therefore important to note that, among all the studies ultimately selected for our study, 38% of the observations are concentrated in 10 papers and 10 authors"
+<!-- #endregion -->
+
+<!-- #region kernel="SoS" -->
+- includes 588 studies: CORRECT
+<!-- #endregion -->
+
+```sos kernel="SoS"
+df.shape[0]
+```
+
+<!-- #region kernel="SoS" -->
+- divided into 51 journals: It should be 39
+<!-- #endregion -->
+
+```sos kernel="SoS"
+df['publication_name'].nunique()
+```
+
+<!-- #region kernel="SoS" -->
+- 90 titles: It should be 78
+<!-- #endregion -->
+
+```sos kernel="SoS"
+df['id'].nunique()
+```
+
+<!-- #region kernel="SoS" -->
+- 87 different first authors: TO CHECK
+<!-- #endregion -->
+
+<!-- #region kernel="SoS" -->
+- 38% of the observations are concentrated in 10 papers: It should be 46
+<!-- #endregion -->
+
+```sos kernel="SoS"
+(
+    (df.groupby('id')['id'].count()/df.shape[0]).rename("count")
+    .reset_index()
+    .sort_values(by = ['count'], ascending = False)
+    .assign(cum_sum = lambda x: x['count'].cumsum())
+    .reset_index()
+    .drop(columns = ['index'])
+    .head(10)
+)
+```
+
 <!-- #region kernel="SoS" nteract={"transient": {"deleting": false}} -->
 ## Schema Latex table
 
