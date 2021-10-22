@@ -513,6 +513,370 @@ drive.add_data_to_spreadsheet(
     rangeData = None)
 ```
 
+# Download authors and paper information
+
+## Semantic scholar
+
+Extract paper name from METADATA_TABLES_COLLECTION
+Get doi from Semantic scholar
+
+## Google scholar
+
+Google Scholar <- Use this API: https://serpapi.com/ 
+
+- Input table: [METADATA_TABLES_COLLECTION](https://docs.google.com/spreadsheets/d/1d66_CVtWni7wmKlIMcpaoanvT2ghmjbXARiHgnLWvUw/edit?usp=sharing)
+
+```python
+#!pip install google-search-results
+```
+
+```python
+FILENAME_SPREADSHEET = "CSR Excel File Meta-Analysis - Version 4 -  01.02.2021"
+spreadsheet_id = drive.find_file_id(FILENAME_SPREADSHEET, to_print=False)
+```
+
+```python
+doi = drive.download_data_from_spreadsheet(
+    sheetID = spreadsheet_id,
+    sheetName = "Feuil1",
+    to_dataframe = True)
+```
+
+```python
+from serpapi import GoogleSearch
+from tqdm import tqdm
+import time
+```
+
+Get paper name
+
+```python
+import requests
+
+headers = {
+    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36'
+}
+
+```
+
+```python
+field = [
+    "url",
+    "title",
+    "abstract",
+    "venue",
+    "year",
+    "referenceCount",
+    "citationCount",
+    "influentialCitationCount",
+    "isOpenAccess",
+    "fieldsOfStudy",
+    "authors"]
+field_paper = [
+    "externalIds",
+    "url",
+    "title",
+    "abstract",
+    "venue",
+    "year",
+    "referenceCount",
+    "citationCount",
+    "influentialCitationCount",
+    "isOpenAccess",
+    "fieldsOfStudy",
+    "authors"
+]
+```
+
+```python
+def find_doi(paper_name):
+    """
+    to keep thing simple, assume first results in the best option
+    """
+    paper_name_clean = (
+         paper_name
+        .lower()
+        .replace("  ", "+")
+        .replace(" ", "+")
+        .replace("\n", "+")
+        .replace(",", "+")
+        .replace("–", "")
+        .replace("++", "+")
+        .replace(":", "")
+    )
+    url_paper = 'https://api.semanticscholar.org/graph/v1/paper/search?query={}&fields={}'.format(
+        paper_name_clean, ",".join(field))
+    response_1 = requests.get(url_paper, headers=headers)
+    if response_1.status_code == 200:
+        response_1 = response_1.json()
+        if len(response_1['data']) > 0:
+            url_paper = "https://api.semanticscholar.org/graph/v1/paper/{}?fields={}".format(
+                response_1['data'][0]['paperId'], ",".join(field_paper))
+            response_2 = requests.get(url_paper, headers=headers)
+            if response_2.status_code == 200:
+                response_2 = response_2.json()
+                response_2['paper_name_source'] = paper_name
+                response_2['status'] = 'found'
+                return response_2
+            else:
+                return {'paper_name': paper_name, 'status': 'not found'}
+        else:
+            return {'paper_name': paper_name, 'status': 'not found'}
+    else:
+        return {'paper_name': paper_name, 'status': 'not found', 'status_code':response_1.status_code}
+```
+
+```python
+list_paper_semantic = []
+list_failure = []
+```
+
+```python
+for i, p in tqdm(enumerate(list(doi['Title'].unique()))):
+    time.sleep(8)
+    response = find_doi(paper_name = p)  
+    if response['status'] == 'found':
+        list_paper_semantic.append(response)
+    else:
+        list_failure.append(p)
+```
+
+```python
+list_failure
+```
+
+Failure: 
+
+- 'The Effect of Corporate Social Responsibility on Financial Performance: Evidence from the Banking Industry in Emerging Economies',
+- 'An examination of corporate social responsibility and financial performance: A study of the top 50 Indonesian listed corporations',
+- 'Does it pay to be different? An analysis of the relationship between corporate social and financial performance (',
+- 'Corporate Social and Environmental Performance and Their Relation to Financial Performance and Institutional Ownership: Empirical Evidence on Canadian Firms',
+-  'The Corporate Social-Financial Performance Relationship: A Typology and Analysis'
+
+```python
+list_failure = ['The Effect of Corporate Social Responsibility on Financial Performance: Evidence from the Banking Industry in Emerging Economies',
+ 'An examination of corporate social responsibility and financial performance: A study of the top 50 Indonesian listed corporations',
+ 'Does it pay to be different? An analysis of the relationship between corporate social and financial performance (',
+ 'Corporate Social and Environmental Performance and Their Relation to Financial Performance and Institutional Ownership: Empirical Evidence on Canadian Firms',
+ 'The Corporate Social-Financial Performance Relationship: A Typology and Analysis']
+```
+
+## Validate results levenstheinlev = levenshtein_distance(
+                                                aut_in_table, author_to_find)
+                                            list_leven.append(
+                                                {'score': lev, 'match_author': aut_in_table, 'index': ind})
+
+```python
+def levenshtein_distance(token1, token2):
+    """
+    """
+    distances = np.zeros((len(token1) + 1, len(token2) + 1))
+
+    for t1 in range(len(token1) + 1):
+        distances[t1][0] = t1
+
+    for t2 in range(len(token2) + 1):
+        distances[0][t2] = t2
+
+    a = 0
+    b = 0
+    c = 0
+
+    for t1 in range(1, len(token1) + 1):
+        for t2 in range(1, len(token2) + 1):
+            if (token1[t1 - 1] == token2[t2 - 1]):
+                distances[t1][t2] = distances[t1 - 1][t2 - 1]
+            else:
+                a = distances[t1][t2 - 1]
+                b = distances[t1 - 1][t2]
+                c = distances[t1 - 1][t2 - 1]
+
+                if (a <= b and a <= c):
+                    distances[t1][t2] = a + 1
+                elif (b <= a and b <= c):
+                    distances[t1][t2] = b + 1
+                else:
+                    distances[t1][t2] = c + 1
+    return distances[len(token1)][len(token2)]
+```
+
+```python
+for ind, paper in enumerate(list_paper_semantic):
+    lev = levenshtein_distance(
+    paper['title'].lower(),
+        paper['paper_name_source'].lower().replace('\n', ' ')
+    )
+    paper['Levenshtein_score'] = lev
+    #list_leven.append({'score': lev, 'match_author': aut_in_table, 'index': ind})
+```
+
+```python
+pd.DataFrame(list_paper_semantic)['Levenshtein_score'].describe()
+```
+
+No mistake, all of the 106 papers are found
+
+```python
+(
+    pd.DataFrame(list_paper_semantic).loc[lambda x: x['Levenshtein_score'] > 2]
+    .reindex(columns = ['title', 'paper_name_source', 'Levenshtein_score'])
+)
+```
+
+Save S3
+
+```python
+for ind, paper in enumerate(list_paper_semantic):
+    with open("paper_id_{}".format(paper["paperId"]), "w") as outfile:
+        json.dump(response, outfile)
+    s3.upload_file(
+        file_to_upload="paper_id_{}".format(paper["paperId"]),
+        destination_in_s3="DATA/JOURNALS/SEMANTIC_SCHOLAR/PAPERS",
+    )
+    os.remove("paper_id_{}".format(paper["paperId"]))
+```
+
+```python
+import pickle
+
+# Store data (serialize)
+with open('list_paper_semantic.pickle', 'wb') as handle:
+    pickle.dump(list_paper_semantic, handle)
+```
+
+## Google scholar 
+
+```python
+#api_key = "76d06e832b47b086bf230ccce2d63f22e2a0a69437f2b22175afa705f50a485e"
+#api_key = "1220349f54021d5ccfc2c92bf2bf502c839d079682fbbc94457f3a6cf1e0d08b"
+api_key = "7a89c050004f86cd7cfde9d704be2ddc466c4ce050f7d61d592169d6e26dc987"
+def collect_doi_information(doi):
+    """
+    """
+    
+    params = {
+      "engine": "google_scholar",
+      "q": doi,
+      "api_key": api_key
+    }
+
+    search = GoogleSearch(params)
+    results = search.get_dict()
+    list_authors = []
+
+    #### SEARCH TITLE
+    if "link" in results['organic_results'][0]:
+        i = 0
+    else:
+        i = 1
+        
+    if 'cited_by' in results['organic_results'][i]['inline_links']:
+        if "total" in results['organic_results'][i]['inline_links']['cited_by']:
+            cite = results['organic_results'][i]['inline_links']['cited_by']['total']
+        else:
+            cite = False
+
+        if "authors" in results['organic_results'][i]['publication_info']:
+            authors = results['organic_results'][i]['publication_info']['authors']
+        else:
+            authors = False
+
+
+        dic_title = {
+            'title':results['organic_results'][i]['title'],
+            'result_id':results['organic_results'][i]['result_id'],
+            'link':results['organic_results'][i]['link'],
+            'snippet':results['organic_results'][i]['snippet'],
+            'publication_info':results['organic_results'][i]['publication_info']['summary'],
+            "authors":authors,
+            "cited_by":cite
+        }
+        #### SEARCH AUTHORS
+        
+        if authors != False:
+            for i, author in enumerate(results['organic_results'][i]['publication_info']['authors']):
+                params = {
+                 "engine": "google_scholar_author",
+                 "author_id": author['author_id'],
+                 "api_key":api_key
+            }
+
+                search = GoogleSearch(params)
+                results_auth = search.get_dict()
+                if "author" in results_auth:
+                    aut = results_auth['author']
+                    author['details'] = aut
+                    list_authors.append(author)
+    else:
+        dic_title = results
+
+    return dic_title, list_authors
+```
+
+```python
+list_papers_google = []
+list_authors_google = []
+```
+
+```python
+list_failure_google = []
+```
+
+```python
+### next batch already chosen 92
+for i, d in tqdm(enumerate(list_paper_semantic[92:])):
+    if "DOI" in d['externalIds']:
+        filename = d['paperId']
+        #### EXTRACT INFORMATION 
+        dic_title, authors = collect_doi_information(d['externalIds']['DOI'])
+        list_papers_google.append(dic_title)
+        list_authors_google.append(authors)
+
+        ### PAPER
+        with open('paper_{}'.format(filename), 'w') as outfile:
+            json.dump(dic_title, outfile)
+        s3.upload_file(file_to_upload = 'paper_{}'.format(filename),
+                    destination_in_s3 = "DATA/JOURNALS/GOOGLE_SCHOLAR/PAPERS")
+        os.remove('paper_{}'.format(filename))
+
+        ### JOURNAL
+        with open('authors_{}'.format(filename), 'w') as outfile:
+            json.dump(authors, outfile)
+        s3.upload_file(file_to_upload = 'authors_{}'.format(filename),
+                    destination_in_s3 = "DATA/JOURNALS/GOOGLE_SCHOLAR/AUTHORS")
+        os.remove('authors_{}'.format(filename))
+```
+
+```python
+76 + i
+```
+
+```python
+with open('list_papers_google.pickle', 'wb') as handle:
+    pickle.dump(list_papers_google, handle)
+with open('list_authors_google.pickle', 'wb') as handle:
+    pickle.dump(list_authors_google, handle)
+```
+
+```python
+74 + 2
+```
+
+```python
+params = {
+      "engine": "google_scholar",
+      "q": '10.3390/SU11133643',
+      "api_key": api_key
+    }
+
+search = GoogleSearch(params)
+results = search.get_dict()
+```
+
+```python
+len(list_papers_google)
+```
+
 # Table `meta_analysis_esg_cfp`
 
 Since the table to create has missing value, please use the following at the top of the query
