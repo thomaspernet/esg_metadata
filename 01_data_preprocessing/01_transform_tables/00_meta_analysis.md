@@ -1275,13 +1275,14 @@ match_author = (
 
 ```python
 import requests
+api_key = ""
 def twinword(token1, token2):
     """
     """
     url = "https://api.twinword.com/api/text/similarity/latest/"
     headers = {
         'Host': "api.twinword.com",
-        "X-Twaip-Key": "T2pS4kaW7BQBP0eoXJU5HHhvYtYYJfGTWorsyviz3Kc+7eFxyboqdJYc4xAEyptg1eURGJdeURGCjlE3sjffFw=="
+        "X-Twaip-Key":api_key
     }
     querystring = {
         "text1": token1,
@@ -1526,8 +1527,6 @@ df_authors_journal_full = (
                       'semantic',
                       'google',
                       'gender',
-                      'preds_0',
-                      'preds_1',
                       'authorId',
                       'missing',
                       'max_prob',
