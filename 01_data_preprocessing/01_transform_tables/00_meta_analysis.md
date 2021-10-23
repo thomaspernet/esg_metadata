@@ -546,6 +546,7 @@ doi = drive.download_data_from_spreadsheet(
 from serpapi import GoogleSearch
 from tqdm import tqdm
 import time
+import pickle
 ```
 
 Get paper name
@@ -737,8 +738,6 @@ for ind, paper in enumerate(list_paper_semantic):
 ```
 
 ```python
-import pickle
-
 # Store data (serialize)
 with open('list_paper_semantic.pickle', 'wb') as handle:
     pickle.dump(list_paper_semantic, handle)
@@ -747,69 +746,71 @@ with open('list_paper_semantic.pickle', 'wb') as handle:
 ## Google scholar 
 
 ```python
-#api_key = "76d06e832b47b086bf230ccce2d63f22e2a0a69437f2b22175afa705f50a485e"
-#api_key = "1220349f54021d5ccfc2c92bf2bf502c839d079682fbbc94457f3a6cf1e0d08b"
-api_key = "7a89c050004f86cd7cfde9d704be2ddc466c4ce050f7d61d592169d6e26dc987"
+#api_key = ""
+
 def collect_doi_information(doi):
     """
     """
-    
+
     params = {
-      "engine": "google_scholar",
-      "q": doi,
-      "api_key": api_key
+        "engine": "google_scholar",
+        "q": doi,
+        "api_key": api_key
     }
 
     search = GoogleSearch(params)
     results = search.get_dict()
     list_authors = []
-
-    #### SEARCH TITLE
-    if "link" in results['organic_results'][0]:
-        i = 0
-    else:
-        i = 1
-        
-    if 'cited_by' in results['organic_results'][i]['inline_links']:
-        if "total" in results['organic_results'][i]['inline_links']['cited_by']:
-            cite = results['organic_results'][i]['inline_links']['cited_by']['total']
+    dic_title = {"search_parameters": results['search_parameters']}
+    if 'organic_results' in results:
+        dic_title['status'] = "FOUND"
+        # SEARCH TITLE
+        if "link" in results['organic_results'][0] or len(results['organic_results']) == 1:
+            i = 0
         else:
-            cite = False
+            i = 1
 
-        if "authors" in results['organic_results'][i]['publication_info']:
-            authors = results['organic_results'][i]['publication_info']['authors']
-        else:
-            authors = False
+        for key in [
+            "title",
+            "result_id",
+            "link",
+            "snippet",
+            "publication_info",
+            "cited_by",
+        ]:
+            if key in results['organic_results'][i]:
+                dic_title[key] = results['organic_results'][i][key]
+            elif key in results['organic_results'][i]['inline_links']:
+                dic_title[key] = results['organic_results'][i]['inline_links'][key]
+            elif key in results['organic_results'][i]['publication_info']:
+                dic_title[key] = results['organic_results'][i]['publication_info'][key]
 
-
-        dic_title = {
-            'title':results['organic_results'][i]['title'],
-            'result_id':results['organic_results'][i]['result_id'],
-            'link':results['organic_results'][i]['link'],
-            'snippet':results['organic_results'][i]['snippet'],
-            'publication_info':results['organic_results'][i]['publication_info']['summary'],
-            "authors":authors,
-            "cited_by":cite
-        }
-        #### SEARCH AUTHORS
-        
-        if authors != False:
-            for i, author in enumerate(results['organic_results'][i]['publication_info']['authors']):
+        # SEARCH AUTHORS
+        if 'authors' in dic_title['publication_info']:
+            dic_title['authors_details'] = []
+            for i, author in enumerate(dic_title['publication_info']['authors']):
                 params = {
-                 "engine": "google_scholar_author",
-                 "author_id": author['author_id'],
-                 "api_key":api_key
-            }
+                        "engine": "google_scholar_author",
+                        "author_id": author['author_id'],
+                        "api_key": api_key
+                    }
 
                 search = GoogleSearch(params)
                 results_auth = search.get_dict()
+                dic_authors = {
+                        'search_parameters': results_auth['search_parameters'],
+                    }
                 if "author" in results_auth:
-                    aut = results_auth['author']
-                    author['details'] = aut
-                    list_authors.append(author)
+                    dic_authors['status'] = 'FOUND'
+                    dic_authors['author'] = results_auth['author']
+                else:
+                    dic_authors['status'] = 'NOT_FOUND'
+                    dic_authors['author'] = {'name':author['authors']}
+                dic_title['authors_details'].append(dic_authors)
+                list_authors.append(dic_authors)
+                
     else:
-        dic_title = results
-
+        dic_title['status'] = "NOT_FOUND"
     return dic_title, list_authors
 ```
 
@@ -819,18 +820,20 @@ list_authors_google = []
 ```
 
 ```python
-list_failure_google = []
+list_paper_semantic = pickle.load( open( "list_paper_semantic.pickle", "rb" ) )
+#list_papers_google = pickle.load( open( "list_papers_google.pickle", "rb" ) )
+#list_authors_google = pickle.load( open( "list_authors_google.pickle", "rb" ) )
 ```
 
 ```python
 ### next batch already chosen 92
-for i, d in tqdm(enumerate(list_paper_semantic[92:])):
+for i, d in tqdm(enumerate(list_paper_semantic[:2])):
     if "DOI" in d['externalIds']:
         filename = d['paperId']
         #### EXTRACT INFORMATION 
         dic_title, authors = collect_doi_information(d['externalIds']['DOI'])
         list_papers_google.append(dic_title)
-        list_authors_google.append(authors)
+        list_authors_google.extend(authors)
 
         ### PAPER
         with open('paper_{}'.format(filename), 'w') as outfile:
@@ -839,16 +842,22 @@ for i, d in tqdm(enumerate(list_paper_semantic[92:])):
                     destination_in_s3 = "DATA/JOURNALS/GOOGLE_SCHOLAR/PAPERS")
         os.remove('paper_{}'.format(filename))
 
-        ### JOURNAL
-        with open('authors_{}'.format(filename), 'w') as outfile:
-            json.dump(authors, outfile)
-        s3.upload_file(file_to_upload = 'authors_{}'.format(filename),
-                    destination_in_s3 = "DATA/JOURNALS/GOOGLE_SCHOLAR/AUTHORS")
-        os.remove('authors_{}'.format(filename))
+        ### AUTHORS
+        for a in authors:
+            id_ = a['search_parameters']['author_id']
+            with open('authors_{}'.format(id_), 'w') as outfile:
+                json.dump(a, outfile)
+            s3.upload_file(file_to_upload = 'authors_{}'.format(id_),
+                        destination_in_s3 = "DATA/JOURNALS/GOOGLE_SCHOLAR/AUTHORS")
+            os.remove('authors_{}'.format(id_))
 ```
 
 ```python
-76 + i
+len(list_paper_semantic)
+```
+
+```python
+len(list_papers_google)
 ```
 
 ```python
@@ -858,23 +867,45 @@ with open('list_authors_google.pickle', 'wb') as handle:
     pickle.dump(list_authors_google, handle)
 ```
 
+### Reconstruct paper-authors tables
+
 ```python
-74 + 2
+(
+    pd.json_normalize(list_authors_google).assign(
+        interest=lambda x: 
+            x.apply(
+                lambda x:  
+                [
+                    i["title"]
+                    for i in x["author.interests"]
+                    if x["author.interests"] != np.nan
+                ]
+                if isinstance(x["author.interests"], list)
+                else np.nan,
+                axis=1
+        ),
+        email_extensition = lambda x: x['author.email'].str.replace('Verified email at ', '', regex=False)
+    )
+)
 ```
 
 ```python
-params = {
-      "engine": "google_scholar",
-      "q": '10.3390/SU11133643',
-      "api_key": api_key
-    }
-
-search = GoogleSearch(params)
-results = search.get_dict()
+df_google_scholar = (
+    pd.json_normalize(list_papers_google)
+)
+df_google_scholar.head()
 ```
 
 ```python
-len(list_papers_google)
+df_semantic = (
+    pd.json_normalize(list_paper_semantic, meta=[
+        'externalIds'
+    ])
+    .drop(columns=['paper_name_source'])
+    .assign(
+        nb_authors=lambda x: x['authors'].str.len()
+    )
+)
 ```
 
 # Table `meta_analysis_esg_cfp`
