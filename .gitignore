@@ -161,3 +161,4 @@ dmypy.json
 .pyre/
 *.zip
 utils/summary_stat.py
+01_data_preprocessing/01_transform_tables/creds/service.json

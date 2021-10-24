@@ -590,6 +590,15 @@ field_paper = [
     "fieldsOfStudy",
     "authors"
 ]
+field_authors = [
+    "externalIds",
+    "url",
+    "name",
+    "aliases",
+    "affiliations",
+    "homepage",
+    "papers"
+]
 ```
 
 ```python
@@ -621,6 +630,20 @@ def find_doi(paper_name):
                 response_2 = response_2.json()
                 response_2['paper_name_source'] = paper_name
                 response_2['status'] = 'found'
+                
+                ### find authors details information
+                authors_fulls = []
+                for aut in response_1['data'][0]['authors']:
+                    url_author = 'https://api.semanticscholar.org/graph/v1/author/{}?fields={}'.format(
+                        aut['authorId'],
+                        ",".join(field_authors))
+                    response_3 = requests.get(url_author, headers=headers)
+                    if response_3.status_code == 200:
+                        authors_fulls.append(response_3.json())
+                        
+                if len(authors_fulls) >0:
+                    response_2['authors_detail'] = authors_fulls
+                
                 return response_2
             else:
                 return {'paper_name': paper_name, 'status': 'not found'}
@@ -637,12 +660,16 @@ list_failure = []
 
 ```python
 for i, p in tqdm(enumerate(list(doi['Title'].unique()))):
-    time.sleep(8)
+    time.sleep(15)
     response = find_doi(paper_name = p)  
     if response['status'] == 'found':
         list_paper_semantic.append(response)
     else:
         list_failure.append(p)
+```
+
+```python
+len(list_paper_semantic)
 ```
 
 ```python
@@ -743,7 +770,9 @@ with open('MODELS_AND_DATA/list_paper_semantic.pickle', 'wb') as handle:
     pickle.dump(list_paper_semantic, handle)
 ```
 
+<!-- #region heading_collapsed="true" -->
 ## Google scholar 
+<!-- #endregion -->
 
 ```python
 api_key = "5240a76403945e46c3f7870cb36a76eef235f64526554bbf92f41364ebbad2c0"
@@ -869,8 +898,9 @@ with open('MODELS_AND_DATA/list_authors_google.pickle', 'wb') as handle:
     pickle.dump(list_authors_google, handle)
 ```
 
+<!-- #region heading_collapsed="true" -->
 ## Train deep learning model gender detection
-
+<!-- #endregion -->
 
 ### Download data
 
@@ -1049,9 +1079,11 @@ plt.ylabel('Accuracy')
 plt.legend()
 ```
 
-### Reconstruct paper-authors tables
+<!-- #region heading_collapsed="true" -->
+## Reconstruct paper-authors tables
 
 - Need to add the gender
+<!-- #endregion -->
 
 ```python
 from tensorflow.keras.models import load_model
@@ -1560,6 +1592,7 @@ drive.upload_file_root(mime_type = 'text/plain',
 drive.move_file(file_name = 'AUTHOR_SEMANTIC_GOOGLE.csv', folder_name = "SPREADSHEETS_ESG_METADATA")
 ```
 
+<!-- #region heading_collapsed="true" -->
 # Table `meta_analysis_esg_cfp`
 
 Since the table to create has missing value, please use the following at the top of the query
@@ -1567,7 +1600,7 @@ Since the table to create has missing value, please use the following at the top
 ```
 CREATE TABLE database.table_name WITH (format = 'PARQUET') AS
 ```
-
+<!-- #endregion -->
 
 Choose a location in S3 to save the CSV. It is recommended to save in it the `datalake-datascience` bucket. Locate an appropriate folder in the bucket, and make sure all output have the same format
 
@@ -1822,10 +1855,11 @@ output = s3.run_query(
 output
 ```
 
+<!-- #region heading_collapsed="true" -->
 # Update Glue catalogue and Github
 
 This step is mandatory to validate the query in the ETL.
-
+<!-- #endregion -->
 
 ## Create or update the data catalog
 
@@ -1942,22 +1976,25 @@ update_glue_github.find_duplicates(
 update_glue_github.count_missing(client = client, name_json = name_json, bucket = bucket,TableName = table_name)
 ```
 
+<!-- #region heading_collapsed="true" -->
 # Update Github Data catalog
 
 The data catalog is available in Glue. Although, we might want to get a quick access to the tables in Github. In this part, we are generating a `README.md` in the folder `00_data_catalogue`. All tables used in the project will be added to the catalog. We use the ETL parameter file and the schema in Glue to create the README. 
 
 Bear in mind the code will erase the previous README. 
+<!-- #endregion -->
 
 ```python
 create_schema.make_data_schema_github(name_json = name_json)
 ```
 
+<!-- #region heading_collapsed="true" -->
 # Analytics
 
 In this part, we are providing basic summary statistic. Since we have created the tables, we can parse the schema in Glue and use our json file to automatically generates the analysis.
 
 The cells below execute the job in the key `ANALYSIS`. You need to change the `primary_key` and `secondary_key` 
-
+<!-- #endregion -->
 
 For a full analysis of the table, please use the following Lambda function. Be patient, it can takes between 5 to 30 minutes. Times varies according to the number of columns in your dataset.
 
@@ -2038,7 +2075,9 @@ payload
 #response
 ```
 
+<!-- #region heading_collapsed="true" -->
 # Generation report
+<!-- #endregion -->
 
 ```python
 import os, time, shutil, urllib, ipykernel, json
