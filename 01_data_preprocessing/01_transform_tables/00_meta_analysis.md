@@ -516,6 +516,182 @@ drive.add_data_to_spreadsheet(
     rangeData = None)
 ```
 
+## Train deep learning model gender detection
+
+
+### Download data
+
+```python
+project = 'valid-pagoda-132423'
+gcp = connect_cloud_platform.connect_console(project = project,
+                                             service_account = service_account,
+                                             colab = False)
+
+sql = """
+SELECT
+  name,
+  gender,
+  COUNT(name) AS num_names
+FROM
+  `bigquery-public-data.usa_names.usa_1910_current`
+GROUP BY
+  name,
+  gender
+"""
+
+#names_df = client.query(sql).to_dataframe()
+names_df = gcp.upload_data_from_bigquery(query = sql,location = "US")
+```
+
+```python
+names_df.shape
+```
+
+```python
+names_df.head()
+```
+
+### Clean up and pre-process
+
+1. Lowercase the name since each character’s case doesn’t convey any information about a person’s gender.
+2. Split each character: The basic idea of the ML model we’re building is to read characters in a name to identify patterns that could indicate masculinity or femininity. Thus we split the name into each character.
+3. Pad names with empty spaces until a max of 50 characters ensures the ML model sees the same length for all the names.
+4. Encode each character to a unique number since ML models can only work with numbers. In this case, we encode ‘ ’ (space) to 0, ‘a’ to 1, ‘b’ to 2, and so on.
+5. Encode each gender to a unique number since ML models can only work with numbers. In this case, we encode ‘F’ to 0 and ‘M’ to 1.
+
+```python
+def preprocess(names_df,column, train=True, to_lower = True):
+    # Step 1: Lowercase
+    if to_lower:
+        names_df['name'] = names_df[column].str.lower()
+    else:
+        names_df['name'] = names_df[column]
+    # Step 2: Split individual characters
+    names_df['name'] = [list(name) for name in names_df['name']]
+
+    # Step 3: Pad names with spaces to make all names same length
+    name_length = 50
+    names_df['name'] = [
+        (name + [' ']*name_length)[:name_length] 
+        for name in names_df['name']
+    ]
+
+    # Step 4: Encode Characters to Numbers
+    names_df['name'] = [
+        [
+            max(0.0, ord(char)-96.0) 
+            for char in name
+        ]
+        for name in names_df['name']
+    ]
+    
+    if train:
+        # Step 5: Encode Gender to Numbers
+        names_df['gender'] = [
+            0.0 if gender=='F' else 1.0 
+            for gender in names_df['gender']
+        ]
+        return names_df
+    else:
+        return names_df['name']
+```
+
+```python
+names_df = preprocess(names_df, column = 'name')
+names_df.head()
+```
+
+### Model Architecture
+
+1. Embedding layer: to “embed” each input character’s encoded number into a dense 256 dimension vector. The choice of embedding_dim is a hyperparameter that can be tuned to get the desired accuracy.
+2. Bidirectional LSTM layer: read the sequence of character embeddings from the previous step and output a single vector representing that sequence. The values for units and dropouts are hyperparameters as well.
+3. Final Dense layer: to output a single value close to 0 for ‘F’ or close to 1 for ‘M’ since this is the encoding we used in the preprocessing step.
+
+```python
+#!pip install --upgrade tensorflow
+```
+
+```python
+from tensorflow.keras import Sequential
+from tensorflow.keras.layers import Embedding, Bidirectional, LSTM, Dense
+from tensorflow.keras.optimizers import Adam
+
+def lstm_model(num_alphabets=27, name_length=50, embedding_dim=256):
+    model = Sequential([
+        Embedding(num_alphabets, embedding_dim, input_length=name_length),
+        Bidirectional(LSTM(units=128, recurrent_dropout=0.2, dropout=0.2)),
+        Dense(1, activation="sigmoid")
+    ])
+
+    model.compile(loss='binary_crossentropy',
+                  optimizer=Adam(learning_rate=0.001),
+                  metrics=['accuracy'])
+
+    return model
+```
+
+### Training the Model
+
+We’ll use the standard tensorflow.keras training pipeline as below
+
+1. Instantiate the model using the function we wrote in the model architecture step.
+2. Split the data into 80% training and 20% validation.
+3. Call model.fit with EarlyStopping callback to stop training once the model starts to overfit.
+4. Save the trained model
+5. Plot the training and validation accuracies to visually check the model performance.
+
+```python
+import numpy as np
+from matplotlib import pyplot as plt
+from sklearn.model_selection import train_test_split
+from tensorflow.keras.callbacks import EarlyStopping
+```
+
+```python
+%time
+
+# Step 1: Instantiate the model
+model = lstm_model(num_alphabets=27, name_length=50, embedding_dim=256)
+
+# Step 2: Split Training and Test Data
+X = np.asarray(names_df['name'].values.tolist())
+y = np.asarray(names_df['gender'].values.tolist())
+
+X_train, X_test, y_train, y_test = train_test_split(X,
+                                                    y,
+                                                    test_size=0.2,
+                                                    random_state=0)
+
+# Step 3: Train the model
+callbacks = [
+    EarlyStopping(monitor='val_accuracy',
+                  min_delta=1e-3,
+                  patience=5,
+                  mode='max',
+                  restore_best_weights=True,
+                  verbose=1),
+]
+
+history = model.fit(x=X_train,
+                    y=y_train,
+                    batch_size=64,
+                    epochs=50,
+                    validation_data=(X_test, y_test),
+                    callbacks=callbacks)
+
+# Step 4: Save the model
+model.save('MODELS_AND_DATA/boyorgirl.h5')
+```
+
+```python
+# Step 5: Plot accuracies
+plt.plot(history.history['accuracy'], label='train')
+plt.plot(history.history['val_accuracy'], label='val')
+plt.xlabel('Epochs')
+plt.ylabel('Accuracy')
+plt.legend()
+```
+
 # Download authors and paper information
 
 ## Semantic scholar
@@ -523,17 +699,31 @@ drive.add_data_to_spreadsheet(
 Extract paper name from METADATA_TABLES_COLLECTION
 Get doi from Semantic scholar
 
-## Google scholar
+### Gender Semantic Scholar
 
-Google Scholar <- Use this API: https://serpapi.com/ 
+- We fetched the author's alias so that we have more options for the first name. For instance, the author `S. Waddock` has 4 aliases:
 
-- Input table: [METADATA_TABLES_COLLECTION](https://docs.google.com/spreadsheets/d/1d66_CVtWni7wmKlIMcpaoanvT2ghmjbXARiHgnLWvUw/edit?usp=sharing)
+- 'S Waddock',
+- 'Sandra Waddock',
+- 'Sandr A Waddock',
+- 'Sandra A. Waddock'
+
+We will use the model to predict the first name.
+
+
 
 ```python
 from serpapi import GoogleSearch
 from tqdm import tqdm
 import time
 import pickle
+import re
+from tensorflow.keras.models import load_model
+import unicodedata
+```
+
+```python
+pred_model = load_model('MODELS_AND_DATA/boyorgirl.h5')
 ```
 
 ```python
@@ -654,6 +844,35 @@ def find_doi(paper_name):
 ```
 
 ```python
+def clean_name(name='Sarah'):
+    """
+    """
+    
+    return "".join(
+        (
+            c
+            for c in unicodedata.normalize("NFD", name)
+            if unicodedata.category(c) != "Mn"
+        )
+    ).lower().replace("-", ' ')
+def prediction_gender(name=["sarah"]):
+    """
+    name should be normalised and a list of candidates
+    """
+    return np.mean(pred_model.predict(
+        np.asarray(
+            preprocess(
+                pd.DataFrame(
+                    name,
+                    columns=['semantic_0']
+                ), column="semantic_0", train=False
+            )
+            .values.tolist()
+        )
+    ))
+```
+
+```python
 list_paper_semantic = []
 list_failure = []
 ```
@@ -669,7 +888,31 @@ for i, p in tqdm(enumerate(list(doi['Title'].unique()))):
 ```
 
 ```python
-len(list_paper_semantic)
+for i, authors in tqdm(enumerate(list_paper_semantic)):
+    for author in authors["authors_detail"]:
+        #### Clean authors
+        author_clean = [clean_name(name=author["name"].split(" ")[0])] if \
+                        len(clean_name(name=author["name"].split(" ")[0]))>2 else None
+        if author["aliases"] is not None:
+            author_clean_alias = list(
+                dict.fromkeys(
+                    [clean_name(name=
+                                re.sub(r"[^a-zA-Z0-9]+", ' ', a
+                                      ).split(" ")[0]) for a in author["aliases"] if len(a.split(" ")[0]) >2]
+                )
+            )
+            if author_clean is not None:
+                author_clean.extend(author_clean_alias)
+            else:
+                author_clean = author_clean_alias
+        #### predict gender
+        if len(author_clean) > 0:
+            max_prediction = prediction_gender(name=author_clean)
+            gender= "MALE" if max_prediction >=.5 else "FEMALE"
+        else:
+            max_prediction = None
+            gender = 'UNKNOWN'
+        author['gender'] = {'gender': gender, 'probability':max_prediction}
 ```
 
 ```python
@@ -756,7 +999,7 @@ Save S3
 ```python
 for ind, paper in enumerate(list_paper_semantic):
     with open("paper_id_{}".format(paper["paperId"]), "w") as outfile:
-        json.dump(response, outfile)
+        json.dump(eval(str(paper)), outfile)
     s3.upload_file(
         file_to_upload="paper_id_{}".format(paper["paperId"]),
         destination_in_s3="DATA/JOURNALS/SEMANTIC_SCHOLAR/PAPERS",
@@ -770,9 +1013,11 @@ with open('MODELS_AND_DATA/list_paper_semantic.pickle', 'wb') as handle:
     pickle.dump(list_paper_semantic, handle)
 ```
 
-<!-- #region heading_collapsed="true" -->
 ## Google scholar 
-<!-- #endregion -->
+
+Google Scholar <- Use this API: https://serpapi.com/ 
+
+- Input table: [METADATA_TABLES_COLLECTION](https://docs.google.com/spreadsheets/d/1d66_CVtWni7wmKlIMcpaoanvT2ghmjbXARiHgnLWvUw/edit?usp=sharing)
 
 ```python
 api_key = "5240a76403945e46c3f7870cb36a76eef235f64526554bbf92f41364ebbad2c0"
@@ -832,12 +1077,23 @@ def collect_doi_information(doi):
                 if "author" in results_auth:
                     dic_authors['status'] = 'FOUND'
                     dic_authors['author'] = results_auth['author']
+                    #### detect Gender
+                    author_clean = [clean_name(name=results_auth['author']['name'].split(" ")[0])] if \
+                        len(clean_name(name=results_auth['author']['name'].split(" ")[0]))>2 else None
+                    if author_clean is not None:
+                        max_prediction = prediction_gender(name=author_clean)
+                        gender= "MALE" if max_prediction >=.5 else "FEMALE"
+                    else:
+                        max_prediction = None
+                        gender = 'UNKNOWN'
+                    dic_authors['gender'] = {'gender': gender, 'probability':max_prediction}
+                        
                 else:
                     dic_authors['status'] = 'NOT_FOUND'
                     dic_authors['author'] = {'name':author['authors']}
+                    dic_authors['gender'] = {'gender': 'UNKNOWN', 'probability':None}
                 dic_title['authors_details'].append(dic_authors)
-                list_authors.append(dic_authors)
-                
+                list_authors.append(dic_authors)       
     else:
         dic_title['status'] = "NOT_FOUND"
     return dic_title, list_authors
@@ -864,7 +1120,7 @@ for i, d in tqdm(enumerate(list_paper_semantic)):
 
         ### PAPER
         with open('paper_{}'.format(filename), 'w') as outfile:
-            json.dump(dic_title, outfile)
+            json.dump(eval(str(dic_title)), outfile)
         s3.upload_file(file_to_upload = 'paper_{}'.format(filename),
                     destination_in_s3 = "DATA/JOURNALS/GOOGLE_SCHOLAR/PAPERS")
         os.remove('paper_{}'.format(filename))
@@ -873,7 +1129,7 @@ for i, d in tqdm(enumerate(list_paper_semantic)):
         for a in authors:
             id_ = a['search_parameters']['author_id']
             with open('authors_{}'.format(id_), 'w') as outfile:
-                json.dump(a, outfile)
+                json.dump(eval(str(a)), outfile)
             s3.upload_file(file_to_upload = 'authors_{}'.format(id_),
                         destination_in_s3 = "DATA/JOURNALS/GOOGLE_SCHOLAR/AUTHORS")
             os.remove('authors_{}'.format(id_))
@@ -898,208 +1154,19 @@ with open('MODELS_AND_DATA/list_authors_google.pickle', 'wb') as handle:
     pickle.dump(list_authors_google, handle)
 ```
 
-<!-- #region heading_collapsed="true" -->
-## Train deep learning model gender detection
-<!-- #endregion -->
-
-### Download data
-
-```python
-project = 'valid-pagoda-132423'
-gcp = connect_cloud_platform.connect_console(project = project,
-                                             service_account = service_account,
-                                             colab = False)
-```
-
-```python
-sql = """
-SELECT
-  name,
-  gender,
-  COUNT(name) AS num_names
-FROM
-  `bigquery-public-data.usa_names.usa_1910_current`
-GROUP BY
-  name,
-  gender
-"""
-
-#names_df = client.query(sql).to_dataframe()
-names_df = gcp.upload_data_from_bigquery(query = sql,location = "US")
-```
-
-```python
-names_df.shape
-```
-
-```python
-names_df.head()
-```
-
-### Clean up and pre-process
-
-1. Lowercase the name since each character’s case doesn’t convey any information about a person’s gender.
-2. Split each character: The basic idea of the ML model we’re building is to read characters in a name to identify patterns that could indicate masculinity or femininity. Thus we split the name into each character.
-3. Pad names with empty spaces until a max of 50 characters ensures the ML model sees the same length for all the names.
-4. Encode each character to a unique number since ML models can only work with numbers. In this case, we encode ‘ ’ (space) to 0, ‘a’ to 1, ‘b’ to 2, and so on.
-5. Encode each gender to a unique number since ML models can only work with numbers. In this case, we encode ‘F’ to 0 and ‘M’ to 1.
-
-```python
-def preprocess(names_df,column, train=True, to_lower = True):
-    # Step 1: Lowercase
-    if to_lower:
-        names_df['name'] = names_df[column].str.lower()
-    else:
-        names_df['name'] = names_df[column]
-    # Step 2: Split individual characters
-    names_df['name'] = [list(name) for name in names_df['name']]
-
-    # Step 3: Pad names with spaces to make all names same length
-    name_length = 50
-    names_df['name'] = [
-        (name + [' ']*name_length)[:name_length] 
-        for name in names_df['name']
-    ]
-
-    # Step 4: Encode Characters to Numbers
-    names_df['name'] = [
-        [
-            max(0.0, ord(char)-96.0) 
-            for char in name
-        ]
-        for name in names_df['name']
-    ]
-    
-    if train:
-        # Step 5: Encode Gender to Numbers
-        names_df['gender'] = [
-            0.0 if gender=='F' else 1.0 
-            for gender in names_df['gender']
-        ]
-        return names_df
-    else:
-        return names_df['name']
-    
-    
-```
-
-```python
-names_df = preprocess(names_df, column = 'name')
-names_df.head()
-```
-
-### Model Architecture
-
-1. Embedding layer: to “embed” each input character’s encoded number into a dense 256 dimension vector. The choice of embedding_dim is a hyperparameter that can be tuned to get the desired accuracy.
-2. Bidirectional LSTM layer: read the sequence of character embeddings from the previous step and output a single vector representing that sequence. The values for units and dropouts are hyperparameters as well.
-3. Final Dense layer: to output a single value close to 0 for ‘F’ or close to 1 for ‘M’ since this is the encoding we used in the preprocessing step.
-
-```python
-#!pip install --upgrade tensorflow
-```
-
-```python
-from tensorflow.keras import Sequential
-from tensorflow.keras.layers import Embedding, Bidirectional, LSTM, Dense
-from tensorflow.keras.optimizers import Adam
-
-def lstm_model(num_alphabets=27, name_length=50, embedding_dim=256):
-    model = Sequential([
-        Embedding(num_alphabets, embedding_dim, input_length=name_length),
-        Bidirectional(LSTM(units=128, recurrent_dropout=0.2, dropout=0.2)),
-        Dense(1, activation="sigmoid")
-    ])
-
-    model.compile(loss='binary_crossentropy',
-                  optimizer=Adam(learning_rate=0.001),
-                  metrics=['accuracy'])
-
-    return model
-```
-
-### Training the Model
-
-We’ll use the standard tensorflow.keras training pipeline as below
-
-1. Instantiate the model using the function we wrote in the model architecture step.
-2. Split the data into 80% training and 20% validation.
-3. Call model.fit with EarlyStopping callback to stop training once the model starts to overfit.
-4. Save the trained model
-5. Plot the training and validation accuracies to visually check the model performance.
-
-```python
-import numpy as np
-from matplotlib import pyplot as plt
-from sklearn.model_selection import train_test_split
-from tensorflow.keras.callbacks import EarlyStopping
-```
-
-```python
-%time
-
-# Step 1: Instantiate the model
-model = lstm_model(num_alphabets=27, name_length=50, embedding_dim=256)
-
-# Step 2: Split Training and Test Data
-X = np.asarray(names_df['name'].values.tolist())
-y = np.asarray(names_df['gender'].values.tolist())
-
-X_train, X_test, y_train, y_test = train_test_split(X,
-                                                    y,
-                                                    test_size=0.2,
-                                                    random_state=0)
-
-# Step 3: Train the model
-callbacks = [
-    EarlyStopping(monitor='val_accuracy',
-                  min_delta=1e-3,
-                  patience=5,
-                  mode='max',
-                  restore_best_weights=True,
-                  verbose=1),
-]
-
-history = model.fit(x=X_train,
-                    y=y_train,
-                    batch_size=64,
-                    epochs=50,
-                    validation_data=(X_test, y_test),
-                    callbacks=callbacks)
-
-# Step 4: Save the model
-model.save('MODELS_AND_DATA/boyorgirl.h5')
-```
-
-```python
-# Step 5: Plot accuracies
-plt.plot(history.history['accuracy'], label='train')
-plt.plot(history.history['val_accuracy'], label='val')
-plt.xlabel('Epochs')
-plt.ylabel('Accuracy')
-plt.legend()
-```
-
-<!-- #region heading_collapsed="true" -->
 ## Reconstruct paper-authors tables
 
-- Need to add the gender
-<!-- #endregion -->
 
 ```python
-from tensorflow.keras.models import load_model
-import unicodedata
-```
-
-```python
-pred_model = load_model('MODELS_AND_DATA/boyorgirl.h5')
+list_papers_google = pickle.load( open( "MODELS_AND_DATA/list_papers_google.pickle", "rb" ))
+list_authors_google = pickle.load( open( "MODELS_AND_DATA/list_authors_google.pickle", "rb" ))
+list_paper_semantic = pickle.load( open( "MODELS_AND_DATA/list_paper_semantic.pickle", "rb" ))
 ```
 
 ```python
 df_authors = (
-    pd.concat(
-        [
-            (
-                pd.json_normalize(list_authors_google).assign(
+                pd.json_normalize(list_authors_google)
+    .assign(
                     interest=lambda x: x.apply(
                         lambda x: [
                             i["title"]
@@ -1114,24 +1181,6 @@ df_authors = (
                         "Verified email at ", "", regex=False
                     ),
                 )
-            ),
-            pd.json_normalize(list_authors_google)
-            .assign(
-                author_clean=lambda x: x.apply(
-                    lambda x: "".join(
-                        (
-                            c
-                            for c in unicodedata.normalize("NFD", x["author.name"])
-                            if unicodedata.category(c) != "Mn"
-                        )
-                    ),
-                    axis=1,
-                )
-            )["author_clean"]
-            .str.split(" ", expand=True),
-        ],
-        axis=1,
-    )
     .reindex(
         columns=[
             "status",
@@ -1139,22 +1188,19 @@ df_authors = (
             "search_parameters.author_id",
             "search_parameters.hl",
             "author.name",
+            "gender.gender",
+            "gender.probability",
             "author.affiliations",
             "author.email",
             "author.website",
             "author.interests",
             "author.thumbnail",
             "interest",
-            "email_extensition",
-            #"first_name"
+            "email_extensition"
         ]
     )
 )
 df_authors.head(1)
-```
-
-```python
-list_papers_google = pickle.load( open( "MODELS_AND_DATA/list_papers_google.pickle", "rb" ))
 ```
 
 ```python
@@ -1168,11 +1214,11 @@ df_google_scholar = (
 
 ```python
 df_paper_info_full = (
-    pd.json_normalize(list_paper_semantic, meta=["externalIds"])
+    pd.json_normalize(list_paper_semantic, meta=["externalIds"]).rename(columns = {'authors_detail':'author_details_semantic'})
     .drop(columns=["paper_name_source"])
     .assign(nb_authors=lambda x: x["authors"].str.len())
     .merge(
-        df_google_scholar.drop(columns=["title", "status"]),
+        df_google_scholar.drop(columns=["title", "status"]).rename(columns = {'authors_details':'author_details_google'}),
         how="left",
         left_on=["externalIds.DOI"],
         right_on=["search_parameters.q"],
@@ -1190,7 +1236,8 @@ df_paper_info_full = (
             "nb_authors_google",
             "missing_authors_info",
             "authors",
-            "authors_details",
+            "author_details_semantic",
+            "author_details_google",
             "referenceCount",
             "citationCount",
             "cited_by.total",
@@ -1342,7 +1389,7 @@ test = (
 test['google'].nunique()
 ```
 
-Test 1: 125 exact match
+Test 1: 124 exact match
 
 - authors with large similarity score and only one observation by author
 
@@ -1382,7 +1429,149 @@ We found 136 authors among the 266:
 - We now need to match Google's authors information, and then match with semantic authors' list to see the authors not match
 - We remove the duplicate by keeping the highest complexity value within authors
 
+
+### Authors
+
+- We can add extra information about the expertise of the authors in ESG. 
+
+
+
 ```python
+ (
+            pd.json_normalize(list_paper_semantic, "authors_detail")
+            .assign(
+                name=lambda x: x['name'].str.lower(),
+                semantic=lambda x: x.apply(
+                    lambda x: "".join(
+                        (
+                            c
+                            for c in unicodedata.normalize("NFD", x["name"])
+                            if unicodedata.category(c) != "Mn"
+                        )
+                    ),
+                    axis=1,
+                )
+            )
+            .drop_duplicates(subset=['name'])
+            .drop(columns=['gender.gender', 'gender.probability'])
+     .head(1)
+        )
+```
+
+Find similarity between:
+
+- esg
+- environmental social governance
+- environmental
+- social 
+- governance
+
+1. Create list of all the papers
+
+```python
+from gensim.models import Word2Vec
+import nltk
+from nltk.corpus import stopwords
+from scipy.spatial import distance
+#nltk.download('stopwords')
+```
+
+```python
+stop = stopwords.words('english')
+```
+
+```python
+def dumb_search(items):
+    return any(item in 'esg environmental social governance' for item in items)
+```
+
+```python
+test = (
+    pd.json_normalize(list_paper_semantic, "authors_detail")
+    .assign(
+        paper=lambda x: x.apply(
+            lambda x: [
+                {'id': i["paperId"], 'name':i['title']}
+                for i in x["papers"]
+                if x["papers"] != np.nan
+            ]
+            if isinstance(x["papers"], list)
+            else np.nan,
+            axis=1,
+        )
+    )
+)
+list_papers = []
+null = [list_papers.extend(i) for i in test['paper'].to_list()]
+all_connected_paper = (
+    pd.DataFrame(list_papers)
+    .drop_duplicates()
+    .assign(
+        name_clean=lambda x:
+        x.apply(lambda x:
+                basic_clean(' '.join([word for word in x['name'].split() if word not in (stop)])), axis=1)
+    )
+    .assign(
+        esg = lambda x: x.apply(
+            lambda x:
+            dumb_search(x['name_clean']), axis = 1)
+                #compute_cosine(entity_1 = 'esg',entity_2 = x['name_clean']), axis = 1)
+    )
+)
+all_connected_paper.shape
+```
+
+```python
+all_connected_paper.head()
+```
+
+```python
+all_connected_paper['esg'].value_counts()
+```
+
+Compute expertise authors:
+
+- total esg / total papers
+
+```python
+def count_esg(papers):
+    """
+    papers list with keys paperId and title
+    """
+    return sum([all_connected_paper.loc[lambda x: x['id'].isin([item['paperId']])]['esg'].values[0] for item in papers])
+```
+
+```python
+#!pip install --upgrade gensim
+```
+
+```python
+def compute_cosine(entity_1, entity_2):
+    """
+    entity_2: list of words to compare
+    """
+    return [{'word':i, 'cosine': 1 - distance.cosine(
+     np.array(model_weights.loc[lambda x: x[0].isin([entity_1])].iloc[0,1:]),
+     np.array(model_weights.loc[lambda x: x[0].isin([i])].iloc[0,1:])
+ )} for i in entity_2 if not model_weights.loc[lambda x: x[0].isin([i])].empty]
+```
+
+```python
+#%%time 
+#model = Word2Vec(sentences = all_connected_paper['name_clean'].tolist(),
+#                 vector_size = 100,
+#                 window = 5,
+#                 min_count=5,
+#                 sg = 0)
+#model.wv.save_word2vec_format('word2vec_weights_100.txt', binary=False)
+#list_header = ['Words'].extend(list(range(1, 101)))
+#model_weights = pd.read_csv('word2vec_weights_100.txt',
+#                            sep = ' ', skiprows= 1,
+#                           header= list_header)
+```
+
+```python
+%%time
 df_authors_full = (
     pd.concat(
         [
@@ -1414,34 +1603,11 @@ df_authors_full = (
                         "semantic")["similarity"].transform(max),
                 )
                 .loc[lambda x: x["max_similarity"] == x["similarity"]]
-                .assign(
-                    google_0=lambda x: x['google'].str.split(" ", expand=True)[
-                        0],
-                    semantic_0=lambda x: x['semantic'].str.split(" ", expand=True)[
-                        0],
-                    preprocessed_0=lambda x: preprocess(
-                        x.reindex(columns=["google_0"]), column="google_0", train=False
-                    ),
-                    preprocessed_1=lambda x: preprocess(
-                        x.reindex(columns=["semantic_0"]), column="semantic_0", train=False
-                    ),
-                    preds_0=lambda x:
-                    pred_model.predict(
-                        np.asarray(x["preprocessed_0"].values.tolist())
-                    ),
-                    preds_1=lambda x:
-                    pred_model.predict(
-                        np.asarray(x["preprocessed_1"].values.tolist())
-                    )
-                )
-                .assign(
-                    preds_1=lambda x: np.where(x["semantic_0"].str.len() <3, np.nan, x['preds_1'])
-                )
             ),
             (
-                pd.json_normalize(list_paper_semantic, "authors")
-                .apply(lambda x: x.str.lower())
+                pd.json_normalize(list_paper_semantic, "authors_detail")
                 .assign(
+                    name=lambda x:x['name'].str.lower(),
                     semantic=lambda x: x.apply(
                         lambda x: "".join(
                             (
@@ -1453,42 +1619,104 @@ df_authors_full = (
                         axis=1,
                     )
                 )
-                .drop_duplicates()
+                .drop_duplicates(subset=['name'])
                 .loc[
                     lambda x: ~x["semantic"].isin(
                         list(pd.concat([test_2, test_1])["semantic"])
                     )
                 ]
                 .drop(columns=["name"])
-                .assign(
-                    semantic_0=lambda x: x['semantic'].str.split(" ", expand=True)[
-                        0],
-                    preprocessed_1=lambda x: preprocess(
-                        x.reindex(columns=["semantic_0"]), column="semantic_0", train=False
-                    ),
-                    preds_1=lambda x:
-                    pred_model.predict(
-                        np.asarray(x["preprocessed_1"].values.tolist())
-                    ),
-                )
-                .assign(
-                    preds_1=lambda x: np.where(x["semantic_0"].str.len() <3, np.nan, x['preds_1']),
-                )
             ),
         ],
         axis=0,
     )
     .assign(
         missing=lambda x: x['google'].isin([np.nan]),
-        max_prob = lambda x: x[['preds_0' ,'preds_1']].max(axis=1),
-        gender=lambda x: np.where(x["max_prob"] > 0.5, "MALE", "FEMALE"),
+        #max_prob = lambda x: x[['preds_0' ,'preds_1']].max(axis=1),
+        #gender=lambda x: np.where(x["max_prob"] > 0.5, "MALE", "FEMALE"),
     )
     .sort_values(by=['missing', 'semantic'])
+    .drop(columns=[
+        'url',
+        'aliases',
+        'affiliations',
+        'homepage',
+        'papers',
+        'externalIds.DBLP',
+        "authorId"
+    ])
+    .merge(
+        (
+            pd.json_normalize(list_paper_semantic, "authors_detail")
+            .assign(
+                name=lambda x: x['name'].str.lower(),
+                semantic=lambda x: x.apply(
+                    lambda x: "".join(
+                        (
+                            c
+                            for c in unicodedata.normalize("NFD", x["name"])
+                            if unicodedata.category(c) != "Mn"
+                        )
+                    ),
+                    axis=1,
+                )
+            )
+            .drop_duplicates(subset=['name'])
+            .drop(columns=['gender.gender', 'gender.probability'])
+        ),
+        how='right',
+        on=['semantic']
+    )
+    .reindex(
+        columns=[
+            'missing',
+            'authorId',
+            'name',
+            'author.name',
+            'aliases',
+            'google',
+            'semantic',
+            'gender.gender',
+            'gender.probability',
+            'similarity',
+            'status',
+            'url',
+            'affiliations',
+            'author.affiliations',
+            'homepage',
+            'author.website',
+            'author.email',
+            'email_extensition',
+            'author.interests',
+            'interest',
+            'search_parameters.engine',
+            'search_parameters.author_id',
+            'search_parameters.hl',
+            'author.thumbnail',
+            'size',
+            'max_similarity',
+            'papers'
+        ])
+    .assign(
+        total_paper = lambda x: x['papers'].str.len(),
+        esg = lambda x: x.apply(
+            lambda x:
+            count_esg(x['papers']), axis = 1),
+        pct_esg = lambda x: x['esg']/x['total_paper']
+    )
 )
 ```
 
 ```python
-df_authors_full['gender'].value_counts()
+df_authors_full.head(1)
+```
+
+```python
+df_authors_full['pct_esg'].describe()
+```
+
+```python
+df_authors_full['gender.gender'].value_counts()
 ```
 
 ```python
@@ -1523,63 +1751,8 @@ df_authors_journal_full = (
         ),
     )
     .merge(df_authors_full, how="left", on=["semantic"])
-    .reindex(columns=['paperId',
-                      'url',
-                      'title',
-                      'abstract',
-                      'venue',
-                      'year',
-                      'nb_authors',
-                      'nb_authors_google',
-                      'missing_authors_info',
-                      'authors',
-                      'authors_details',
-                      'referenceCount',
-                      'citationCount',
-                      'cited_by.total',
-                      'cited_by.link',
-                      'cited_by.cites_id',
-                      'cited_by.serpapi_scholar_link',
-                      'influentialCitationCount',
-                      'isOpenAccess',
-                      'fieldsOfStudy',
-                      'Levenshtein_score',
-                      'externalIds.MAG',
-                      'externalIds.DOI',
-                      'externalIds.DBLP',
-                      'result_id',
-                      'link',
-                      'snippet',
-                      'search_parameters.engine_x',
-                      'search_parameters.q',
-                      'search_parameters.hl_x',
-                      'publication_info.summary',
-                      'publication_info.authors',
-                      'authors_list',
-                      'semantic',
-                      'google',
-                      'gender',
-                      'authorId',
-                      'missing',
-                      'max_prob',
-                      'similarity',
-                      'status_y',
-                      'search_parameters.engine_y',
-                      'search_parameters.author_id',
-                      'search_parameters.hl_y',
-                      'author.name',
-                      'author.affiliations',
-                      'author.email',
-                      'author.website',
-                      'author.interests',
-                      'author.thumbnail',
-                      'interest',
-                      'email_extensition',
-                      'max_similarity',
-                      'google_0',
-                      'semantic_0'
-                      ])
 )
+df_authors_journal_full.shape
 ```
 
 ```python
