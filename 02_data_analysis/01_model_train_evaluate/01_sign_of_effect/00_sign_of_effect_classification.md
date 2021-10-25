@@ -173,7 +173,20 @@ SELECT
        adjusted_standard_error,
        target,
        p_value_significant,
-       weight
+       weight,
+       nb_authors,
+       reference_count,
+       citation_count,
+       cited_by_total,
+       CASE WHEN is_open_access = TRUE THEN 'YES' ELSE 'NO' END AS is_open_access,
+       total_paper,
+       esg,
+       pct_esg,
+       paper_name,
+       female,
+       male,
+       unknown,
+       pct_female
 FROM 
   test 
   LEFT JOIN (
@@ -433,6 +446,7 @@ source(path)
 %get df_path
 df_final <- read_csv(df_path) %>%
 mutate_if(is.character, as.factor) %>%
+
 mutate(
     sign_of_effect = relevel(sign_of_effect, ref='NEGATIVE'),
     adjusted_model = relevel(adjusted_model, ref='OTHER'),
@@ -448,6 +462,7 @@ mutate(
         as.factor(study_focusing_on_developing_or_developed_countries), ref = 'WORLDWIDE'),
     regions =relevel(as.factor(regions), ref = 'WORLDWIDE'),
     cnrs_ranking =relevel(as.factor(cnrs_ranking), ref = '0'),
+    is_open_access =relevel(as.factor(is_open_access), ref = 'NO'),
 )
 ```
 
@@ -745,6 +760,174 @@ stargazer(list_final, type = "text",
           style = "qje")
 ```
 
+<!-- #region kernel="R" -->
+### Papers and authors specification
+
+<!-- #endregion -->
+
+```sos kernel="R"
+normalit<-function(m){
+   (m - min(m))/(max(m)-min(m))
+ }
+
+df_final <- df_final %>% mutate(
+    pct_esg_1 = normalit(pct_esg),
+    esg_1 =  normalit(esg)
+)
+```
+
+```sos kernel="R"
+###
+t_0 <- glm(target ~ environmental
+           + adjusted_model  
+           + kyoto 
+           + financial_crisis
+           + publication_year
+           + windows
+           + mid_year
+           + regions
+           + sjr
+           + lag
+           + interaction_term
+           + quadratic_term
+           + is_open_access
+           + nb_authors
+           + pct_female
+           + pct_esg_1,
+           data = df_final ,
+           binomial(link = "probit")
+          )
+t_0.rrr <- exp(coef(t_0))
+
+
+t_1 <- glm(target ~ social
+           + adjusted_model  
+           + kyoto 
+           + financial_crisis
+           + publication_year
+           + windows
+           + mid_year
+           + regions
+           + sjr
+           + lag
+           + interaction_term
+           + quadratic_term
+           + is_open_access
+           + nb_authors
+           + pct_female
+           + pct_esg_1,
+           data = df_final ,
+           binomial(link = "probit")
+          )
+t_1.rrr <- exp(coef(t_1))
+
+t_2 <- glm(target ~ governance
+           + adjusted_model  
+           + kyoto 
+           + financial_crisis
+           + publication_year
+           + windows
+           + mid_year
+           + regions
+           + sjr
+           + lag
+           + interaction_term
+           + quadratic_term
+           + is_open_access
+           + nb_authors
+           + pct_female
+           + pct_esg_1,
+           data = df_final ,
+           binomial(link = "probit")
+          )
+t_2.rrr <- exp(coef(t_2))
+
+list_final = list(t_0, t_1, t_2)
+list_final.rrr = list(t_0.rrr,t_1.rrr,t_2.rrr)
+stargazer(list_final, type = "text", 
+  se = lapply(list_final,
+              se_robust),
+          coef=list_final.rrr,
+          style = "qje",
+         out="table1.txt")
+```
+
+```sos kernel="R"
+###
+t_0 <- glm(target ~ environmental
+           + adjusted_model  
+           + kyoto 
+           + financial_crisis
+           + publication_year
+           + windows
+           + mid_year
+           + regions
+           + cnrs_ranking
+           + lag
+           + interaction_term
+           + quadratic_term
+           + is_open_access
+           + nb_authors
+           + pct_female
+           + pct_esg_1,
+           data = df_final ,
+           binomial(link = "probit")
+          )
+t_0.rrr <- exp(coef(t_0))
+
+
+t_1 <- glm(target ~ social
+           + adjusted_model  
+           + kyoto 
+           + financial_crisis
+           + publication_year
+           + windows
+           + mid_year
+           + regions
+           + cnrs_ranking
+           + lag
+           + interaction_term
+           + quadratic_term
+           + is_open_access
+           + nb_authors
+           + pct_female
+           + pct_esg_1,
+           data = df_final ,
+           binomial(link = "probit")
+          )
+t_1.rrr <- exp(coef(t_1))
+
+t_2 <- glm(target ~ governance
+           + adjusted_model  
+           + kyoto 
+           + financial_crisis
+           + publication_year
+           + windows
+           + mid_year
+           + regions
+           + cnrs_ranking
+           + lag
+           + interaction_term
+           + quadratic_term
+           + is_open_access
+           + nb_authors
+           + pct_female
+           + pct_esg_1,
+           data = df_final ,
+           binomial(link = "probit")
+          )
+t_2.rrr <- exp(coef(t_2))
+
+list_final = list(t_0, t_1, t_2)
+list_final.rrr = list(t_0.rrr,t_1.rrr,t_2.rrr)
+stargazer(list_final, type = "text", 
+  se = lapply(list_final,
+              se_robust),
+          coef=list_final.rrr,
+          style = "qje",
+         out="table2.txt")
+```
+
 <!-- #region kernel="SoS" -->
 ## Model OLS: 
 
@@ -970,6 +1153,78 @@ stargazer(list_final, type = "text",
 ```
 
 <!-- #region kernel="R" -->
+Author
+<!-- #endregion -->
+
+```sos kernel="R"
+###
+t_0 <- glm(adjusted_t_value ~ environmental
+           + adjusted_model  
+           + kyoto 
+           + financial_crisis
+           + publication_year
+           + windows
+           + mid_year
+           + regions
+           + sjr
+           + lag
+           + interaction_term
+           + quadratic_term
+           + is_open_access
+           + nb_authors
+           + pct_female
+           + pct_esg_1,
+           data = df_final %>% filter(adjusted_t_value < 10),
+           family=gaussian(identity)
+          )
+t_1 <- glm(adjusted_t_value ~ social
+           + adjusted_model  
+           + kyoto 
+           + financial_crisis
+           + publication_year
+           + windows
+           + mid_year
+           + regions
+           + sjr
+           + lag
+           + interaction_term
+           + quadratic_term
+           + is_open_access
+           + nb_authors
+           + pct_female
+           + pct_esg_1,
+           data = df_final %>% filter(adjusted_t_value < 10),
+           family=gaussian(identity)
+          )
+
+t_2 <- glm(adjusted_t_value ~ governance
+           + adjusted_model  
+           + kyoto 
+           + financial_crisis
+           + publication_year
+           + windows
+           + mid_year
+           + regions
+           + sjr
+           + lag
+           + interaction_term
+           + quadratic_term
+           + is_open_access
+           + nb_authors
+           + pct_female
+           + pct_esg_1,
+           data = df_final %>% filter(adjusted_t_value < 10),
+           family=gaussian(identity)
+          )
+
+list_final = list(t_0, t_1, t_2)
+stargazer(list_final, type = "text", 
+  se = lapply(list_final,
+              se_robust),
+          style = "qje")
+```
+
+<!-- #region kernel="R" -->
 Model 2: absolute value
 
 Interested in the factors leading to larger t-student critical value, hence significant coefficient
@@ -1159,7 +1414,7 @@ stargazer(list_final, type = "text",
           style = "qje")
 ```
 
-<!-- #region kernel="R" -->
+<!-- #region kernel="R" heading_collapsed="true" -->
 # Statistics
 
 ## Target
