@@ -81,6 +81,10 @@ import numpy as np
 import seaborn as sns
 import os, shutil, json, re
 
+from GoogleDrivePy.google_drive import connect_drive
+from GoogleDrivePy.google_platform import connect_cloud_platform
+from GoogleDrivePy.google_authorization import authorization_service
+
 path = os.getcwd()
 parent_path = str(Path(path).parent.parent)
 
@@ -372,6 +376,7 @@ Currently, the missing values come from the rows to check in [METADATA_TABLES_CO
 output.isna().sum().loc[lambda x: x> 0].sort_values()
 ```
 
+<!-- #region heading_collapsed="true" -->
 ## Explain missings:
 
 ### Date
@@ -382,6 +387,7 @@ output.isna().sum().loc[lambda x: x> 0].sort_values()
     - No date
 - 'L’impact de la responsabilité sociale (RSE) sur la performance financière des entreprises (PFE) au Cameroun'
     - Poor date formating: 2007 Semester I, 2007 Semester I
+<!-- #endregion -->
 
 ```python
 def make_clickable(val):
@@ -457,18 +463,14 @@ def make_clickable(val):
 )
 ```
 
+<!-- #region heading_collapsed="true" -->
 ### Save data to Google Spreadsheet for sharing
 
 - Link: [METADATA_MODEL](https://docs.google.com/spreadsheets/d/13gpRy93l7POWGe-rKjytt7KWOcD1oSLACngTEpuqCTg/edit#gid=0)
+<!-- #endregion -->
 
 ```python
 #!pip install --upgrade git+git://github.com/thomaspernet/GoogleDrive-python
-```
-
-```python
-from GoogleDrivePy.google_drive import connect_drive
-from GoogleDrivePy.google_platform import connect_cloud_platform
-from GoogleDrivePy.google_authorization import authorization_service
 ```
 
 ```python
@@ -516,10 +518,45 @@ drive.add_data_to_spreadsheet(
     rangeData = None)
 ```
 
+# Author information
+
+During a presentation (Desir Seminar), it has been pointed out that characteristic of an author might impact the desire results. Most of the information are available from the internet. 
+
+We use two sources of information:
+
+- [Semantic scholar](https://www.semanticscholar.org/me/research)
+    - API: https://www.semanticscholar.org/product/api
+- [Google scholar](https://scholar.google.com/schhp?hl=en&as_sdt=0,5)
+    - API: https://serpapi.com/
+
+Using both data sourcs, we will retrieve or compute the following information:
+
+- author information (name, affiliation, publication, email, etc) -> From the API 
+- author gender: From a model
+- author expertise in ESG: Computed 
+
+The workflow works in three steps:
+
+1. Train gender detection model using US name from the public dataset [USA Names](https://console.cloud.google.com/marketplace/product/social-security-administration/us-names?project=lofty-foundry-302615)
+2. Download paper and author information from the spreadsheet [CSR Excel File Meta-Analysis - Version 4 - 01.02.2021](https://docs.google.com/spreadsheets/d/11A3l50yfiGxxRuyV-f3WV9Z-4DcsQLYW6XBl4a7U4bQ/edit?usp=sharing)
+3. Fusion paper and author informations. The final table has the size of number of papers x number of authors per paper. 
+
+
 ## Train deep learning model gender detection
 
+The first step of the workflow consists to train a basic LSTM architecture to deter the gender from family name. 
 
+Training the model requires the following steps:
+
+1. Download the data from Google Cloud Platform
+2. Lowercase first name, split character and convert them to numerical value
+3. Train the model using a vector embedding, Bidirectional LSTM layer and a dense layer to compute the prediction 
+
+<!-- #region heading_collapsed="true" -->
 ### Download data
+
+The data comes from the public dataset [USA Names](https://console.cloud.google.com/marketplace/product/social-security-administration/us-names?project=lofty-foundry-302615)
+<!-- #endregion -->
 
 ```python
 project = 'valid-pagoda-132423'
@@ -551,6 +588,7 @@ names_df.shape
 names_df.head()
 ```
 
+<!-- #region heading_collapsed="true" -->
 ### Clean up and pre-process
 
 1. Lowercase the name since each character’s case doesn’t convey any information about a person’s gender.
@@ -558,6 +596,13 @@ names_df.head()
 3. Pad names with empty spaces until a max of 50 characters ensures the ML model sees the same length for all the names.
 4. Encode each character to a unique number since ML models can only work with numbers. In this case, we encode ‘ ’ (space) to 0, ‘a’ to 1, ‘b’ to 2, and so on.
 5. Encode each gender to a unique number since ML models can only work with numbers. In this case, we encode ‘F’ to 0 and ‘M’ to 1.
+
+For example, the preprocessing step does the following:
+
+Take the name  "mary", the character "m" is given the number 13, the character "a" is 1, and so one. The 0s are the padding because the matrix should have the same dimension
+
+![image.png](attachment:477f5f29-e1e5-4a28-85fc-e6effb0eb8b5.png)
+<!-- #endregion -->
 
 ```python
 def preprocess(names_df,column, train=True, to_lower = True):
@@ -597,15 +642,19 @@ def preprocess(names_df,column, train=True, to_lower = True):
 ```
 
 ```python
-names_df = preprocess(names_df, column = 'name')
+names_df = preprocess(names_df, column = 'name', train=True)
 names_df.head()
 ```
 
+<!-- #region heading_collapsed="true" -->
 ### Model Architecture
 
 1. Embedding layer: to “embed” each input character’s encoded number into a dense 256 dimension vector. The choice of embedding_dim is a hyperparameter that can be tuned to get the desired accuracy.
 2. Bidirectional LSTM layer: read the sequence of character embeddings from the previous step and output a single vector representing that sequence. The values for units and dropouts are hyperparameters as well.
 3. Final Dense layer: to output a single value close to 0 for ‘F’ or close to 1 for ‘M’ since this is the encoding we used in the preprocessing step.
+
+Note: Embedding layer enables us to convert each word into a fixed length vector of defined size. The resultant vector is a dense one with having real values instead of just 0’s and 1’s. The fixed length of word vectors helps us to represent words in a better way along with reduced dimensions
+<!-- #endregion -->
 
 ```python
 #!pip install --upgrade tensorflow
@@ -630,6 +679,36 @@ def lstm_model(num_alphabets=27, name_length=50, embedding_dim=256):
     return model
 ```
 
+The idea is to turns positive integers (indexes) into dense vectors of fixed size. Then this layer can be used as the first layer in a model.
+
+The size of the vocabulary (the list from the preprocessing) is equal to 27: The alphabet has 26 letters, and the space characters. We want the output layer to be a vector of 256 weights. `input_length` is the maximum size of the name. We can set it up since the length of input sequences is constant.
+
+Here is an example of how the vector embedding output looks like
+
+Note: In this example we have not trained the embedding layer. The weights assigned to the word vectors are initialized randomly.
+
+```python
+model_ex = Sequential()
+model_ex.add(Embedding(input_dim= 27, output_dim= 256, input_length=50))
+model_ex.compile(loss = 'binary_crossentropy', metrics= 'accuracy')
+output_array = model_ex.predict(names_df['name'].values.tolist())
+```
+
+```python
+output_array.shape
+```
+
+The embedding vector for the first word is:
+
+```python
+output_array[0].shape
+```
+
+```python
+output_array[0]
+```
+
+<!-- #region heading_collapsed="true" -->
 ### Training the Model
 
 We’ll use the standard tensorflow.keras training pipeline as below
@@ -639,6 +718,7 @@ We’ll use the standard tensorflow.keras training pipeline as below
 3. Call model.fit with EarlyStopping callback to stop training once the model starts to overfit.
 4. Save the trained model
 5. Plot the training and validation accuracies to visually check the model performance.
+<!-- #endregion -->
 
 ```python
 import numpy as np
@@ -694,23 +774,33 @@ plt.legend()
 
 # Download authors and paper information
 
+To get the most information possible about an author, we need to rely on two differents data source:
+
+- [Semantic scholar](https://www.semanticscholar.org/me/research)
+    - API: https://www.semanticscholar.org/product/api
+- [Google scholar](https://scholar.google.com/schhp?hl=en&as_sdt=0,5)
+    - API: https://serpapi.com/
+    
+Both data sources are accessible through an API.
+
+However, Google scholar does not always return the author information, and the spelling is different in both data sources.
+
+In this steps, we will begin with fetching data from Scemantic scholar, then Google scholar. 
+
+
 ## Semantic scholar
 
-Extract paper name from METADATA_TABLES_COLLECTION
-Get doi from Semantic scholar
+Our primary objective is to get the information about the gender, but also to evaluate the expertise of an author about ESG. The data source Semantic Scholar has 198,182,311 papers from all fields of science. 
 
-### Gender Semantic Scholar
+Our strategy is to use the API to search for a paper in order to get the related information (DOI, cite, performance) and more importantly, the ID of the author(s). Indeed, to get information about an author, we need to know his/her ID. As soon as we have the ID, we can collect and compute all other information (i.e. gender and expertise)
 
-- We fetched the author's alias so that we have more options for the first name. For instance, the author `S. Waddock` has 4 aliases:
+The workflow is the following:
 
-- 'S Waddock',
-- 'Sandra Waddock',
-- 'Sandr A Waddock',
-- 'Sandra A. Waddock'
-
-We will use the model to predict the first name.
-
-
+1. Find the paper's ID in Semantic scholar from the spreadsheet [CSR Excel File Meta-Analysis - Version 4 - 01.02.2021](https://docs.google.com/spreadsheets/d/11A3l50yfiGxxRuyV-f3WV9Z-4DcsQLYW6XBl4a7U4bQ/edit?usp=sharing)
+2. Fetch paper information using the ID, including the list of authors
+3. Fetch author information using the author ID (including all the authors publication)
+4. Use the author name and aliases to predict the gender
+5. Save the results in S3: [DATA/JOURNALS/SEMANTIC_SCHOLAR/PAPERS](s3://datalake-london/DATA/JOURNALS/SEMANTIC_SCHOLAR/PAPERS/)
 
 ```python
 from serpapi import GoogleSearch
@@ -872,6 +962,50 @@ def prediction_gender(name=["sarah"]):
     ))
 ```
 
+Below is an example with the following paper:
+
+- [The corporate social performance-financial performance link](https://drive.google.com/file/d/1-QRrQ_jgKGOJ5vDaTmYViElJDKcbtbSy/view?usp=sharing) and in [semantic scholar](https://www.semanticscholar.org/paper/2e899bc9e49e4a55374f26fdfd3f777658d460ab)
+
+![image.png](attachment:4bff35c2-9018-478a-81a7-1036fad1463d.png)
+
+the authors are:
+
+- S. Waddock 
+- S. Graves
+
+and the DOI is "10.1002/(SICI)1097-0266(199704)18:4<303::AID-SMJ869>3.0.CO;2-G"
+
+```python
+response = find_doi(paper_name = list(doi['Title'].unique())[-2]) 
+response['externalIds']['DOI']
+```
+
+In the next steps, we want to predict the gender of the author. The first author is `S. Waddock` which is impossible to detect the gender because only one letter displays for the first name. Therefor, we will combine the first name with all the aliases. We add another constraint, the first name should have more than 2 characters:
+
+- 'S. Waddock',
+- 'S Waddock',
+- 'Sandra Waddock',
+- 'Sandr A Waddock',
+- 'Sandra A. Waddock'
+
+Then we push all the candidates to the model, and return the average probability. The model gives an average probability of 43%, meaning the author is a female.
+
+```python
+prediction_gender(
+    list(
+                dict.fromkeys(
+                    [clean_name(name=
+                                re.sub(r"[^a-zA-Z0-9]+", ' ', a
+                                      ).split(" ")[0]) for a in 
+                     [response['authors_detail'][0]['name']] + response['authors_detail'][0]['aliases']
+                     if len(a.split(" ")[0]) >2]
+                )
+            )
+)
+```
+
+Get full list of information
+
 ```python
 list_paper_semantic = []
 list_failure = []
@@ -935,67 +1069,6 @@ list_failure = ['The Effect of Corporate Social Responsibility on Financial Perf
  'The Corporate Social-Financial Performance Relationship: A Typology and Analysis']
 ```
 
-## Validate results levenstheinlev
-
-```python
-def levenshtein_distance(token1, token2):
-    """
-    """
-    distances = np.zeros((len(token1) + 1, len(token2) + 1))
-
-    for t1 in range(len(token1) + 1):
-        distances[t1][0] = t1
-
-    for t2 in range(len(token2) + 1):
-        distances[0][t2] = t2
-
-    a = 0
-    b = 0
-    c = 0
-
-    for t1 in range(1, len(token1) + 1):
-        for t2 in range(1, len(token2) + 1):
-            if (token1[t1 - 1] == token2[t2 - 1]):
-                distances[t1][t2] = distances[t1 - 1][t2 - 1]
-            else:
-                a = distances[t1][t2 - 1]
-                b = distances[t1 - 1][t2]
-                c = distances[t1 - 1][t2 - 1]
-
-                if (a <= b and a <= c):
-                    distances[t1][t2] = a + 1
-                elif (b <= a and b <= c):
-                    distances[t1][t2] = b + 1
-                else:
-                    distances[t1][t2] = c + 1
-    return distances[len(token1)][len(token2)]
-```
-
-```python
-for ind, paper in enumerate(list_paper_semantic):
-    lev = levenshtein_distance(
-    paper['title'].lower(),
-        paper['paper_name_source'].lower().replace('\n', ' ')
-    )
-    paper['Levenshtein_score'] = lev
-    #list_leven.append({'score': lev, 'match_author': aut_in_table, 'index': ind})
-```
-
-```python
-pd.DataFrame(list_paper_semantic)['Levenshtein_score'].describe()
-```
-
-No mistake, all of the 106 papers are found
-
-```python
-(
-    pd.DataFrame(list_paper_semantic).loc[lambda x: x['Levenshtein_score'] > 2]
-    .reindex(columns = ['title', 'paper_name_source', 'Levenshtein_score'])
-)
-```
-
-Save S3
-
 ```python
 for ind, paper in enumerate(list_paper_semantic):
     with open("paper_id_{}".format(paper["paperId"]), "w") as outfile:
@@ -1015,12 +1088,15 @@ with open('MODELS_AND_DATA/list_paper_semantic.pickle', 'wb') as handle:
 
 ## Google scholar 
 
-Google Scholar <- Use this API: https://serpapi.com/ 
+The strategy with Google Scholar is the same as Semantic scholar:
 
-- Input table: [METADATA_TABLES_COLLECTION](https://docs.google.com/spreadsheets/d/1d66_CVtWni7wmKlIMcpaoanvT2ghmjbXARiHgnLWvUw/edit?usp=sharing)
+1. Use the list of paper's DOI from Semantic scholar to find the paper information and author ID
+2. Use the author ID to collect information
+3. Predict gender
+
 
 ```python
-api_key = "5240a76403945e46c3f7870cb36a76eef235f64526554bbf92f41364ebbad2c0"
+api_key = ""
 
 def collect_doi_information(doi):
     """
@@ -1154,14 +1230,48 @@ with open('MODELS_AND_DATA/list_authors_google.pickle', 'wb') as handle:
     pickle.dump(list_authors_google, handle)
 ```
 
-## Reconstruct paper-authors tables
+# Reconstruct paper-authors tables
 
+The final step consists to bring together the paper informations with the authors informations. In the end, we want a table with all the authors information for a given paper. Therefore, the final table has the following dimension: number of papers x number of authors. 
+
+To construct the table, we need to proceed in three steps:
+
+1. Combine the author information from Semantic scholar and Google Scholar, and construct the author expertise
+2. Combine the paper information from Semantic scholar and Google Scholar
+3. Merge steps 1 and 2
+
+The data is saved in Google spreadsheet for validation purposes: [AUTHOR_SEMANTIC_GOOGLE](https://docs.google.com/spreadsheets/d/1GrrQBip4qNcDuT_MEG9KhNhfTC3yFsVZUtP8-SvXBL4/edit?usp=sharing)
+
+
+
+## Author information from Semantic scholar and Google Scholar
+
+We mentionned earlier that there is no direct link between the author name in Semantic scholar and Google scholar for two reasons. First of all, the reason comes from different spelling. Secondly, not all authors have information in Google scholar
+
+We also need to construct the authors expertise in ESG. 
+
+In the part, we will reconstruct the list of author information from Semantic scholar and Google Scholar and construct the expertise following these steps:
+
+1. Import list of authors from Google Scholar
+    - construct list of interest
+    - grab the email extension
+2. Identify same authors in Semantic scholar and Google scholar. There are 266 authors in Semantic scholar and 146 in Google scholar
+    - Use levensthein/Hamming distance and similarity algoritmh to find similar authors
 
 ```python
-list_papers_google = pickle.load( open( "MODELS_AND_DATA/list_papers_google.pickle", "rb" ))
+import jellyfish
+import requests
+```
+
+```python
 list_authors_google = pickle.load( open( "MODELS_AND_DATA/list_authors_google.pickle", "rb" ))
 list_paper_semantic = pickle.load( open( "MODELS_AND_DATA/list_paper_semantic.pickle", "rb" ))
 ```
+
+### Import list of authors from Google Scholar
+
+- construct list of interest
+- grab the email extension
 
 ```python
 df_authors = (
@@ -1200,102 +1310,7 @@ df_authors = (
         ]
     )
 )
-df_authors.head(1)
-```
-
-```python
-df_google_scholar = (
-    pd.json_normalize(list_papers_google)
-    .assign(
-        nb_authors_google=lambda x: x['publication_info.authors'].str.len()
-    )
-)
-```
-
-```python
-df_paper_info_full = (
-    pd.json_normalize(list_paper_semantic, meta=["externalIds"]).rename(columns = {'authors_detail':'author_details_semantic'})
-    .drop(columns=["paper_name_source"])
-    .assign(nb_authors=lambda x: x["authors"].str.len())
-    .merge(
-        df_google_scholar.drop(columns=["title", "status"]).rename(columns = {'authors_details':'author_details_google'}),
-        how="left",
-        left_on=["externalIds.DOI"],
-        right_on=["search_parameters.q"],
-    )
-    .assign(missing_authors_info=lambda x: x["nb_authors"] != x["nb_authors_google"])
-    .reindex(
-        columns=[
-            "paperId",
-            "url",
-            "title",
-            "abstract",
-            "venue",
-            "year",
-            "nb_authors",
-            "nb_authors_google",
-            "missing_authors_info",
-            "authors",
-            "author_details_semantic",
-            "author_details_google",
-            "referenceCount",
-            "citationCount",
-            "cited_by.total",
-            "cited_by.link",
-            "cited_by.cites_id",
-            "cited_by.serpapi_scholar_link",
-            "influentialCitationCount",
-            "isOpenAccess",
-            "fieldsOfStudy",
-            "status",
-            "Levenshtein_score",
-            "externalIds.MAG",
-            "externalIds.DOI",
-            "externalIds.DBLP",   
-            "result_id",
-            "link",
-            "snippet",       
-            "search_parameters.engine",
-            "search_parameters.q",
-            "search_parameters.hl",
-            "publication_info.summary",
-            "publication_info.authors"
-        ]
-    )
-)
-df_paper_info_full.head(1)
-```
-
-```python
-df_paper_info_full['missing_authors_info'].value_counts()
-```
-
-<!-- #region -->
-Save to spreadsheet for validation: [PAPER_SEMANTIC_GOOGLE](https://docs.google.com/spreadsheets/d/1aK8BMsUHUVaLePtlMoM-D9wM6E9nmnBE4kaenCgdm00/edit?usp=sharing)
-
-
-Need to manualy create spreadsheet, because the API does not process data with list
-<!-- #endregion -->
-
-```python
-FILENAME_SPREADSHEET = "PAPER_SEMANTIC_GOOGLE"
-```
-
-```python
-df_paper_info_full.to_csv('PAPER_SEMANTIC_GOOGLE.csv', index = False)
-drive.upload_file_root(mime_type = 'text/plain',
-                 file_name = 'PAPER_SEMANTIC_GOOGLE.csv',
-                 local_path = "PAPER_SEMANTIC_GOOGLE.csv"
-                ) 
-drive.move_file(file_name = 'PAPER_SEMANTIC_GOOGLE.csv', folder_name = "SPREADSHEETS_ESG_METADATA")
-```
-
-Create spreadsheet authors: [AUTHOR_SEMANTIC_GOOGLE](https://docs.google.com/spreadsheets/d/1GrrQBip4qNcDuT_MEG9KhNhfTC3yFsVZUtP8-SvXBL4/edit?usp=sharing)
-
-Once again, use levensthein to match them. No need to be fancy
-
-```python
-import jellyfish
+df_authors.tail(1)
 ```
 
 ```python
@@ -1304,6 +1319,61 @@ pd.json_normalize(list_paper_semantic, "authors")["name"].nunique()
 
 ```python
 df_authors["author.name"].nunique()
+```
+
+<!-- #region -->
+### Identify same authors in Semantic scholar and Google scholar
+
+To identify the same authors in the list of authors from Semantic scholar and Google scholar, we use the following sets of rules:
+
+1. Construct a cartesian matrix between the list of authors fromSemantic scholar and Google scholar (38836 rows)
+    - ![image.png](attachment:ead54b19-6d26-4eb7-a2e2-951a006d640f.png)
+2. Compute levensthein and Hamming distance
+    - Within author from Google, get the lowest levensthein and max Hamming
+3. Filter rows where the lowest score from the levensthein distance equals the levensthein distance
+4. Compute the similary algorithm
+5. Search for best match: 124 exact match
+    - Compute the number of candidates within Google authors
+    - Filter when number of candidates equals to 1 (one choice only) and similarity score above .1
+    - Filter when max similarity with Google author equals similarity
+6. Search for second best match: 7 exact match
+    - Exclude authors from Semantic scholar
+    - Exclude rows with similarity equals to 0
+    - Compute minimum Hamming distance within Google authors
+    - Keep when minimum Hamming distance equals Hamming distance
+    
+
+Perfect match
+![image.png](attachment:eea6c1f8-c270-4e23-9f5e-1bcf82aed39b.png)
+
+Un-perfect or disimilar match
+
+![image.png](attachment:1850d067-d8fe-42d8-8334-71fc6d3e2895.png)
+
+We use the similarity API to compute the similarity score
+
+- https://www.twinword.com/ 
+- https://rapidapi.com/twinword/api/text-similarity 
+
+<!-- #endregion -->
+
+```python
+api_key = ""
+def twinword(token1, token2):
+    """
+    """
+    url = "https://api.twinword.com/api/text/similarity/latest/"
+    headers = {
+        'Host': "api.twinword.com",
+        "X-Twaip-Key":api_key
+    }
+    querystring = {
+        "text1": token1,
+        "text2": token2
+    }
+    response = requests.get(url, headers=headers,params=querystring)
+    return response.json()['similarity']
+    
 ```
 
 ```python
@@ -1342,35 +1412,17 @@ match_author = (
         ),
         score_lev = lambda x: x.apply(lambda x: jellyfish.levenshtein_distance(x['semantic'], x['google']),axis =1),
         min_score_lev = lambda x: x.groupby('google')['score_lev'].transform(min),
-        score_jaro= lambda x: x.apply(lambda x: jellyfish.jaro_distance(x['semantic'], x['google']),axis =1),
-        max_score_jaro = lambda x: x.groupby('google')['score_jaro'].transform(max),
-        score_d_lev= lambda x: x.apply(lambda x: jellyfish.damerau_levenshtein_distance(x['semantic'], x['google']),axis =1),
-        min_score_d_lev = lambda x: x.groupby('google')['score_d_lev'].transform(min),
         score_hamming= lambda x: x.apply(lambda x: jellyfish.hamming_distance(x['semantic'], x['google']),axis =1),
         min_score_hamming = lambda x: x.groupby('google')['score_hamming'].transform(min)
     )
 )
 ```
 
-```python
-import requests
-api_key = ""
-def twinword(token1, token2):
-    """
-    """
-    url = "https://api.twinword.com/api/text/similarity/latest/"
-    headers = {
-        'Host': "api.twinword.com",
-        "X-Twaip-Key":api_key
-    }
-    querystring = {
-        "text1": token1,
-        "text2": token2
-    }
-    response = requests.get(url, headers=headers,params=querystring)
-    return response.json()['similarity']
-    
-```
+Filter 1: Potential candidates
+
+- Filter rows where the lowest score from the levensthein distance equals the levensthein distance
+- Compute the similary algorithm
+- Filter the rows with a similarity score of 0
 
 ```python
 test = (
@@ -1381,17 +1433,30 @@ test = (
         similarity = lambda x: x.apply(lambda x: twinword(x['semantic'], x['google']), axis= 1),
         max_similarity = lambda x: x.groupby('semantic')['similarity'].transform(max)
     )
-    .loc[lambda x: x['score_lev'] == x['min_score_lev']]
 )
+```
+
+```python
+test.shape
+```
+
+```python
+test.head()
+```
+
+```python
+test.tail()
 ```
 
 ```python
 test['google'].nunique()
 ```
 
-Test 1: 124 exact match
+Filter 1: 124 exact match
 
-- authors with large similarity score and only one observation by author
+- Compute the number of candidates within Google authors
+- Filter when number of candidates equals to 1 (one choice only) and similarity score above .1
+- Filter when max similarity with Google author equals similarity
 
 ```python
 test_1 = (
@@ -1408,7 +1473,10 @@ test_1['google'].nunique()
 
 Test 2: 7 exact match
 
-- authors with large similarity score and if duplicates lowest hammer
+- Exclude authors from Semantic scholar
+- Exclude rows with similarity equals to 0
+- Compute minimum Hamming distance within Google authors
+- Keep when minimum Hamming distance equals Hamming distance
 
 ```python
 test_2 = (
@@ -1424,49 +1492,45 @@ test_2 = (
 test_2['google'].nunique()
 ```
 
-We found 136 authors among the 266:
-
-- We now need to match Google's authors information, and then match with semantic authors' list to see the authors not match
-- We remove the duplicate by keeping the highest complexity value within authors
+We found 131 authors among the 266:
 
 
-### Authors
+### Authors ESG expertise
 
-- We can add extra information about the expertise of the authors in ESG. 
+Semantic scholar provides the list all papers for any authors. In the previous steps, we saved this list. 
 
+For instance, the author Abderrahman Jahmane wrote 3 papers in his carreer
 
+[{'paperId': '44af7948d66a4dc62952a863e957faaa5770d13c', 'title': 'Corporate social responsibility and firm value: Guiding through economic policy uncertainty'}, {'paperId': '57bf8e616da8230ca7a961be19affeb8b8ae619d', 'title': 'Corporate social responsibility, financial instability and corporate financial performance: Linear, non-linear and spillover effects – The case of the CAC 40 companies'}, {'paperId': 'eff6f21cc09c572f3bdc8add0d0f43badecbf977', 'title': 'Accounting for endogeneity and the dynamics of corporate social – Corporate financial performance relationship'}]
 
-```python
- (
-            pd.json_normalize(list_paper_semantic, "authors_detail")
-            .assign(
-                name=lambda x: x['name'].str.lower(),
-                semantic=lambda x: x.apply(
-                    lambda x: "".join(
-                        (
-                            c
-                            for c in unicodedata.normalize("NFD", x["name"])
-                            if unicodedata.category(c) != "Mn"
-                        )
-                    ),
-                    axis=1,
-                )
-            )
-            .drop_duplicates(subset=['name'])
-            .drop(columns=['gender.gender', 'gender.probability'])
-     .head(1)
-        )
-```
+![image.png](attachment:506ed69f-90a8-4fcf-957a-963786c803d1.png)
 
-Find similarity between:
+Source: https://www.semanticscholar.org/author/Abderrahmane-Jahmane/122677227 
 
-- esg
-- environmental social governance
-- environmental
-- social 
-- governance
+We will use the paper's title to flag whether it deals with ESG or not. 
 
-1. Create list of all the papers
+For the 266 authors, we have collected about 14,443 unique papers. We rely on a naive technique to flag all of the 14.443 papers. 
+
+The technique is the following:
+
+- Create a clean list of words from the title (removing English stop words, special characters, and lower case)
+- Flag if clean list contains "esg environmental social governance"
+
+![image.png](attachment:fca29c37-1181-4bf3-85e0-6c1f0b07df1c.png)
+
+In total 857 papers deals with ESG among the 14,443 papers (5.9%)  
+
+The last step to create the authors table concatenates the common authors from Semantic scholar and Google scholar with the authors not in Google scholar. When the concatenatation is done, we compute the expertise score as follow, within author:
+
+- Expertise ESG = Sum papers flag ESG / Sum papers
+
+The distribution of expertise:
+
+![image.png](attachment:ce26dcd9-f233-48f9-854f-0891ae91c0ea.png)
+
+The distribution of gender:
+
+![image.png](attachment:44f68bd0-7fb1-4063-aadd-b442b532d001.png)
 
 ```python
 from gensim.models import Word2Vec
@@ -1481,35 +1545,45 @@ stop = stopwords.words('english')
 ```
 
 ```python
-def dumb_search(items):
-    return any(item in 'esg environmental social governance' for item in items)
+def basic_clean(text):
+    return re.sub(r'[^\w\s]|[|]', '', text).split()
 ```
 
 ```python
-test = (
-    pd.json_normalize(list_paper_semantic, "authors_detail")
-    .assign(
-        paper=lambda x: x.apply(
-            lambda x: [
-                {'id': i["paperId"], 'name':i['title']}
-                for i in x["papers"]
-                if x["papers"] != np.nan
-            ]
-            if isinstance(x["papers"], list)
-            else np.nan,
-            axis=1,
-        )
-    )
-)
+def dumb_search(items):
+    #return any(item in 'esg environmental social governance' for item in items)
+    return True if len([i for i in ['esg',"environmental","social","governance"] if i in items]) > 0 else False
+```
+
+```python
+def count_esg(papers):
+    """
+    papers list with keys paperId and title
+    """
+    return sum([all_connected_paper.loc[lambda x: x['paperId'].isin([item['paperId']])]['esg'].values[0] for item in papers])
+```
+
+```python
+def compute_cosine(entity_1, entity_2):
+    """
+    entity_2: list of words to compare
+    """
+    return [{'word':i, 'cosine': 1 - distance.cosine(
+     np.array(model_weights.loc[lambda x: x[0].isin([entity_1])].iloc[0,1:]),
+     np.array(model_weights.loc[lambda x: x[0].isin([i])].iloc[0,1:])
+ )} for i in entity_2 if not model_weights.loc[lambda x: x[0].isin([i])].empty]
+```
+
+```python
 list_papers = []
-null = [list_papers.extend(i) for i in test['paper'].to_list()]
+null = [list_papers.extend(i) for i in pd.json_normalize(list_paper_semantic, "authors_detail")['papers'].to_list()]
 all_connected_paper = (
     pd.DataFrame(list_papers)
     .drop_duplicates()
     .assign(
         name_clean=lambda x:
         x.apply(lambda x:
-                basic_clean(' '.join([word for word in x['name'].split() if word not in (stop)])), axis=1)
+                basic_clean(' '.join([word.lower() for word in x['title'].split() if word not in (stop)])), axis=1)
     )
     .assign(
         esg = lambda x: x.apply(
@@ -1522,38 +1596,22 @@ all_connected_paper.shape
 ```
 
 ```python
+len([i for i in ['esg',"environmental","social","governance"] if i in
+ [
+     "financial", "development", "really", "spur", "nascent", "entrepreneurship", "europe", "a", "panel", "data", "analysis"]
+])
+```
+
+```python
 all_connected_paper.head()
 ```
 
 ```python
-all_connected_paper['esg'].value_counts()
-```
-
-Compute expertise authors:
-
-- total esg / total papers
-
-```python
-def count_esg(papers):
-    """
-    papers list with keys paperId and title
-    """
-    return sum([all_connected_paper.loc[lambda x: x['id'].isin([item['paperId']])]['esg'].values[0] for item in papers])
+all_connected_paper['esg'].value_counts(normalize = True)
 ```
 
 ```python
 #!pip install --upgrade gensim
-```
-
-```python
-def compute_cosine(entity_1, entity_2):
-    """
-    entity_2: list of words to compare
-    """
-    return [{'word':i, 'cosine': 1 - distance.cosine(
-     np.array(model_weights.loc[lambda x: x[0].isin([entity_1])].iloc[0,1:]),
-     np.array(model_weights.loc[lambda x: x[0].isin([i])].iloc[0,1:])
- )} for i in entity_2 if not model_weights.loc[lambda x: x[0].isin([i])].empty]
 ```
 
 ```python
@@ -1632,8 +1690,6 @@ df_authors_full = (
     )
     .assign(
         missing=lambda x: x['google'].isin([np.nan]),
-        #max_prob = lambda x: x[['preds_0' ,'preds_1']].max(axis=1),
-        #gender=lambda x: np.where(x["max_prob"] > 0.5, "MALE", "FEMALE"),
     )
     .sort_values(by=['missing', 'semantic'])
     .drop(columns=[
@@ -1723,7 +1779,70 @@ df_authors_full['gender.gender'].value_counts()
 df_authors_full.shape
 ```
 
-Add journals to update the information in Google spreadsheet
+### Add paper information
+
+```python
+list_papers_google = pickle.load( open( "MODELS_AND_DATA/list_papers_google.pickle", "rb" ))
+df_google_scholar = (
+    pd.json_normalize(list_papers_google)
+    .assign(
+        nb_authors_google=lambda x: x['publication_info.authors'].str.len()
+    )
+)
+```
+
+```python
+df_paper_info_full = (
+    pd.json_normalize(list_paper_semantic, meta=["externalIds"]).rename(columns = {'authors_detail':'author_details_semantic'})
+    .drop(columns=["paper_name_source"])
+    .assign(nb_authors=lambda x: x["authors"].str.len())
+    .merge(
+        df_google_scholar.drop(columns=["title", "status"]).rename(columns = {'authors_details':'author_details_google'}),
+        how="left",
+        left_on=["externalIds.DOI"],
+        right_on=["search_parameters.q"],
+    )
+    .assign(missing_authors_info=lambda x: x["nb_authors"] != x["nb_authors_google"])
+    .reindex(
+        columns=[
+            "paperId",
+            "url",
+            "title",
+            "abstract",
+            "venue",
+            "year",
+            "nb_authors",
+            "nb_authors_google",
+            "missing_authors_info",
+            "authors",
+            "author_details_semantic",
+            "author_details_google",
+            "referenceCount",
+            "citationCount",
+            "cited_by.total",
+            "cited_by.link",
+            "cited_by.cites_id",
+            "cited_by.serpapi_scholar_link",
+            "influentialCitationCount",
+            "isOpenAccess",
+            "fieldsOfStudy",
+            "status",
+            "Levenshtein_score",
+            "externalIds.MAG",
+            "externalIds.DOI",
+            "externalIds.DBLP",   
+            "result_id",
+            "link",
+            "snippet",       
+            "search_parameters.engine",
+            "search_parameters.q",
+            "search_parameters.hl",
+            "publication_info.summary",
+            "publication_info.authors"
+        ]
+    )
+)
+```
 
 ```python
 df_authors_journal_full = (
@@ -1765,7 +1884,6 @@ drive.upload_file_root(mime_type = 'text/plain',
 drive.move_file(file_name = 'AUTHOR_SEMANTIC_GOOGLE.csv', folder_name = "SPREADSHEETS_ESG_METADATA")
 ```
 
-<!-- #region heading_collapsed="true" -->
 # Table `meta_analysis_esg_cfp`
 
 Since the table to create has missing value, please use the following at the top of the query
@@ -1773,7 +1891,7 @@ Since the table to create has missing value, please use the following at the top
 ```
 CREATE TABLE database.table_name WITH (format = 'PARQUET') AS
 ```
-<!-- #endregion -->
+
 
 Choose a location in S3 to save the CSV. It is recommended to save in it the `datalake-datascience` bucket. Locate an appropriate folder in the bucket, and make sure all output have the same format
 
@@ -1804,7 +1922,7 @@ s3.remove_all_bucket(path_remove = s3_output)
 ```python
 %%time
 query = """
-CREATE TABLE {0}.{1} WITH (format = 'PARQUET') AS
+-- CREATE TABLE {0}.{1} WITH (format = 'PARQUET') AS
 WITH merge AS (
   SELECT 
     id, 
@@ -2009,9 +2127,251 @@ FROM
 output = s3.run_query(
                     query=query,
                     database=DatabaseName,
-                    s3_output=s3_output,
+                    s3_output=s3_output_example,
+    filename = "temp"
                 )
-output
+output.head()
+```
+
+```python
+output.shape
+```
+
+Use Semantic scholar to find ID
+
+```python
+def find_id(paper_name):
+    """
+    to keep thing simple, assume first results in the best option
+    """
+    paper_name_clean = (
+         paper_name
+        .lower()
+        .replace("  ", "+")
+        .replace(" ", "+")
+        .replace("\n", "+")
+        .replace(",", "+")
+        .replace("–", "")
+        .replace("++", "+")
+        .replace(":", "")
+    )
+    url_paper = 'https://api.semanticscholar.org/graph/v1/paper/search?query={}&fields={}'.format(
+        paper_name_clean, ",".join(field))
+    response_1 = requests.get(url_paper, headers=headers)
+    if response_1.status_code == 200:
+        response_1 = response_1.json()
+        if len(response_1['data']) > 0:
+            url_paper = "https://api.semanticscholar.org/graph/v1/paper/{}?fields={}".format(
+                response_1['data'][0]['paperId'], ",".join(field_paper))
+            response_2 = requests.get(url_paper, headers=headers)
+            return {'paper_name': paper_name, 'paperId':response_2.json()['paperId']}
+```
+
+```python
+find_list = False
+if find_list:
+    list_ids = []
+    failure = []
+    for p in tqdm(list(output['paper_name'].unique())):
+        time.sleep(5)
+        try:
+            list_ids.append(find_id(p))
+        except:
+            failure.append(p)
+```
+
+### Add authors information:
+
+- Add the following information from [AUTHOR_SEMANTIC_GOOGLE](https://docs.google.com/spreadsheets/d/1GrrQBip4qNcDuT_MEG9KhNhfTC3yFsVZUtP8-SvXBL4/edit?usp=sharing)
+
+```python
+(df_authors_journal_full.groupby(["title", 'paperId'])
+    .agg(
+        {
+            "nb_authors": "max",
+            "referenceCount": "sum",
+            "citationCount": "sum",
+            "cited_by.total": "sum",
+            "isOpenAccess": "min",
+            "total_paper": "sum",
+            "esg": "sum",
+        }
+    )
+ 
+    )
+```
+
+```python
+(
+    df_authors_journal_full.groupby(["paperId"])['gender.gender'].value_counts()
+    .unstack(-1)
+    .fillna(0)
+    .assign(
+    total = lambda x: x.sum(axis=1),
+        pct_female = lambda x: x['FEMALE']/x['total']
+    )
+    .reset_index()
+    .drop(columns = ['total'])
+)
+```
+
+```python
+df_final = (
+    df_authors_journal_full.groupby(["paperId"])
+    .agg(
+        {
+            "nb_authors": "max",
+            "referenceCount": "sum",
+            "citationCount": "sum",
+            "cited_by.total": "sum",
+            "isOpenAccess": "min",
+            "total_paper": "sum",
+            "esg": "sum",
+        }
+    )
+    .assign(pct_esg=lambda x: x["esg"] / x["total_paper"])
+    .reset_index()
+    .loc[lambda x: x['esg'] != 0]
+    .merge(pd.DataFrame([i for i in list_ids if i]), on=["paperId"])
+    .merge(
+        (
+            df_authors_journal_full.groupby(
+                ["paperId"])['gender.gender'].value_counts()
+            .unstack(-1)
+            .fillna(0)
+            .assign(
+                total=lambda x: x.sum(axis=1),
+                pct_female=lambda x: x['FEMALE']/x['total']
+            )
+            .reset_index()
+            .drop(columns=['total'])
+        ), on=['paperId']
+    )
+    .merge(output, on=["paper_name"])
+    .rename(columns={
+        'cited_by.total': 'cited_by_total',
+        'referenceCount': 'reference_count',
+        'citationCount': 'citation_count',
+        'isOpenAccess': 'is_open_access',
+        'cited_by.total': 'cited_by_total',
+        'FEMALE':'female',
+        'MALE':'male',
+        'UNKNOWN':'unknown'
+    })
+)
+
+df_final.shape
+```
+
+```python
+df_final.head(1)
+```
+
+```python
+input_path = 'df_esg_metaanalysis.csv'
+df_final.to_csv(input_path, index=False)
+# SAVE S3
+s3.upload_file(input_path, s3_output)
+```
+
+```python
+schema = [
+    {'Name': 'index', 'Type': 'int', 'Comments': ''},
+{'Name': 'paperId', 'Type': 'string', 'Comments': ''},
+{'Name': 'nb_authors', 'Type': 'int', 'Comments': ''},
+{'Name': 'reference_count', 'Type': 'int', 'Comments': ''},
+{'Name': 'citation_count', 'Type': 'int', 'Comments': ''},
+{'Name': 'cited_by_total', 'Type': 'int', 'Comments': ''},
+{'Name': 'is_open_access', 'Type': 'boolean', 'Comments': ''},
+{'Name': 'total_paper', 'Type': 'int', 'Comments': ''},
+{'Name': 'esg', 'Type': 'int', 'Comments': ''},
+{'Name': 'pct_esg', 'Type': 'float', 'Comments': ''},
+{'Name': 'paper_name', 'Type': 'string', 'Comments': ''},
+{'Name': 'female', 'Type': 'float', 'Comments': ''},
+    {'Name': 'male', 'Type': 'float', 'Comments': ''},
+    {'Name': 'unknown', 'Type': 'float', 'Comments': ''},
+    {'Name': 'pct_female', 'Type': 'float', 'Comments': ''},
+{'Name': 'to_remove', 'Type': 'string', 'Comments': ''},
+{'Name': 'id', 'Type': 'int', 'Comments': ''},
+{'Name': 'image', 'Type': 'string', 'Comments': ''},
+{'Name': 'row_id_excel', 'Type': 'string', 'Comments': ''},
+{'Name': 'row_id_google_spreadsheet', 'Type': 'string', 'Comments': ''},
+{'Name': 'table_refer', 'Type': 'string', 'Comments': ''},
+{'Name': 'incremental_id', 'Type': 'int', 'Comments': ''},
+{'Name': 'publication_name', 'Type': 'string', 'Comments': ''},
+{'Name': 'rank', 'Type': 'int', 'Comments': ''},
+{'Name': 'sjr', 'Type': 'int', 'Comments': ''},
+{'Name': 'sjr_best_quartile', 'Type': 'string', 'Comments': ''},
+{'Name': 'h_index', 'Type': 'int', 'Comments': ''},
+{'Name': 'total_docs_2020', 'Type': 'int', 'Comments': ''},
+{'Name': 'total_docs_3years', 'Type': 'int', 'Comments': ''},
+{'Name': 'total_refs', 'Type': 'int', 'Comments': ''},
+{'Name': 'total_cites_3years', 'Type': 'int', 'Comments': ''},
+{'Name': 'citable_docs_3years', 'Type': 'int', 'Comments': ''},
+{'Name': 'cites_doc_2years', 'Type': 'int', 'Comments': ''},
+{'Name': 'country', 'Type': 'string', 'Comments': ''},
+{'Name': 'publication_year', 'Type': 'int', 'Comments': ''},
+{'Name': 'publication_type', 'Type': 'string', 'Comments': ''},
+{'Name': 'cnrs_ranking', 'Type': 'int', 'Comments': ''},
+{'Name': 'peer_reviewed', 'Type': 'string', 'Comments': ''},
+{'Name': 'study_focused_on_social_environmental_behaviour', 'Type': 'string', 'Comments': ''},
+{'Name': 'type_of_data', 'Type': 'string', 'Comments': ''},
+{'Name': 'regions', 'Type': 'string', 'Comments': ''},
+{'Name': 'study_focusing_on_developing_or_developed_countries', 'Type': 'string', 'Comments': ''},
+{'Name': 'first_date_of_observations', 'Type': 'int', 'Comments': ''},
+{'Name': 'mid_year', 'Type': 'int', 'Comments': ''},
+{'Name': 'last_date_of_observations', 'Type': 'int', 'Comments': ''},
+{'Name': 'kyoto', 'Type': 'string', 'Comments': ''},
+{'Name': 'financial_crisis', 'Type': 'string', 'Comments': ''},
+{'Name': 'windows', 'Type': 'int', 'Comments': ''},
+{'Name': 'adjusted_model_name', 'Type': 'string', 'Comments': ''},
+{'Name': 'adjusted_model', 'Type': 'string', 'Comments': ''},
+{'Name': 'dependent', 'Type': 'string', 'Comments': ''},
+{'Name': 'adjusted_dependent', 'Type': 'string', 'Comments': ''},
+{'Name': 'independent', 'Type': 'string', 'Comments': ''},
+{'Name': 'adjusted_independent', 'Type': 'string', 'Comments': ''},
+{'Name': 'social', 'Type': 'string', 'Comments': ''},
+{'Name': 'environmental', 'Type': 'string', 'Comments': ''},
+{'Name': 'governance', 'Type': 'string', 'Comments': ''},
+{'Name': 'sign_of_effect', 'Type': 'string', 'Comments': ''},
+{'Name': 'target', 'Type': 'string', 'Comments': ''},
+{'Name': 'p_value_significant', 'Type': 'string', 'Comments': ''},
+{'Name': 'sign_positive', 'Type': 'string', 'Comments': ''},
+{'Name': 'sign_negative', 'Type': 'string', 'Comments': ''},
+{'Name': 'lag', 'Type': 'string', 'Comments': ''},
+{'Name': 'interaction_term', 'Type': 'string', 'Comments': ''},
+{'Name': 'quadratic_term', 'Type': 'string', 'Comments': ''},
+{'Name': 'n', 'Type': 'int', 'Comments': ''},
+{'Name': 'r2', 'Type': 'int', 'Comments': ''},
+{'Name': 'beta', 'Type': 'int', 'Comments': ''},
+{'Name': 'test_standard_error', 'Type': 'string', 'Comments': ''},
+{'Name': 'test_p_value', 'Type': 'string', 'Comments': ''},
+{'Name': 'test_t_value', 'Type': 'string', 'Comments': ''},
+{'Name': 'adjusted_standard_error', 'Type': 'int', 'Comments': ''},
+{'Name': 'adjusted_t_value', 'Type': 'int', 'Comments': ''}
+]
+
+```
+
+```python
+glue = service_glue.connect_glue(client=client)
+
+target_S3URI = os.path.join("s3://",bucket, s3_output)
+name_crawler = "crawl-industry-name"
+Role = 'arn:aws:iam::468786073381:role/AWSGlueServiceRole-crawler-datalake'
+DatabaseName = "esg"
+TablePrefix = 'meta_analysis_'  # add "_" after prefix, ex: hello_
+
+
+glue.create_table_glue(
+    target_S3URI,
+    name_crawler,
+    Role,
+    DatabaseName,
+    TablePrefix,
+    from_athena=False,
+    update_schema=schema,
+)
 ```
 
 ```python
@@ -2028,11 +2388,10 @@ output = s3.run_query(
 output
 ```
 
-<!-- #region heading_collapsed="true" -->
 # Update Glue catalogue and Github
 
 This step is mandatory to validate the query in the ETL.
-<!-- #endregion -->
+
 
 ## Create or update the data catalog
 
@@ -2149,13 +2508,11 @@ update_glue_github.find_duplicates(
 update_glue_github.count_missing(client = client, name_json = name_json, bucket = bucket,TableName = table_name)
 ```
 
-<!-- #region heading_collapsed="true" -->
 # Update Github Data catalog
 
 The data catalog is available in Glue. Although, we might want to get a quick access to the tables in Github. In this part, we are generating a `README.md` in the folder `00_data_catalogue`. All tables used in the project will be added to the catalog. We use the ETL parameter file and the schema in Glue to create the README. 
 
 Bear in mind the code will erase the previous README. 
-<!-- #endregion -->
 
 ```python
 create_schema.make_data_schema_github(name_json = name_json)
@@ -2248,9 +2605,7 @@ payload
 #response
 ```
 
-<!-- #region heading_collapsed="true" -->
 # Generation report
-<!-- #endregion -->
 
 ```python
 import os, time, shutil, urllib, ipykernel, json
