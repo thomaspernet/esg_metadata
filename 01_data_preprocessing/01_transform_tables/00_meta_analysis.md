@@ -463,11 +463,9 @@ def make_clickable(val):
 )
 ```
 
-<!-- #region heading_collapsed="true" -->
 ### Save data to Google Spreadsheet for sharing
 
 - Link: [METADATA_MODEL](https://docs.google.com/spreadsheets/d/13gpRy93l7POWGe-rKjytt7KWOcD1oSLACngTEpuqCTg/edit#gid=0)
-<!-- #endregion -->
 
 ```python
 #!pip install --upgrade git+git://github.com/thomaspernet/GoogleDrive-python
@@ -1593,13 +1591,6 @@ all_connected_paper = (
     )
 )
 all_connected_paper.shape
-```
-
-```python
-len([i for i in ['esg',"environmental","social","governance"] if i in
- [
-     "financial", "development", "really", "spur", "nascent", "entrepreneurship", "europe", "a", "panel", "data", "analysis"]
-])
 ```
 
 ```python
