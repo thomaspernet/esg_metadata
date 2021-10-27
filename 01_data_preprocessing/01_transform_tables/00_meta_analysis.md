@@ -1896,14 +1896,22 @@ def average_embedding(doc, stopwords, list_embedding):
     return {
        'weights':weights,
         'lenght':lenght,
-        'size': len(doc.split())if doc.split() is not None else None,
+        'size': len(doc.split()) if doc is not None else None,
         'sentiment':sent,
         'tag':list_tags
     }
 ```
 
 ```python
-#average_embedding(list_paper_semantic[0]['abstract'], stop, wv)
+#pd.DataFrame(list_paper_semantic).loc[lambda x: x['abstract'].isin([None])]
+```
+
+```python
+list_paper_semantic[11]['abstract']
+```
+
+```python
+len(list_paper_semantic[11]['abstract'].split()) if list_paper_semantic[11]['abstract'] is not None else None
 ```
 
 ```python
@@ -2002,7 +2010,7 @@ scaler = StandardScaler()
 le = preprocessing.LabelEncoder()
 df_tsne = (
     df_embedding.set_index("paperId").drop(
-        columns=["abstract", "avg_embedding", "sentiment", "lenght", "adj","noun","verb"]
+        columns=["abstract", "avg_embedding", "sentiment", "lenght", "adj","noun","verb", "size"]
     )
     .explode('weights')
     .reset_index()
@@ -2021,7 +2029,7 @@ df_tsne = (
         (
             df_embedding
             .set_index("paperId")
-            .reindex(columns=['sentiment', "lenght", "abstract", "adj","noun","verb", "size"])
+            .reindex(columns=['sentiment', "lenght", "abstract", "adj","noun","verb"])
         ),
         left_index=True, right_index=True
     )
@@ -2052,13 +2060,13 @@ df_tsne.drop(columns = ["abstract"]).head().iloc[:3, -10:]
 
 ```python
 kmeans_w_emb = KMeans(n_clusters=3, random_state=1).fit(
-    df_tsne.drop(columns = ["abstract"])
+    df_tsne.drop(columns = ["abstract", 'sentiment'])
     #.drop(columns = ['sentiment', "lenght","abstract"])
 )
 pd.Series(kmeans_w_emb.labels_).value_counts()
 ```
 
-T-sne
+Explore data with T-sne
 
 ```python
 model = manifold.TSNE(n_components=3,
@@ -2107,8 +2115,7 @@ df_tsne = (
         ),
         left_index=True, right_index=True
     )
-    #.loc[lambda x: x['cluster_w_emb'].isin([1])]
-    #.reindex(columns = ['abstract'])
+
 )
 ```
 
@@ -2245,6 +2252,10 @@ df_authors_journal_full = (
     .merge(df_authors_full, how="left", on=["semantic"])
 )
 df_authors_journal_full.shape
+```
+
+```python
+
 ```
 
 ```python
