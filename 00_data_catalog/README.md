@@ -196,5 +196,16 @@
 | 73 | adjusted_t_value                                    | int     | reconstructed t value                                                                                                                   |
 | 74 | csr_20_categories                                   | string  | csr 20 categories                                                                                                                       |
 | 75 | cfp_4_categories                                    | string  | cfp 4 categories                                                                                                                        |
+| 76 | title                                               | string  | title                                                                                                                                   |
+| 77 | cluster_w_emb                                       | string  | cluster w emb                                                                                                                           |
+| 78 | sentiment                                           | string  | sentiment                                                                                                                               |
+| 79 | lenght                                              | float   | lenght                                                                                                                                  |
+| 80 | adj                                                 | float   | adj                                                                                                                                     |
+| 81 | noun                                                | float   | noun                                                                                                                                    |
+| 82 | verb                                                | float   | verb                                                                                                                                    |
+| 83 | size_abstract                                       | float   | size abstract                                                                                                                           |
+| 84 | pct_adj                                             | float   | pct adj                                                                                                                                 |
+| 85 | pct_noun                                            | float   | pct noun                                                                                                                                |
+| 86 | pct_verb                                            | float   | pct verb                                                                                                                                |
 
     

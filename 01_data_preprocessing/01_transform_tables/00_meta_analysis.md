@@ -1355,7 +1355,7 @@ We use the similarity API to compute the similarity score
 <!-- #endregion -->
 
 ```python
-api_key = "T2pS4kaW7BQBP0eoXJU5HHhvYtYYJfGTWorsyviz3Kc+7eFxyboqdJYc4xAEyptg1eURGJdeURGCjlE3sjffFw=="
+api_key = ""
 def twinword(token1, token2):
     """
     """
@@ -2651,34 +2651,7 @@ if find_list:
 
 
 ```python
-(df_authors_journal_full.groupby(["title", 'paperId'])
-    .agg(
-        {
-            "nb_authors": "max",
-            "referenceCount": "sum",
-            "citationCount": "sum",
-            "cited_by.total": "sum",
-            "isOpenAccess": "min",
-            "total_paper": "sum",
-            "esg": "sum",
-        }
-    )
- 
-    )
-```
-
-```python
-(
-    df_authors_journal_full.groupby(["paperId"])['gender.gender'].value_counts()
-    .unstack(-1)
-    .fillna(0)
-    .assign(
-    total = lambda x: x.sum(axis=1),
-        pct_female = lambda x: x['FEMALE']/x['total']
-    )
-    .reset_index()
-    .drop(columns = ['total'])
-)
+df_authors_journal_full.columns
 ```
 
 ```python
@@ -2720,36 +2693,56 @@ df_final = (
         'citationCount': 'citation_count',
         'isOpenAccess': 'is_open_access',
         'cited_by.total': 'cited_by_total',
-        'FEMALE':'female',
-        'MALE':'male',
-        'UNKNOWN':'unknown'
+        'FEMALE': 'female',
+        'MALE': 'male',
+        'UNKNOWN': 'unknown'
     })
     .replace(
         {
-            'csr_20_categories':{
-               
-                'BIST ESG score':'OTHER',
-                'Vigeo score':'OTHER',
-                'Charity':'OTHER',
-                'EIRIS':'OTHER',
-                'Fortune':'OTHER',
-                'Ibase':'OTHER',
-                'ISO norms':'OTHER',
-                'RiskMetrics':'OTHER',
-                'Surveys':'OTHER',
-                'Environmental disclosure':'OTHER',
-                'Disclosure of CSR and GRI':'OTHER',
-                'Other':'OTHER',
-                'Bloomberg ESG score':'BLOOMBERG',
-                'Thomson':'THOMSON',
-                'KLD rating':'MSCI',
+            'csr_20_categories': {
+
+                'BIST ESG score': 'OTHER',
+                'Vigeo score': 'OTHER',
+                'Charity': 'OTHER',
+                'EIRIS': 'OTHER',
+                'Fortune': 'OTHER',
+                'Ibase': 'OTHER',
+                'ISO norms': 'OTHER',
+                'RiskMetrics': 'OTHER',
+                'Surveys': 'OTHER',
+                'Environmental disclosure': 'OTHER',
+                'Disclosure of CSR and GRI': 'OTHER',
+                'Other': 'OTHER',
+                'Bloomberg ESG score': 'BLOOMBERG',
+                'Thomson': 'THOMSON',
+                'KLD rating': 'MSCI',
             },
-           'region_journal':{
-               'Eastern Europe':'EUROPE',
-                'Western Europe':'EUROPE',
-                'Northern America':'NORTHERN AMERICA',
-           } 
+            'region_journal': {
+                'Eastern Europe': 'EUROPE',
+                'Western Europe': 'EUROPE',
+                'Northern America': 'NORTHERN AMERICA',
+            }
         }
+    )
+    .merge(
+        (
+            df_authors_journal_full
+            .reindex(columns=[
+                "title",
+                'paperId',
+                'cluster_w_emb',
+                'sentiment',
+                'lenght',
+                'adj',
+                'noun',
+                'verb',
+                'size_abstract',
+                'pct_adj',
+                'pct_noun',
+                'pct_verb'
+            ])
+            .drop_duplicates(subset=['paperId'])
+        )
     )
 )
 
@@ -3144,7 +3137,7 @@ from notebook import notebookapp
 ```
 
 ```python
-#create_report.create_report(extension = "html", keep_code = True, notebookname =  notebookname)
+create_report.create_report(extension = "html", keep_code = True, notebookname =  notebookname)
 ```
 
 ```python
