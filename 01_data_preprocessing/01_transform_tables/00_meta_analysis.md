@@ -2651,10 +2651,6 @@ if find_list:
 
 
 ```python
-df_authors_journal_full.columns
-```
-
-```python
 df_final = (
     df_authors_journal_full.groupby(["paperId"])
     .agg(
@@ -2728,7 +2724,6 @@ df_final = (
         (
             df_authors_journal_full
             .reindex(columns=[
-                "title",
                 'paperId',
                 'cluster_w_emb',
                 'sentiment',
