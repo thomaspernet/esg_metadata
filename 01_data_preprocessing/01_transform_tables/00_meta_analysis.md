@@ -1355,7 +1355,7 @@ We use the similarity API to compute the similarity score
 <!-- #endregion -->
 
 ```python
-api_key = ""
+api_key = "T2pS4kaW7BQBP0eoXJU5HHhvYtYYJfGTWorsyviz3Kc+7eFxyboqdJYc4xAEyptg1eURGJdeURGCjlE3sjffFw=="
 def twinword(token1, token2):
     """
     """
@@ -1907,14 +1907,6 @@ def average_embedding(doc, stopwords, list_embedding):
 ```
 
 ```python
-list_paper_semantic[11]['abstract']
-```
-
-```python
-len(list_paper_semantic[11]['abstract'].split()) if list_paper_semantic[11]['abstract'] is not None else None
-```
-
-```python
 %%time
 df_embedding = (
     pd.DataFrame(list_paper_semantic)
@@ -2061,7 +2053,6 @@ df_tsne.drop(columns = ["abstract"]).head().iloc[:3, -10:]
 ```python
 kmeans_w_emb = KMeans(n_clusters=3, random_state=1).fit(
     df_tsne.drop(columns = ["abstract", 'sentiment'])
-    #.drop(columns = ['sentiment', "lenght","abstract"])
 )
 pd.Series(kmeans_w_emb.labels_).value_counts()
 ```
@@ -2111,12 +2102,19 @@ df_tsne = (
         (
             df_embedding
             .set_index("paperId")
-            .reindex(columns=['sentiment', "lenght", "abstract", "adj","noun","verb"])
+            .reindex(columns=['sentiment', "lenght", "abstract", "adj","noun","verb", 'size'])
         ),
         left_index=True, right_index=True
     )
+    .reindex(columns=["cluster_w_emb", 'sentiment', "lenght", "abstract", "adj","noun","verb", 'size'])
+    .assign(
+        pct_adj = lambda x: x['adj']/ x['size'],
+        pct_noun = lambda x: x['noun']/ x['size'],
+        pct_verb = lambda x: x['verb']/ x['size']
+    )
 
 )
+df_tsne.head(1)
 ```
 
 ```python
@@ -2250,12 +2248,9 @@ df_authors_journal_full = (
         ),
     )
     .merge(df_authors_full, how="left", on=["semantic"])
+    .merge(df_tsne.drop(columns = ['abstract']).rename(columns = {'size':'size_abstract'}), how="left", on=["paperId"])
 )
 df_authors_journal_full.shape
-```
-
-```python
-
 ```
 
 ```python
@@ -2310,6 +2305,7 @@ query = """
 WITH merge AS (
   SELECT 
     id, 
+    id_old,
     image,
     row_id_excel,
     table_refer,
@@ -2369,7 +2365,7 @@ WITH merge AS (
     LEFT JOIN (
       SELECT 
         DISTINCT(title),
-        nr, 
+        nr as id_old, 
         publication_year, 
         publication_type, 
         publication_name, 
@@ -2380,7 +2376,7 @@ WITH merge AS (
         study_focusing_on_developing_or_developed_countries
       FROM 
         esg.papers_meta_analysis
-    ) as old on papers_meta_analysis_new.id = old.nr
+    ) as old on papers_meta_analysis_new.id = old.id_old
     -- WHERE to_remove = 'TO_KEEP'
 LEFT JOIN (
 SELECT 
@@ -2422,6 +2418,7 @@ GROUP BY
 SELECT 
     to_remove, 
     id, 
+    id_old,
     image,
     row_id_excel,
     row_id_google_spreadsheet,
@@ -2447,6 +2444,7 @@ SELECT
     study_focused_on_social_environmental_behaviour, 
     type_of_data, 
     regions,
+    region_journal,
     study_focusing_on_developing_or_developed_countries,
     first_date_of_observations,
     last_date_of_observations - (windows/2) as mid_year,
@@ -2502,7 +2500,8 @@ FROM
       total_cites_3years, 
       citable_docs_3years, 
       cites_doc_2years, 
-      country 
+      country,
+      region as region_journal
     FROM 
       "scimago"."journals_scimago"
     WHERE sourceid not in (16400154787)
@@ -2519,6 +2518,53 @@ output.head()
 
 ```python
 output.shape
+```
+
+We also want to add csr_20_categories and cfp_4_categories, but the original data are not unique so we will keep the unique values using brute force method. 
+
+```python
+query_csr = """
+SELECT DISTINCT(csr_20_categories), nr as id_old
+FROM "esg"."papers_meta_analysis" 
+ORDER BY nr
+"""
+output_csr = (
+    s3.run_query(
+                    query=query_csr,
+                    database=DatabaseName,
+                    s3_output=s3_output_example,
+    filename = "temp"
+                )
+    .drop_duplicates(subset = ['id_old'])
+)
+output_csr.head()
+```
+
+```python
+query_csr = """
+SELECT DISTINCT(cfp_4_categories
+), nr as id_old
+FROM "esg"."papers_meta_analysis" 
+ORDER BY nr
+"""
+output_cfp = (
+    s3.run_query(
+                    query=query_csr,
+                    database=DatabaseName,
+                    s3_output=s3_output_example,
+    filename = "temp"
+                )
+    .drop_duplicates(subset = ['id_old'])
+)
+output_cfp.head()
+```
+
+```python
+output = (
+    output
+    .merge(output_csr)
+    .merge(output_cfp)
+)
 ```
 
 Use Semantic scholar to find ID
@@ -2552,12 +2598,12 @@ def find_id(paper_name):
 ```
 
 ```python
-find_list = False
+find_list = True
 if find_list:
     list_ids = []
     failure = []
     for p in tqdm(list(output['paper_name'].unique())):
-        time.sleep(5)
+        time.sleep(8)
         try:
             list_ids.append(find_id(p))
         except:
@@ -2567,6 +2613,42 @@ if find_list:
 ### Add authors information:
 
 - Add the following information from [AUTHOR_SEMANTIC_GOOGLE](https://docs.google.com/spreadsheets/d/1GrrQBip4qNcDuT_MEG9KhNhfTC3yFsVZUtP8-SvXBL4/edit?usp=sharing)
+
+**Regroup data provider**
+
+- MSCI
+- KLD rating
+- Thomson
+- Bloomberg ESG score
+- Other
+    - 'BIST ESG score':'OTHER',
+    - 'Vigeo score':'OTHER',
+    - 'Charity':'OTHER',
+    - 'EIRIS':'OTHER',
+    - 'Fortune':'OTHER',
+    - 'Ibase':'OTHER',
+    - 'ISO norms':'OTHER',
+    - 'RiskMetrics':'OTHER',
+    - 'Surveys':'OTHER',
+    - 'Environmental disclosure':'OTHER',
+    - 'Disclosure of CSR and GRI':'OTHER'
+
+**Regroup journal region**
+
+- Europe
+    - Eastern Europe
+    - Western Europe
+- Northern America
+- Southern America
+    - Latin America
+- Asia-Pacific
+    - Asiatic Region
+    - Pacific Region
+- Africa-middle East
+    - Middle East
+    - Africa/Middle East
+    - Africa
+
 
 ```python
 (df_authors_journal_full.groupby(["title", 'paperId'])
@@ -2642,6 +2724,33 @@ df_final = (
         'MALE':'male',
         'UNKNOWN':'unknown'
     })
+    .replace(
+        {
+            'csr_20_categories':{
+               
+                'BIST ESG score':'OTHER',
+                'Vigeo score':'OTHER',
+                'Charity':'OTHER',
+                'EIRIS':'OTHER',
+                'Fortune':'OTHER',
+                'Ibase':'OTHER',
+                'ISO norms':'OTHER',
+                'RiskMetrics':'OTHER',
+                'Surveys':'OTHER',
+                'Environmental disclosure':'OTHER',
+                'Disclosure of CSR and GRI':'OTHER',
+                'Other':'OTHER',
+                'Bloomberg ESG score':'BLOOMBERG',
+                'Thomson':'THOMSON',
+                'KLD rating':'MSCI',
+            },
+           'region_journal':{
+               'Eastern Europe':'EUROPE',
+                'Western Europe':'EUROPE',
+                'Northern America':'NORTHERN AMERICA',
+           } 
+        }
+    )
 )
 
 df_final.shape
@@ -2649,6 +2758,30 @@ df_final.shape
 
 ```python
 df_final.head(1)
+```
+
+```python
+(
+    df_final
+    .groupby('region_journal')
+    .agg(
+        {'region_journal':'count'}
+    )
+    .rename(columns = {'region_journal':'count'})
+    .sort_values(by = ["count"])
+)
+```
+
+```python
+(
+    df_final
+    .groupby('csr_20_categories')
+    .agg(
+        {'csr_20_categories':'count'}
+    )
+    .rename(columns = {'csr_20_categories':'count'})
+    .sort_values(by = ["count"])
+)
 ```
 
 ```python
@@ -2672,9 +2805,9 @@ schema = [
 {'Name': 'pct_esg', 'Type': 'float', 'Comments': ''},
 {'Name': 'paper_name', 'Type': 'string', 'Comments': ''},
 {'Name': 'female', 'Type': 'float', 'Comments': ''},
-    {'Name': 'male', 'Type': 'float', 'Comments': ''},
-    {'Name': 'unknown', 'Type': 'float', 'Comments': ''},
-    {'Name': 'pct_female', 'Type': 'float', 'Comments': ''},
+{'Name': 'male', 'Type': 'float', 'Comments': ''},
+{'Name': 'unknown', 'Type': 'float', 'Comments': ''},
+{'Name': 'pct_female', 'Type': 'float', 'Comments': ''},
 {'Name': 'to_remove', 'Type': 'string', 'Comments': ''},
 {'Name': 'id', 'Type': 'int', 'Comments': ''},
 {'Name': 'image', 'Type': 'string', 'Comments': ''},
@@ -2732,7 +2865,20 @@ schema = [
 {'Name': 'test_p_value', 'Type': 'string', 'Comments': ''},
 {'Name': 'test_t_value', 'Type': 'string', 'Comments': ''},
 {'Name': 'adjusted_standard_error', 'Type': 'int', 'Comments': ''},
-{'Name': 'adjusted_t_value', 'Type': 'int', 'Comments': ''}
+{'Name': 'adjusted_t_value', 'Type': 'int', 'Comments': ''},
+{'Name': 'csr_20_categories', 'Type': 'string', 'Comments': ''},
+{'Name': 'cfp_4_categories', 'Type': 'string', 'Comments': ''},    
+{'Name': 'cluster_w_emb', 'Type': 'string', 'Comments': ''},
+{'Name': 'sentiment', 'Type': 'string', 'Comments': ''},
+    {'Name': 'region_journal', 'Type': 'string', 'Comments': ''},
+{'Name': 'lenght', 'Type': 'float', 'Comments': ''},
+{'Name': 'adj', 'Type': 'float', 'Comments': ''},
+{'Name': 'pct_adj', 'Type': 'float', 'Comments': ''},
+{'Name': 'noun', 'Type': 'float', 'Comments': ''},
+{'Name': 'pct_noun', 'Type': 'float', 'Comments': ''},
+{'Name': 'verb', 'Type': 'float', 'Comments': ''},
+{'Name': 'pct_verb', 'Type': 'float', 'Comments': ''},
+{'Name': 'size_abstract', 'Type': 'float', 'Comments': ''}
 ]
 
 ```
@@ -2998,7 +3144,7 @@ from notebook import notebookapp
 ```
 
 ```python
-create_report.create_report(extension = "html", keep_code = True, notebookname =  notebookname)
+#create_report.create_report(extension = "html", keep_code = True, notebookname =  notebookname)
 ```
 
 ```python
