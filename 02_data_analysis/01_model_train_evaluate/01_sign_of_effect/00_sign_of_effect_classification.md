@@ -186,7 +186,23 @@ SELECT
        female,
        male,
        unknown,
-       pct_female
+       pct_female,
+       region_journal,
+       csr_20_categories,
+       cfp_4_categories,
+       CASE WHEN cluster_w_emb = '0.0' THEN 'CLUSTER_0'
+       WHEN cluster_w_emb = '1.0' THEN 'CLUSTER_1'
+       ELSE 'CLUSTER_2' END AS cluster_w_emb,
+       sentiment,
+       lenght,
+       adj,
+       noun,
+       verb,
+       size_abstract,
+       pct_adj,
+       pct_noun,
+       pct_verb,
+       CASE WHEN pct_female > 0 THEN 'YES' ELSE 'NO' END AS d_female
 FROM 
   test 
   LEFT JOIN (
@@ -240,7 +256,7 @@ df['target'].value_counts()
 pd.DataFrame(schema)
 ```
 
-<!-- #region kernel="SoS" -->
+<!-- #region kernel="SoS" heading_collapsed="true" -->
 ### Save data to Google Spreadsheet
 
 Data is in [METADATA_MODEL-FINAL_DATA](https://docs.google.com/spreadsheets/d/13gpRy93l7POWGe-rKjytt7KWOcD1oSLACngTEpuqCTg/edit#gid=1219457110)
@@ -326,6 +342,14 @@ df['weight'].describe()
 df['adjusted_t_value'].describe()
 ```
 
+```sos kernel="SoS"
+df['sjr'].describe()
+```
+
+```sos kernel="SoS"
+df.loc[lambda x: x['sjr'] == 0].head()
+```
+
 <!-- #region kernel="SoS" -->
 ## Validation text
 
@@ -374,6 +398,38 @@ df['id'].nunique()
     .drop(columns = ['index'])
     .head(10)
 )
+```
+
+```sos kernel="SoS"
+(df.groupby('csr_20_categories')['csr_20_categories'].count())
+```
+
+```sos kernel="SoS"
+(df.groupby(['target','csr_20_categories'])['csr_20_categories'].count().unstack(-2))
+```
+
+```sos kernel="SoS"
+(df.groupby('cfp_4_categories')['cfp_4_categories'].count())
+```
+
+```sos kernel="SoS"
+(df.groupby('d_female')['d_female'].count())
+```
+
+```sos kernel="SoS"
+(df.groupby('target')['pct_female'].describe())
+```
+
+```sos kernel="SoS"
+(df.groupby(['target','d_female'])['d_female'].count().unstack(-2))
+```
+
+```sos kernel="SoS"
+(df.groupby('cluster_w_emb')['cluster_w_emb'].count())
+```
+
+```sos kernel="SoS"
+(df.groupby(['target','cluster_w_emb'])['cluster_w_emb'].count().unstack(-2))
 ```
 
 <!-- #region kernel="SoS" nteract={"transient": {"deleting": false}} -->
@@ -444,6 +500,10 @@ source(path)
 
 ```sos kernel="R"
 %get df_path
+
+normalit<-function(m){
+   (m - min(m))/(max(m)-min(m))
+ }
 df_final <- read_csv(df_path) %>%
 mutate_if(is.character, as.factor) %>%
 
@@ -463,6 +523,15 @@ mutate(
     regions =relevel(as.factor(regions), ref = 'WORLDWIDE'),
     cnrs_ranking =relevel(as.factor(cnrs_ranking), ref = '0'),
     is_open_access =relevel(as.factor(is_open_access), ref = 'NO'),
+    sentiment =relevel(as.factor(sentiment), ref = 'NEGATIVE'),
+    region_journal =relevel(as.factor(region_journal), ref = 'NORTHERN AMERICA'),
+    csr_20_categories =relevel(as.factor(csr_20_categories), ref = 'OTHER'),
+    pct_esg_1 = normalit(pct_esg),
+    esg_1 =  normalit(esg),
+    sjr_1 =  normalit(sjr),
+    cluster_w_emb = relevel(as.factor(cluster_w_emb), ref = 'CLUSTER_0'),
+    d_female = relevel(as.factor(d_female), ref = 'NO'),
+    citation_count_1 = normalit(citation_count)
 )
 ```
 
@@ -576,6 +645,26 @@ Probit models can be generalized to account for non-constant error variances in 
 Here, OTHER means insignificant
 <!-- #endregion -->
 
+<!-- #region kernel="R" -->
+### Baseline table
+
+The baseline regression accounts for: 
+
+```
+environmental # social governance
+      + adjusted_model  
+      + kyoto 
+      + financial_crisis
+      + publication_year
+      + windows
+      + mid_year
+      + regions
+      + sjr
+      + region_journal
+      + csr_20_categories
+```
+<!-- #endregion -->
+
 ```sos kernel="R"
 ### Baseline SJR
 t_0 <- glm(target ~ environmental
@@ -586,7 +675,10 @@ t_0 <- glm(target ~ environmental
            + windows
            + mid_year
            + regions
-           + sjr,
+           + sjr
+           + is_open_access
+           + region_journal
+           + csr_20_categories,
            data = df_final ,
            binomial(link = "probit")
           )
@@ -599,7 +691,10 @@ t_1 <- glm(target ~ social
            + windows
            + mid_year
            + regions
-           + sjr,
+           + sjr
+           + is_open_access
+           + region_journal
+           + csr_20_categories,
            data = df_final , binomial(link = "probit"))
 t_1.rrr <- exp(coef(t_1))
 t_2 <- glm(target ~ governance
@@ -610,7 +705,10 @@ t_2 <- glm(target ~ governance
            + windows
            + mid_year
            + regions
-           + sjr,
+           + sjr
+           + is_open_access
+           + region_journal
+           + csr_20_categories,
            data = df_final , binomial(link = "probit"))
 t_2.rrr <- exp(coef(t_2))
 ### Econometrics control
@@ -623,6 +721,9 @@ t_3 <- glm(target ~ environmental
            + mid_year
            + regions
            + sjr
+           + is_open_access
+           + region_journal
+           + csr_20_categories
            + lag
            + interaction_term
            + quadratic_term,
@@ -639,6 +740,9 @@ t_4 <- glm(target ~ social
            + mid_year
            + regions
            + sjr
+           + is_open_access
+           + region_journal
+           + csr_20_categories
            + lag
            + interaction_term
            + quadratic_term,
@@ -653,6 +757,9 @@ t_5 <- glm(target ~ governance
            + mid_year
            + regions
            + sjr
+           + is_open_access
+           + region_journal
+           + csr_20_categories
            + lag
            + interaction_term
            + quadratic_term,
@@ -665,11 +772,12 @@ stargazer(list_final, type = "text",
   se = lapply(list_final,
               se_robust),
           coef=list_final.rrr,
-          style = "qje")
+          style = "qje",
+         out="TABLES/table_0.txt")
 ```
 
 ```sos kernel="R"
-### Baseline SJR
+### Baseline CNRS
 t_0 <- glm(target ~ environmental
            + adjusted_model  
            + kyoto 
@@ -678,7 +786,10 @@ t_0 <- glm(target ~ environmental
            + windows
            + mid_year
            + regions
-           + cnrs_ranking,
+           + cnrs_ranking
+           + is_open_access
+           + region_journal
+           + csr_20_categories,
            data = df_final ,
            binomial(link = "probit")
           )
@@ -691,7 +802,10 @@ t_1 <- glm(target ~ social
            + windows
            + mid_year
            + regions
-           + cnrs_ranking,
+           + cnrs_ranking
+           + is_open_access
+           + region_journal
+           + csr_20_categories,
            data = df_final , binomial(link = "probit"))
 t_1.rrr <- exp(coef(t_1))
 t_2 <- glm(target ~ governance
@@ -702,7 +816,10 @@ t_2 <- glm(target ~ governance
            + windows
            + mid_year
            + regions
-           + cnrs_ranking,
+           + cnrs_ranking
+           + is_open_access
+           + region_journal
+           + csr_20_categories,
            data = df_final , binomial(link = "probit"))
 t_2.rrr <- exp(coef(t_2))
 ### Econometrics control
@@ -715,6 +832,9 @@ t_3 <- glm(target ~ environmental
            + mid_year
            + regions
            + cnrs_ranking
+           + is_open_access
+           + region_journal
+           + csr_20_categories
            + lag
            + interaction_term
            + quadratic_term,
@@ -731,6 +851,9 @@ t_4 <- glm(target ~ social
            + mid_year
            + regions
            + cnrs_ranking
+           + is_open_access
+           + region_journal
+           + csr_20_categories
            + lag
            + interaction_term
            + quadratic_term,
@@ -745,6 +868,9 @@ t_5 <- glm(target ~ governance
            + mid_year
            + regions
            + cnrs_ranking
+           + is_open_access
+           + region_journal
+           + csr_20_categories
            + lag
            + interaction_term
            + quadratic_term,
@@ -757,26 +883,26 @@ stargazer(list_final, type = "text",
   se = lapply(list_final,
               se_robust),
           coef=list_final.rrr,
-          style = "qje")
+          style = "qje",
+         out="TABLES/table_1.txt")
 ```
 
 <!-- #region kernel="R" -->
 ### Papers and authors specification
 
+
+In the second tables, we focus on the authors informations:
+
+Baseline variables + 
+
+- nb_authors: Number of authors in the paper
+- pct_female: Percentage of female author
+- pct_esg_1: ESG expertise of the authors (normalized value)
+
+
 <!-- #endregion -->
 
 ```sos kernel="R"
-normalit<-function(m){
-   (m - min(m))/(max(m)-min(m))
- }
-
-df_final <- df_final %>% mutate(
-    pct_esg_1 = normalit(pct_esg),
-    esg_1 =  normalit(esg)
-)
-```
-
-```sos kernel="R"
 ###
 t_0 <- glm(target ~ environmental
            + adjusted_model  
@@ -787,10 +913,9 @@ t_0 <- glm(target ~ environmental
            + mid_year
            + regions
            + sjr
-           + lag
-           + interaction_term
-           + quadratic_term
            + is_open_access
+           + region_journal
+           + csr_20_categories
            + nb_authors
            + pct_female
            + pct_esg_1,
@@ -809,10 +934,9 @@ t_1 <- glm(target ~ social
            + mid_year
            + regions
            + sjr
-           + lag
-           + interaction_term
-           + quadratic_term
            + is_open_access
+           + region_journal
+           + csr_20_categories
            + nb_authors
            + pct_female
            + pct_esg_1,
@@ -830,10 +954,9 @@ t_2 <- glm(target ~ governance
            + mid_year
            + regions
            + sjr
-           + lag
-           + interaction_term
-           + quadratic_term
            + is_open_access
+           + region_journal
+           + csr_20_categories
            + nb_authors
            + pct_female
            + pct_esg_1,
@@ -849,7 +972,7 @@ stargazer(list_final, type = "text",
               se_robust),
           coef=list_final.rrr,
           style = "qje",
-         out="table1.txt")
+         out="TABLES/table_3.txt")
 ```
 
 ```sos kernel="R"
@@ -863,9 +986,7 @@ t_0 <- glm(target ~ environmental
            + mid_year
            + regions
            + cnrs_ranking
-           + lag
-           + interaction_term
-           + quadratic_term
+           + region_journal
            + is_open_access
            + nb_authors
            + pct_female
@@ -885,9 +1006,7 @@ t_1 <- glm(target ~ social
            + mid_year
            + regions
            + cnrs_ranking
-           + lag
-           + interaction_term
-           + quadratic_term
+           + region_journal
            + is_open_access
            + nb_authors
            + pct_female
@@ -906,9 +1025,7 @@ t_2 <- glm(target ~ governance
            + mid_year
            + regions
            + cnrs_ranking
-           + lag
-           + interaction_term
-           + quadratic_term
+           + region_journal
            + is_open_access
            + nb_authors
            + pct_female
@@ -925,7 +1042,154 @@ stargazer(list_final, type = "text",
               se_robust),
           coef=list_final.rrr,
           style = "qje",
-         out="table2.txt")
+         out="TABLES/table_4.txt")
+```
+
+<!-- #region kernel="R" -->
+### Characteristic abstract
+
+**Sentiment**: Overall feeling of the abstract. Positive means the abstract tend to have more words associated with a positive connotation
+
+**cluster_w_emb**: 3 clusters computed using the words in the abstract (embeddings), the number of verbs, noun,s and adjectives but also the size of the abstract. 
+
+The k-mean algorithm clustered the abstract based on the "quality" of it. 
+
+- sentiment
+- cluster
+<!-- #endregion -->
+
+```sos kernel="R"
+###
+t_0 <- glm(target ~ environmental
+           + adjusted_model  
+           + kyoto 
+           + financial_crisis
+           + publication_year
+           + windows
+           + mid_year
+           + regions
+           + cnrs_ranking
+           + region_journal
+           + csr_20_categories
+           + sentiment
+           + cluster_w_emb,
+           data = df_final ,
+           binomial(link = "probit")
+          )
+t_0.rrr <- exp(coef(t_0))
+
+
+t_1 <- glm(target ~ social
+           + adjusted_model  
+           + kyoto 
+           + financial_crisis
+           + publication_year
+           + windows
+           + mid_year
+           + regions
+           + cnrs_ranking
+           + region_journal
+           + csr_20_categories
+           + sentiment
+           + cluster_w_emb,
+           data = df_final ,
+           binomial(link = "probit")
+          )
+t_1.rrr <- exp(coef(t_1))
+
+t_2 <- glm(target ~ governance
+           + adjusted_model  
+           + kyoto 
+           + financial_crisis
+           + publication_year
+           + windows
+           + mid_year
+           + regions
+           + cnrs_ranking
+           + region_journal
+           + csr_20_categories
+           + sentiment
+           + cluster_w_emb,
+           data = df_final ,
+           binomial(link = "probit")
+          )
+t_2.rrr <- exp(coef(t_2))
+
+list_final = list(t_0, t_1, t_2)
+list_final.rrr = list(t_0.rrr,t_1.rrr,t_2.rrr)
+stargazer(list_final, type = "text", 
+  se = lapply(list_final,
+              se_robust),
+          coef=list_final.rrr,
+          style = "qje",
+         out="table_5.txt")
+```
+
+```sos kernel="R"
+###
+t_0 <- glm(target ~ environmental
+           + adjusted_model  
+           + kyoto 
+           + financial_crisis
+           + publication_year
+           + windows
+           + mid_year
+           + regions
+           + sjr
+           + region_journal
+           + csr_20_categories
+           + sentiment
+           + cluster_w_emb,
+           data = df_final ,
+           binomial(link = "probit")
+          )
+t_0.rrr <- exp(coef(t_0))
+
+
+t_1 <- glm(target ~ social
+           + adjusted_model  
+           + kyoto 
+           + financial_crisis
+           + publication_year
+           + windows
+           + mid_year
+           + regions
+           + sjr
+           + region_journal
+           + csr_20_categories
+           + sentiment
+           + cluster_w_emb,
+           data = df_final ,
+           binomial(link = "probit")
+          )
+t_1.rrr <- exp(coef(t_1))
+
+t_2 <- glm(target ~ governance
+           + adjusted_model  
+           + kyoto 
+           + financial_crisis
+           + publication_year
+           + windows
+           + mid_year
+           + regions
+           + sjr
+           + region_journal
+           + csr_20_categories
+           + sentiment
+           + cluster_w_emb,
+           data = df_final ,
+           binomial(link = "probit")
+          )
+t_2.rrr <- exp(coef(t_2))
+
+list_final = list(t_0, t_1, t_2)
+list_final.rrr = list(t_0.rrr,t_1.rrr,t_2.rrr)
+stargazer(list_final, type = "text", 
+  se = lapply(list_final,
+              se_robust),
+          coef=list_final.rrr,
+          style = "qje",
+         out="table_6.txt")
 ```
 
 <!-- #region kernel="SoS" -->
