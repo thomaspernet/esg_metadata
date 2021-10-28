@@ -808,6 +808,7 @@ import pickle
 import re
 from tensorflow.keras.models import load_model
 import unicodedata
+import requests
 ```
 
 ```python
@@ -833,8 +834,6 @@ doi = drive.download_data_from_spreadsheet(
 Get paper name
 
 ```python
-import requests
-
 headers = {
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36'
 }
@@ -1535,6 +1534,7 @@ from gensim.models import Word2Vec
 import nltk
 from nltk.corpus import stopwords
 from scipy.spatial import distance
+import string
 #nltk.download('stopwords')
 ```
 
@@ -1770,6 +1770,393 @@ df_authors_full['gender.gender'].value_counts()
 df_authors_full.shape
 ```
 
+### Cluster abstract
+
+The last batch of informations relates to the pertinance and details of the abstract. We might think that the abstract contains information about the "quality" or "emotion" behind the paper. Therefore, we propose to compute the following variables:
+
+- sentiment: positive or negative
+- size: number of words in the abstract
+- lenght: number of time the words 'esg', "environmental", "social", "governance" are mentioned
+- adj: Number of adjectives
+- noun: Number of nouns
+- verb: Number of verbs
+- cluster: Clusters the paper belongs to
+
+#### Processus
+
+- Step 1: Clean the abstract:
+    - Lowercase words
+    - Remove [+XYZ chars] in content
+    - Remove multiple spaces in content
+    - Remove ellipsis (and last word)
+    - Replace dash between words
+    - Remove punctuation
+    - Remove stopwords
+    - Remove digits
+    - Remove short tokens
+- Step 2: Compute the sentiments using the [Flair](https://github.com/flairNLP/flair) library
+- Step 3: Count the number of adjectives, nouns and verbs
+- Step 4: Get the vector's embedding from the pre-trained model `word2vec-google-news-300` and look up each word in the list. Compute the average to get a vector of 100 weights for a given document
+- Step 5: Label the sentiment 0/1 and standardise "lenght", "adj","noun","verb"
+- Step 6: Compute the cluster: max 3
+    
+    
+
+```python
+#from nltk.sentiment import SentimentIntensityAnalyzer
+#nltk.download('vader_lexicon')
+#nltk.download('averaged_perceptron_tagger')
+```
+
+```python
+#!pip install flair
+```
+
+```python
+from flair.models import TextClassifier
+from flair.data import Sentence
+import gensim.downloader as api
+import nltk
+```
+
+```python
+wv = api.load('word2vec-google-news-300')
+```
+
+```python
+#with open('MODELS_AND_DATA/word2vec-google-news-300.pickle', 'wb') as handle:
+#    pickle.dump(wv, handle)
+```
+
+```python
+def clean_text(text, stopwords):
+    """Pre-process text and generate tokens
+
+    Args:
+        text: Text to tokenize.
+        
+
+    Returns:
+        Tokenized text.
+    """
+    text = str(text).lower()  # Lowercase words
+    text = re.sub(r"\[(.*?)\]", "", text)  # Remove [+XYZ chars] in content
+    text = re.sub(r"\s+", " ", text)  # Remove multiple spaces in content
+    text = re.sub(r"\w+…|…", "", text)  # Remove ellipsis (and last word)
+    text = re.sub(r"(?<=\w)-(?=\w)", " ", text)  # Replace dash between words
+    text = re.sub(
+        f"[{re.escape(string.punctuation)}]", "", text
+    )  # Remove punctuation
+    text = text.replace('abstract', '')
+    text = text.split()
+
+    #tokens = tokenizer(text)  # Get tokens from text
+    tokens = [t for t in text if not t in stopwords]  # Remove stopwords
+    tokens = ["" if t.isdigit() else t for t in tokens]  # Remove digits
+    tokens = [t for t in tokens if len(t) > 1]  # Remove short tokens
+    return tokens
+```
+
+```python
+def average_embedding(doc, stopwords, list_embedding):
+    text = clean_text(doc, stopwords)
+    #### lenght
+    lenght = len([i for i in ['esg', "environmental", "social", "governance"] if i in
+                  sorted(text)])
+    
+    ### sentiment
+    sentiment = TextClassifier.load('en-sentiment')
+    sentence = Sentence(" ".join(text))
+    sentiment.predict(sentence)
+    score = sentence.labels[0]
+    if "POSITIVE" in str(score):
+        sent = "POSITIVE"
+    elif "NEGATIVE" in str(score):
+         sent =  "NEGATIVE"
+    else:
+         sent =  "NEUTRAL"
+            
+    #### 
+    test = nltk.pos_tag(text)
+    list_tags = {
+        'ADJ':0,
+        'NOUN':0,
+        'VERB':0
+    }
+    for g in test:
+        if g[1] in ["JJ", "JJR", "JJS"]:
+            list_tags['ADJ']+=1
+        elif g[1] in ["NN", "NNS", "NNP" ,"NNPS" ]:
+            list_tags['NOUN']+=1
+        elif g[1] in ["VB", "VBG", "VBD", "VBN", "VBP", "VBZ"]:
+            list_tags['VERB']+=1
+
+    text = list(dict.fromkeys(text))
+    weights = np.mean([list_embedding[i] for i in text if i in list_embedding],axis=0)
+    return {
+       'weights':weights,
+        'lenght':lenght,
+        'size': len(doc.split()) if doc is not None else None,
+        'sentiment':sent,
+        'tag':list_tags
+    }
+```
+
+```python
+#pd.DataFrame(list_paper_semantic).loc[lambda x: x['abstract'].isin([None])]
+```
+
+```python
+%%time
+df_embedding = (
+    pd.DataFrame(list_paper_semantic)
+    .reindex(columns=['paperId', 'abstract'])
+    .assign(
+        avg_embedding=lambda x: x.apply(
+            lambda x:
+            average_embedding(
+                doc=x['abstract'],
+                stopwords=stop,
+                list_embedding=wv)
+            , axis=1
+        )
+    )
+    .assign(
+        weights = lambda x: x.apply(
+            lambda x: x['avg_embedding']['weights'],
+            axis = 1
+        ),
+        lenght = lambda x: x.apply(
+            lambda x: x['avg_embedding']['lenght'],
+            axis = 1
+        ),
+        sentiment = lambda x: x.apply(
+            lambda x: x['avg_embedding']['sentiment'],
+            axis = 1
+        ),
+        size = lambda x: x.apply(
+            lambda x: x['avg_embedding']['size'],
+            axis = 1
+        ),
+        adj = lambda x: x.apply(
+            lambda x: x['avg_embedding']['tag']['ADJ'],
+            axis = 1
+        ),
+         noun = lambda x: x.apply(
+            lambda x: x['avg_embedding']['tag']['NOUN'],
+            axis = 1
+        ),
+         verb = lambda x: x.apply(
+            lambda x: x['avg_embedding']['tag']['VERB'],
+            axis = 1
+        )
+    )
+)
+```
+
+```python
+(
+    df_embedding
+    .agg(
+    {
+        'lenght':'describe',
+        'adj':'describe',
+        'noun':'describe',
+        'verb':'describe',
+    })
+)
+```
+
+```python
+df_embedding['sentiment'].value_counts()
+```
+
+```python
+(
+    df_embedding
+    .groupby('sentiment')
+    .agg(
+    {
+        'adj':'describe',
+        'noun':'describe',
+        'verb':'describe',
+    })
+    .T
+)
+```
+
+Compute the clusters
+
+```python
+from sklearn.cluster import KMeans
+from sklearn.neighbors import DistanceMetric
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from sklearn import preprocessing
+from sklearn import manifold
+from sklearn.metrics import silhouette_score
+import matplotlib.pyplot as plt
+```
+
+```python
+scaler = StandardScaler()
+le = preprocessing.LabelEncoder()
+df_tsne = (
+    df_embedding.set_index("paperId").drop(
+        columns=["abstract", "avg_embedding", "sentiment", "lenght", "adj","noun","verb", "size"]
+    )
+    .explode('weights')
+    .reset_index()
+    .assign(
+        temps = 1,
+        id_ = lambda x: x.groupby(['paperId'])['temps'].transform('cumsum')
+    )
+    .set_index(['paperId', 'id_'])
+    .drop(columns = ['temps'])
+    .unstack(-1)
+    .droplevel(level=0, axis=1)
+    .apply(pd.to_numeric)
+    .reset_index()
+    .set_index('paperId')
+    .merge(
+        (
+            df_embedding
+            .set_index("paperId")
+            .reindex(columns=['sentiment', "lenght", "abstract", "adj","noun","verb"])
+        ),
+        left_index=True, right_index=True
+    )
+    .assign(
+        sentiment = lambda x: le.fit_transform(x["sentiment"]),
+        lenght = lambda x: (x['lenght']-x['lenght'].min())/(x['lenght'].max()-x['lenght'].min()),
+        adj = lambda x: (x['adj']-x['adj'].min())/(x['adj'].max()-x['adj'].min()),
+        noun = lambda x: (x['noun']-x['noun'].min())/(x['noun'].max()-x['noun'].min()),
+        verb = lambda x: (x['verb']-x['verb'].min())/(x['verb'].max()-x['verb'].min())
+    )
+    .loc[lambda x: ~x['abstract'].isin([None])]
+    .loc[lambda x: ~x.index.isin([
+        '0bf6400dcc8d2a9c1b02c650cc8e0ebfedf99670',
+        '732b67567b0ab51ca047fa0f3ebc89de29bbc8a4',
+        'd9041bee67c6cfacc2e28b66e5702d7141648816'
+    ])]
+)
+df_tsne.drop(columns = ["abstract"]).head()
+```
+
+#### Compute K-mean
+
+Use vector embedding and pre-processed sentiment, lenght, adj, noun and verb.
+
+```python
+df_tsne.drop(columns = ["abstract"]).head().iloc[:3, -10:]
+```
+
+```python
+kmeans_w_emb = KMeans(n_clusters=3, random_state=1).fit(
+    df_tsne.drop(columns = ["abstract", 'sentiment'])
+)
+pd.Series(kmeans_w_emb.labels_).value_counts()
+```
+
+Explore data with T-sne
+
+```python
+model = manifold.TSNE(n_components=3,
+                          #metric='precomputed',
+                          perplexity=20.0,
+                          early_exaggeration=12.0,
+                          learning_rate=10,
+                          n_iter=3000,
+                          n_iter_without_progress=300,
+                          min_grad_norm=1e-07,
+                          init='random',
+                          verbose=1,
+                          random_state=4,
+                          method='barnes_hut',
+                          angle=0.5,
+                          n_jobs=None)
+coords = model.fit_transform(df_tsne.drop(columns = ['sentiment', "lenght", "abstract"]))
+df_tsne = (
+    df_tsne
+    .assign(
+        tsne_2d_one = coords[:,0],
+        tsne_2d_two = coords[:,1],
+        cluster_w_emb = kmeans_w_emb.labels_
+        )
+)
+print(df_tsne['cluster_w_emb'].value_counts())
+
+plt.figure(figsize=(15,8))
+ax = sns.scatterplot(
+    data=df_tsne, 
+    x="tsne_2d_one",
+    y="tsne_2d_two",
+    hue="cluster_w_emb",
+    palette="deep")
+```
+
+```python
+df_tsne = (
+    df_tsne
+    .drop(columns=['sentiment', "lenght", "abstract", "adj","noun","verb"])
+    .merge(
+        (
+            df_embedding
+            .set_index("paperId")
+            .reindex(columns=['sentiment', "lenght", "abstract", "adj","noun","verb", 'size'])
+        ),
+        left_index=True, right_index=True
+    )
+    .reindex(columns=["cluster_w_emb", 'sentiment', "lenght", "abstract", "adj","noun","verb", 'size'])
+    .assign(
+        pct_adj = lambda x: x['adj']/ x['size'],
+        pct_noun = lambda x: x['noun']/ x['size'],
+        pct_verb = lambda x: x['verb']/ x['size']
+    )
+
+)
+df_tsne.head(1)
+```
+
+```python
+(
+    df_tsne
+    .groupby('cluster_w_emb')['sentiment'].value_counts()
+    .unstack(-1)
+)
+```
+
+The clustering algorithm groups the paper based on the number of time ESG (and related term) is mentioned and pertinence of the abstract. For instance, the cluster 0 is the one with the highest number of time ESG is mentioned, but also with the largest number of verbs, and adjectives, indicating stronger emotion in the abstract.
+
+```python
+for v in ["lenght","verb","adj","noun"]:
+    display(
+    df_tsne
+    .groupby('cluster_w_emb')
+    .agg(
+        {
+            v:'describe'
+        }
+    )
+)
+```
+
+```python
+pd.concat([(
+    df_tsne
+    .loc[lambda x: x.index.isin(["02281aebff7110c8b6efb59ebba448ecb7e2a4cc"])]
+    .head(1)
+    .reindex(columns = ['cluster_w_emb','abstract',"lenght","verb","adj","noun"])
+),
+    (
+    df_tsne
+    .loc[lambda x: x.index.isin(["128fd0154eeaf6189fcff693abbd076aad42b900"])]
+    .head(1)
+    .reindex(columns = ['cluster_w_emb','abstract',"lenght","verb","adj","noun"])
+)
+], axis = 0
+)
+```
+
 ### Add paper information
 
 ```python
@@ -1861,6 +2248,7 @@ df_authors_journal_full = (
         ),
     )
     .merge(df_authors_full, how="left", on=["semantic"])
+    .merge(df_tsne.drop(columns = ['abstract']).rename(columns = {'size':'size_abstract'}), how="left", on=["paperId"])
 )
 df_authors_journal_full.shape
 ```
@@ -1917,6 +2305,7 @@ query = """
 WITH merge AS (
   SELECT 
     id, 
+    id_old,
     image,
     row_id_excel,
     table_refer,
@@ -1976,7 +2365,7 @@ WITH merge AS (
     LEFT JOIN (
       SELECT 
         DISTINCT(title),
-        nr, 
+        nr as id_old, 
         publication_year, 
         publication_type, 
         publication_name, 
@@ -1987,7 +2376,7 @@ WITH merge AS (
         study_focusing_on_developing_or_developed_countries
       FROM 
         esg.papers_meta_analysis
-    ) as old on papers_meta_analysis_new.id = old.nr
+    ) as old on papers_meta_analysis_new.id = old.id_old
     -- WHERE to_remove = 'TO_KEEP'
 LEFT JOIN (
 SELECT 
@@ -2029,6 +2418,7 @@ GROUP BY
 SELECT 
     to_remove, 
     id, 
+    id_old,
     image,
     row_id_excel,
     row_id_google_spreadsheet,
@@ -2054,6 +2444,7 @@ SELECT
     study_focused_on_social_environmental_behaviour, 
     type_of_data, 
     regions,
+    region_journal,
     study_focusing_on_developing_or_developed_countries,
     first_date_of_observations,
     last_date_of_observations - (windows/2) as mid_year,
@@ -2109,7 +2500,8 @@ FROM
       total_cites_3years, 
       citable_docs_3years, 
       cites_doc_2years, 
-      country 
+      country,
+      region as region_journal
     FROM 
       "scimago"."journals_scimago"
     WHERE sourceid not in (16400154787)
@@ -2126,6 +2518,53 @@ output.head()
 
 ```python
 output.shape
+```
+
+We also want to add csr_20_categories and cfp_4_categories, but the original data are not unique so we will keep the unique values using brute force method. 
+
+```python
+query_csr = """
+SELECT DISTINCT(csr_20_categories), nr as id_old
+FROM "esg"."papers_meta_analysis" 
+ORDER BY nr
+"""
+output_csr = (
+    s3.run_query(
+                    query=query_csr,
+                    database=DatabaseName,
+                    s3_output=s3_output_example,
+    filename = "temp"
+                )
+    .drop_duplicates(subset = ['id_old'])
+)
+output_csr.head()
+```
+
+```python
+query_csr = """
+SELECT DISTINCT(cfp_4_categories
+), nr as id_old
+FROM "esg"."papers_meta_analysis" 
+ORDER BY nr
+"""
+output_cfp = (
+    s3.run_query(
+                    query=query_csr,
+                    database=DatabaseName,
+                    s3_output=s3_output_example,
+    filename = "temp"
+                )
+    .drop_duplicates(subset = ['id_old'])
+)
+output_cfp.head()
+```
+
+```python
+output = (
+    output
+    .merge(output_csr)
+    .merge(output_cfp)
+)
 ```
 
 Use Semantic scholar to find ID
@@ -2159,12 +2598,12 @@ def find_id(paper_name):
 ```
 
 ```python
-find_list = False
+find_list = True
 if find_list:
     list_ids = []
     failure = []
     for p in tqdm(list(output['paper_name'].unique())):
-        time.sleep(5)
+        time.sleep(8)
         try:
             list_ids.append(find_id(p))
         except:
@@ -2175,35 +2614,44 @@ if find_list:
 
 - Add the following information from [AUTHOR_SEMANTIC_GOOGLE](https://docs.google.com/spreadsheets/d/1GrrQBip4qNcDuT_MEG9KhNhfTC3yFsVZUtP8-SvXBL4/edit?usp=sharing)
 
-```python
-(df_authors_journal_full.groupby(["title", 'paperId'])
-    .agg(
-        {
-            "nb_authors": "max",
-            "referenceCount": "sum",
-            "citationCount": "sum",
-            "cited_by.total": "sum",
-            "isOpenAccess": "min",
-            "total_paper": "sum",
-            "esg": "sum",
-        }
-    )
- 
-    )
-```
+**Regroup data provider**
+
+- MSCI
+- KLD rating
+- Thomson
+- Bloomberg ESG score
+- Other
+    - 'BIST ESG score':'OTHER',
+    - 'Vigeo score':'OTHER',
+    - 'Charity':'OTHER',
+    - 'EIRIS':'OTHER',
+    - 'Fortune':'OTHER',
+    - 'Ibase':'OTHER',
+    - 'ISO norms':'OTHER',
+    - 'RiskMetrics':'OTHER',
+    - 'Surveys':'OTHER',
+    - 'Environmental disclosure':'OTHER',
+    - 'Disclosure of CSR and GRI':'OTHER'
+
+**Regroup journal region**
+
+- Europe
+    - Eastern Europe
+    - Western Europe
+- Northern America
+- Southern America
+    - Latin America
+- Asia-Pacific
+    - Asiatic Region
+    - Pacific Region
+- Africa-middle East
+    - Middle East
+    - Africa/Middle East
+    - Africa
+
 
 ```python
-(
-    df_authors_journal_full.groupby(["paperId"])['gender.gender'].value_counts()
-    .unstack(-1)
-    .fillna(0)
-    .assign(
-    total = lambda x: x.sum(axis=1),
-        pct_female = lambda x: x['FEMALE']/x['total']
-    )
-    .reset_index()
-    .drop(columns = ['total'])
-)
+df_authors_journal_full.columns
 ```
 
 ```python
@@ -2245,10 +2693,57 @@ df_final = (
         'citationCount': 'citation_count',
         'isOpenAccess': 'is_open_access',
         'cited_by.total': 'cited_by_total',
-        'FEMALE':'female',
-        'MALE':'male',
-        'UNKNOWN':'unknown'
+        'FEMALE': 'female',
+        'MALE': 'male',
+        'UNKNOWN': 'unknown'
     })
+    .replace(
+        {
+            'csr_20_categories': {
+
+                'BIST ESG score': 'OTHER',
+                'Vigeo score': 'OTHER',
+                'Charity': 'OTHER',
+                'EIRIS': 'OTHER',
+                'Fortune': 'OTHER',
+                'Ibase': 'OTHER',
+                'ISO norms': 'OTHER',
+                'RiskMetrics': 'OTHER',
+                'Surveys': 'OTHER',
+                'Environmental disclosure': 'OTHER',
+                'Disclosure of CSR and GRI': 'OTHER',
+                'Other': 'OTHER',
+                'Bloomberg ESG score': 'BLOOMBERG',
+                'Thomson': 'THOMSON',
+                'KLD rating': 'MSCI',
+            },
+            'region_journal': {
+                'Eastern Europe': 'EUROPE',
+                'Western Europe': 'EUROPE',
+                'Northern America': 'NORTHERN AMERICA',
+            }
+        }
+    )
+    .merge(
+        (
+            df_authors_journal_full
+            .reindex(columns=[
+                "title",
+                'paperId',
+                'cluster_w_emb',
+                'sentiment',
+                'lenght',
+                'adj',
+                'noun',
+                'verb',
+                'size_abstract',
+                'pct_adj',
+                'pct_noun',
+                'pct_verb'
+            ])
+            .drop_duplicates(subset=['paperId'])
+        )
+    )
 )
 
 df_final.shape
@@ -2256,6 +2751,30 @@ df_final.shape
 
 ```python
 df_final.head(1)
+```
+
+```python
+(
+    df_final
+    .groupby('region_journal')
+    .agg(
+        {'region_journal':'count'}
+    )
+    .rename(columns = {'region_journal':'count'})
+    .sort_values(by = ["count"])
+)
+```
+
+```python
+(
+    df_final
+    .groupby('csr_20_categories')
+    .agg(
+        {'csr_20_categories':'count'}
+    )
+    .rename(columns = {'csr_20_categories':'count'})
+    .sort_values(by = ["count"])
+)
 ```
 
 ```python
@@ -2279,9 +2798,9 @@ schema = [
 {'Name': 'pct_esg', 'Type': 'float', 'Comments': ''},
 {'Name': 'paper_name', 'Type': 'string', 'Comments': ''},
 {'Name': 'female', 'Type': 'float', 'Comments': ''},
-    {'Name': 'male', 'Type': 'float', 'Comments': ''},
-    {'Name': 'unknown', 'Type': 'float', 'Comments': ''},
-    {'Name': 'pct_female', 'Type': 'float', 'Comments': ''},
+{'Name': 'male', 'Type': 'float', 'Comments': ''},
+{'Name': 'unknown', 'Type': 'float', 'Comments': ''},
+{'Name': 'pct_female', 'Type': 'float', 'Comments': ''},
 {'Name': 'to_remove', 'Type': 'string', 'Comments': ''},
 {'Name': 'id', 'Type': 'int', 'Comments': ''},
 {'Name': 'image', 'Type': 'string', 'Comments': ''},
@@ -2339,7 +2858,20 @@ schema = [
 {'Name': 'test_p_value', 'Type': 'string', 'Comments': ''},
 {'Name': 'test_t_value', 'Type': 'string', 'Comments': ''},
 {'Name': 'adjusted_standard_error', 'Type': 'int', 'Comments': ''},
-{'Name': 'adjusted_t_value', 'Type': 'int', 'Comments': ''}
+{'Name': 'adjusted_t_value', 'Type': 'int', 'Comments': ''},
+{'Name': 'csr_20_categories', 'Type': 'string', 'Comments': ''},
+{'Name': 'cfp_4_categories', 'Type': 'string', 'Comments': ''},    
+{'Name': 'cluster_w_emb', 'Type': 'string', 'Comments': ''},
+{'Name': 'sentiment', 'Type': 'string', 'Comments': ''},
+    {'Name': 'region_journal', 'Type': 'string', 'Comments': ''},
+{'Name': 'lenght', 'Type': 'float', 'Comments': ''},
+{'Name': 'adj', 'Type': 'float', 'Comments': ''},
+{'Name': 'pct_adj', 'Type': 'float', 'Comments': ''},
+{'Name': 'noun', 'Type': 'float', 'Comments': ''},
+{'Name': 'pct_noun', 'Type': 'float', 'Comments': ''},
+{'Name': 'verb', 'Type': 'float', 'Comments': ''},
+{'Name': 'pct_verb', 'Type': 'float', 'Comments': ''},
+{'Name': 'size_abstract', 'Type': 'float', 'Comments': ''}
 ]
 
 ```
