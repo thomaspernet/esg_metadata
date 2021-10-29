@@ -1355,7 +1355,7 @@ We use the similarity API to compute the similarity score
 <!-- #endregion -->
 
 ```python
-api_key = ""
+api_key = "T2pS4kaW7BQBP0eoXJU5HHhvYtYYJfGTWorsyviz3Kc+7eFxyboqdJYc4xAEyptg1eURGJdeURGCjlE3sjffFw=="
 def twinword(token1, token2):
     """
     """
@@ -1998,8 +1998,20 @@ import matplotlib.pyplot as plt
 ```
 
 ```python
+def standardized(x, option = 1):
+    if option == 1:
+        mean = np.mean(x)
+        sd = np.std(x)
+        s = (x - mean)/sd
+    else:
+        s = (x - x.min())/(x.max() - x.min())
+    return s
+```
+
+```python
 scaler = StandardScaler()
 le = preprocessing.LabelEncoder()
+sc = preprocessing.StandardScaler()
 df_tsne = (
     df_embedding.set_index("paperId").drop(
         columns=["abstract", "avg_embedding", "sentiment", "lenght", "adj","noun","verb", "size"]
@@ -2021,16 +2033,26 @@ df_tsne = (
         (
             df_embedding
             .set_index("paperId")
-            .reindex(columns=['sentiment', "lenght", "abstract", "adj","noun","verb"])
+            .reindex(columns=['sentiment', "lenght", "abstract", "adj","noun","verb", 'size'])
         ),
         left_index=True, right_index=True
     )
     .assign(
         sentiment = lambda x: le.fit_transform(x["sentiment"]),
-        lenght = lambda x: (x['lenght']-x['lenght'].min())/(x['lenght'].max()-x['lenght'].min()),
-        adj = lambda x: (x['adj']-x['adj'].min())/(x['adj'].max()-x['adj'].min()),
-        noun = lambda x: (x['noun']-x['noun'].min())/(x['noun'].max()-x['noun'].min()),
-        verb = lambda x: (x['verb']-x['verb'].min())/(x['verb'].max()-x['verb'].min())
+        #lenght = lambda x: (x['lenght']-x['lenght'].min())/(x['lenght'].max()-x['lenght'].min()),
+        #adj = lambda x: (x['adj']-x['adj'].min())/(x['adj'].max()-x['adj'].min()),
+        #noun = lambda x: (x['noun']-x['noun'].min())/(x['noun'].max()-x['noun'].min()),
+        #verb = lambda x: (x['verb']-x['verb'].min())/(x['verb'].max()-x['verb'].min())
+    )
+)
+df_tsne = (
+    df_tsne
+    .assign(
+        **{
+            "{}".format(col): standardized(df_tsne[col]/df_tsne['size'], option = 2)
+            for col in ['lenght','adj','noun', 'verb']
+        },
+        size = lambda x: standardized(x['size'])
     )
     .loc[lambda x: ~x['abstract'].isin([None])]
     .loc[lambda x: ~x.index.isin([
@@ -2052,7 +2074,9 @@ df_tsne.drop(columns = ["abstract"]).head().iloc[:3, -10:]
 
 ```python
 kmeans_w_emb = KMeans(n_clusters=3, random_state=1).fit(
-    df_tsne.drop(columns = ["abstract", 'sentiment'])
+    df_tsne.drop(columns = ["abstract", 'sentiment', 
+                            'size'
+                           ])
 )
 pd.Series(kmeans_w_emb.labels_).value_counts()
 ```
@@ -2063,7 +2087,7 @@ Explore data with T-sne
 model = manifold.TSNE(n_components=3,
                           #metric='precomputed',
                           perplexity=20.0,
-                          early_exaggeration=12.0,
+                          early_exaggeration=13.0,
                           learning_rate=10,
                           n_iter=3000,
                           n_iter_without_progress=300,
@@ -2097,7 +2121,7 @@ ax = sns.scatterplot(
 ```python
 df_tsne = (
     df_tsne
-    .drop(columns=['sentiment', "lenght", "abstract", "adj","noun","verb"])
+    .drop(columns=['sentiment', "lenght", "abstract", "adj","noun","verb", 'size'])
     .merge(
         (
             df_embedding
@@ -2122,13 +2146,14 @@ df_tsne.head(1)
     df_tsne
     .groupby('cluster_w_emb')['sentiment'].value_counts()
     .unstack(-1)
+    .assign(total = lambda x:x.sum(axis =1))
 )
 ```
 
 The clustering algorithm groups the paper based on the number of time ESG (and related term) is mentioned and pertinence of the abstract. For instance, the cluster 0 is the one with the highest number of time ESG is mentioned, but also with the largest number of verbs, and adjectives, indicating stronger emotion in the abstract.
 
 ```python
-for v in ["lenght","verb","adj","noun"]:
+for v in ["lenght","verb","adj","noun", "size"]:
     display(
     df_tsne
     .groupby('cluster_w_emb')
@@ -2145,13 +2170,13 @@ pd.concat([(
     df_tsne
     .loc[lambda x: x.index.isin(["02281aebff7110c8b6efb59ebba448ecb7e2a4cc"])]
     .head(1)
-    .reindex(columns = ['cluster_w_emb','abstract',"lenght","verb","adj","noun"])
+    .reindex(columns = ['cluster_w_emb','abstract',"lenght","verb","adj","noun", 'size'])
 ),
     (
     df_tsne
     .loc[lambda x: x.index.isin(["128fd0154eeaf6189fcff693abbd076aad42b900"])]
     .head(1)
-    .reindex(columns = ['cluster_w_emb','abstract',"lenght","verb","adj","noun"])
+    .reindex(columns = ['cluster_w_emb','abstract',"lenght","verb","adj","noun", 'size'])
 )
 ], axis = 0
 )
@@ -2598,7 +2623,7 @@ def find_id(paper_name):
 ```
 
 ```python
-find_list = True
+find_list = False
 if find_list:
     list_ids = []
     failure = []
@@ -2608,6 +2633,12 @@ if find_list:
             list_ids.append(find_id(p))
         except:
             failure.append(p)
+    with open('MODELS_AND_DATA/list_papers_id.pickle', 'wb') as handle:
+        pickle.dump(list_ids, handle)
+```
+
+```python
+list_ids = pickle.load( open( "MODELS_AND_DATA/list_papers_id.pickle", "rb" ))
 ```
 
 ### Add authors information:
