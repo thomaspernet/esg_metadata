@@ -102,7 +102,7 @@ var = var.replace(',', '', regex=True)
 
 var = (
     var.replace({
-        "CNRS_Ranking": {'1eg': '1', '1g': '1', '?': np.nan},
+        #"CNRS_Ranking": {'1eg': '1', '1g': '1', '?': np.nan},
         'Study_focused_on_social_environmental_behaviour': {
             'Environmental Social': 'Environmental and Social',
             'Social and environmental': 'Environmental and Social',
@@ -169,6 +169,7 @@ var = (
 )
 
 # SAVE LOCALLY
+var.columns = var.columns.str.lower()
 input_path = os.path.join(parent_path, "00_data_catalog",
                           "temporary_local_data",  FILENAME_SPREADSHEET + ".csv")
 var.to_csv(input_path, index=False)
