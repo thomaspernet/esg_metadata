@@ -105,6 +105,31 @@ glue = service_glue.connect_glue(client = client)
 ```
 
 ```python
+try:
+    os.mkdir("creds")
+except:
+    pass
+
+s3.download_file(key = "CREDS/Financial_dependency_pollution/creds/token.pickle", path_local = "creds")
+s3.download_file(key = "CREDS/Financial_dependency_pollution/creds/service.json", path_local = "creds")
+
+auth = authorization_service.get_authorization(
+    path_credential_gcp=os.path.join(path, "creds", "service.json"),
+    path_credential_drive=os.path.join(path, "creds"),
+    verbose=False,
+    scope=['https://www.googleapis.com/auth/spreadsheets.readonly',
+           "https://www.googleapis.com/auth/drive"]
+)
+gd_auth = auth.authorization_drive(path_secret=os.path.join(
+    path, "creds", "credentials.json"))
+service_account = auth.authorization_gcp()
+drive = connect_drive.drive_operations(gd_auth)
+
+
+shutil.rmtree(os.path.join(path,"creds"))
+```
+
+```python
 pandas_setting = True
 if pandas_setting:
     cm = sns.light_palette("green", as_cmap=True)
@@ -349,21 +374,6 @@ output.head()
 output.shape
 ```
 
-```python
-output.describe()
-```
-
-```python
-output['weight'].describe()
-```
-
-```python
-#output[output.duplicated(subset = ['id', 'beta',
-#                                   'true_standard_error', 'critical_value', 'lag', 'independent',
-#                                  'true_t_value', 'true_stars', 'adjusted_model'
-#                                  ])].head()
-```
-
 Missing journals
 
 ```python
@@ -376,7 +386,6 @@ Currently, the missing values come from the rows to check in [METADATA_TABLES_CO
 output.isna().sum().loc[lambda x: x> 0].sort_values()
 ```
 
-<!-- #region heading_collapsed="true" -->
 ## Explain missings:
 
 ### Date
@@ -387,7 +396,6 @@ output.isna().sum().loc[lambda x: x> 0].sort_values()
     - No date
 - 'L’impact de la responsabilité sociale (RSE) sur la performance financière des entreprises (PFE) au Cameroun'
     - Poor date formating: 2007 Semester I, 2007 Semester I
-<!-- #endregion -->
 
 ```python
 def make_clickable(val):
@@ -469,37 +477,6 @@ def make_clickable(val):
 
 ```python
 #!pip install --upgrade git+git://github.com/thomaspernet/GoogleDrive-python
-```
-
-```python
-try:
-    os.mkdir("creds")
-except:
-    pass
-```
-
-```python
-s3.download_file(key = "CREDS/Financial_dependency_pollution/creds/token.pickle", path_local = "creds")
-s3.download_file(key = "CREDS/Financial_dependency_pollution/creds/service.json", path_local = "creds")
-```
-
-```python
-auth = authorization_service.get_authorization(
-    path_credential_gcp=os.path.join(path, "creds", "service.json"),
-    path_credential_drive=os.path.join(path, "creds"),
-    verbose=False,
-    scope=['https://www.googleapis.com/auth/spreadsheets.readonly',
-           "https://www.googleapis.com/auth/drive"]
-)
-gd_auth = auth.authorization_drive(path_secret=os.path.join(
-    path, "creds", "credentials.json"))
-service_account = auth.authorization_gcp()
-drive = connect_drive.drive_operations(gd_auth)
-```
-
-```python
-import shutil
-shutil.rmtree(os.path.join(path,"creds"))
 ```
 
 ```python
@@ -776,17 +753,12 @@ To get the most information possible about an author, we need to rely on two dif
 
 - [Semantic scholar](https://www.semanticscholar.org/me/research)
     - API: https://www.semanticscholar.org/product/api
-- [Google scholar](https://scholar.google.com/schhp?hl=en&as_sdt=0,5)
-    - API: https://serpapi.com/
-    
-Both data sources are accessible through an API.
+In this steps, we will begin with fetching data from Scemantic scholar, and do the following:
 
-However, Google scholar does not always return the author information, and the spelling is different in both data sources.
-
-In this steps, we will begin with fetching data from Scemantic scholar, then Google scholar. 
-
-
-## Semantic scholar
+- Download data
+- Add Gender
+- Compute ESG expertise
+- Compute cluster
 
 Our primary objective is to get the information about the gender, but also to evaluate the expertise of an author about ESG. The data source Semantic Scholar has 198,182,311 papers from all fields of science. 
 
@@ -810,6 +782,8 @@ from tensorflow.keras.models import load_model
 import unicodedata
 import requests
 ```
+
+## Download paper-author information and predict gender
 
 ```python
 pred_model = load_model('MODELS_AND_DATA/boyorgirl.h5')
@@ -1083,416 +1057,7 @@ with open('MODELS_AND_DATA/list_paper_semantic.pickle', 'wb') as handle:
     pickle.dump(list_paper_semantic, handle)
 ```
 
-## Google scholar 
-
-The strategy with Google Scholar is the same as Semantic scholar:
-
-1. Use the list of paper's DOI from Semantic scholar to find the paper information and author ID
-2. Use the author ID to collect information
-3. Predict gender
-
-
-```python
-api_key = ""
-
-def collect_doi_information(doi):
-    """
-    """
-
-    params = {
-        "engine": "google_scholar",
-        "q": doi,
-        "api_key": api_key
-    }
-
-    search = GoogleSearch(params)
-    results = search.get_dict()
-    list_authors = []
-    dic_title = {"search_parameters": results['search_parameters']}
-    if 'organic_results' in results:
-        dic_title['status'] = "FOUND"
-        # SEARCH TITLE
-        if "link" in results['organic_results'][0] or len(results['organic_results']) == 1:
-            i = 0
-        else:
-            i = 1
-
-        for key in [
-            "title",
-            "result_id",
-            "link",
-            "snippet",
-            "publication_info",
-            "cited_by",
-        ]:
-            if key in results['organic_results'][i]:
-                dic_title[key] = results['organic_results'][i][key]
-            elif key in results['organic_results'][i]['inline_links']:
-                dic_title[key] = results['organic_results'][i]['inline_links'][key]
-            elif key in results['organic_results'][i]['publication_info']:
-                dic_title[key] = results['organic_results'][i]['publication_info'][key]
-
-        # SEARCH AUTHORS
-        if 'authors' in dic_title['publication_info']:
-            dic_title['authors_details'] = []
-            for i, author in enumerate(dic_title['publication_info']['authors']):
-                params = {
-                        "engine": "google_scholar_author",
-                        "author_id": author['author_id'],
-                        "api_key": api_key
-                    }
-
-                search = GoogleSearch(params)
-                results_auth = search.get_dict()
-                dic_authors = {
-                        'search_parameters': results_auth['search_parameters'],
-                    }
-                if "author" in results_auth:
-                    dic_authors['status'] = 'FOUND'
-                    dic_authors['author'] = results_auth['author']
-                    #### detect Gender
-                    author_clean = [clean_name(name=results_auth['author']['name'].split(" ")[0])] if \
-                        len(clean_name(name=results_auth['author']['name'].split(" ")[0]))>2 else None
-                    if author_clean is not None:
-                        max_prediction = prediction_gender(name=author_clean)
-                        gender= "MALE" if max_prediction >=.5 else "FEMALE"
-                    else:
-                        max_prediction = None
-                        gender = 'UNKNOWN'
-                    dic_authors['gender'] = {'gender': gender, 'probability':max_prediction}
-                        
-                else:
-                    dic_authors['status'] = 'NOT_FOUND'
-                    dic_authors['author'] = {'name':author['authors']}
-                    dic_authors['gender'] = {'gender': 'UNKNOWN', 'probability':None}
-                dic_title['authors_details'].append(dic_authors)
-                list_authors.append(dic_authors)       
-    else:
-        dic_title['status'] = "NOT_FOUND"
-    return dic_title, list_authors
-```
-
-```python
-list_papers_google = []
-list_authors_google = []
-```
-
-```python
-list_paper_semantic = pickle.load( open( "MODELS_AND_DATA/list_paper_semantic.pickle", "rb" ) )
-```
-
-```python
-### 
-for i, d in tqdm(enumerate(list_paper_semantic)):
-    if "DOI" in d['externalIds']:
-        filename = d['paperId']
-        #### EXTRACT INFORMATION 
-        dic_title, authors = collect_doi_information(d['externalIds']['DOI'])
-        list_papers_google.append(dic_title)
-        list_authors_google.extend(authors)
-
-        ### PAPER
-        with open('paper_{}'.format(filename), 'w') as outfile:
-            json.dump(eval(str(dic_title)), outfile)
-        s3.upload_file(file_to_upload = 'paper_{}'.format(filename),
-                    destination_in_s3 = "DATA/JOURNALS/GOOGLE_SCHOLAR/PAPERS")
-        os.remove('paper_{}'.format(filename))
-
-        ### AUTHORS
-        for a in authors:
-            id_ = a['search_parameters']['author_id']
-            with open('authors_{}'.format(id_), 'w') as outfile:
-                json.dump(eval(str(a)), outfile)
-            s3.upload_file(file_to_upload = 'authors_{}'.format(id_),
-                        destination_in_s3 = "DATA/JOURNALS/GOOGLE_SCHOLAR/AUTHORS")
-            os.remove('authors_{}'.format(id_))
-```
-
-```python
-len(list_paper_semantic)
-```
-
-```python
-len(list_papers_google)
-```
-
-```python
-len(list_authors_google)
-```
-
-```python
-with open('MODELS_AND_DATA/list_papers_google.pickle', 'wb') as handle:
-    pickle.dump(list_papers_google, handle)
-with open('MODELS_AND_DATA/list_authors_google.pickle', 'wb') as handle:
-    pickle.dump(list_authors_google, handle)
-```
-
-# Reconstruct paper-authors tables
-
-The final step consists to bring together the paper informations with the authors informations. In the end, we want a table with all the authors information for a given paper. Therefore, the final table has the following dimension: number of papers x number of authors. 
-
-To construct the table, we need to proceed in three steps:
-
-1. Combine the author information from Semantic scholar and Google Scholar, and construct the author expertise
-2. Combine the paper information from Semantic scholar and Google Scholar
-3. Merge steps 1 and 2
-
-The data is saved in Google spreadsheet for validation purposes: [AUTHOR_SEMANTIC_GOOGLE](https://docs.google.com/spreadsheets/d/1GrrQBip4qNcDuT_MEG9KhNhfTC3yFsVZUtP8-SvXBL4/edit?usp=sharing)
-
-
-
-## Author information from Semantic scholar and Google Scholar
-
-We mentionned earlier that there is no direct link between the author name in Semantic scholar and Google scholar for two reasons. First of all, the reason comes from different spelling. Secondly, not all authors have information in Google scholar
-
-We also need to construct the authors expertise in ESG. 
-
-In the part, we will reconstruct the list of author information from Semantic scholar and Google Scholar and construct the expertise following these steps:
-
-1. Import list of authors from Google Scholar
-    - construct list of interest
-    - grab the email extension
-2. Identify same authors in Semantic scholar and Google scholar. There are 266 authors in Semantic scholar and 146 in Google scholar
-    - Use levensthein/Hamming distance and similarity algoritmh to find similar authors
-
-```python
-import jellyfish
-import requests
-```
-
-```python
-list_authors_google = pickle.load( open( "MODELS_AND_DATA/list_authors_google.pickle", "rb" ))
-list_paper_semantic = pickle.load( open( "MODELS_AND_DATA/list_paper_semantic.pickle", "rb" ))
-```
-
-### Import list of authors from Google Scholar
-
-- construct list of interest
-- grab the email extension
-
-```python
-df_authors = (
-                pd.json_normalize(list_authors_google)
-    .assign(
-                    interest=lambda x: x.apply(
-                        lambda x: [
-                            i["title"]
-                            for i in x["author.interests"]
-                            if x["author.interests"] != np.nan
-                        ]
-                        if isinstance(x["author.interests"], list)
-                        else np.nan,
-                        axis=1,
-                    ),
-                    email_extensition=lambda x: x["author.email"].str.replace(
-                        "Verified email at ", "", regex=False
-                    ),
-                )
-    .reindex(
-        columns=[
-            "status",
-            "search_parameters.engine",
-            "search_parameters.author_id",
-            "search_parameters.hl",
-            "author.name",
-            "gender.gender",
-            "gender.probability",
-            "author.affiliations",
-            "author.email",
-            "author.website",
-            "author.interests",
-            "author.thumbnail",
-            "interest",
-            "email_extensition"
-        ]
-    )
-)
-df_authors.tail(1)
-```
-
-```python
-pd.json_normalize(list_paper_semantic, "authors")["name"].nunique()
-```
-
-```python
-df_authors["author.name"].nunique()
-```
-
-<!-- #region -->
-### Identify same authors in Semantic scholar and Google scholar
-
-To identify the same authors in the list of authors from Semantic scholar and Google scholar, we use the following sets of rules:
-
-1. Construct a cartesian matrix between the list of authors fromSemantic scholar and Google scholar (38836 rows)
-    - ![image.png](attachment:ead54b19-6d26-4eb7-a2e2-951a006d640f.png)
-2. Compute levensthein and Hamming distance
-    - Within author from Google, get the lowest levensthein and max Hamming
-3. Filter rows where the lowest score from the levensthein distance equals the levensthein distance
-4. Compute the similary algorithm
-5. Search for best match: 124 exact match
-    - Compute the number of candidates within Google authors
-    - Filter when number of candidates equals to 1 (one choice only) and similarity score above .1
-    - Filter when max similarity with Google author equals similarity
-6. Search for second best match: 7 exact match
-    - Exclude authors from Semantic scholar
-    - Exclude rows with similarity equals to 0
-    - Compute minimum Hamming distance within Google authors
-    - Keep when minimum Hamming distance equals Hamming distance
-    
-
-Perfect match
-![image.png](attachment:eea6c1f8-c270-4e23-9f5e-1bcf82aed39b.png)
-
-Un-perfect or disimilar match
-
-![image.png](attachment:1850d067-d8fe-42d8-8334-71fc6d3e2895.png)
-
-We use the similarity API to compute the similarity score
-
-- https://www.twinword.com/ 
-- https://rapidapi.com/twinword/api/text-similarity 
-
-<!-- #endregion -->
-
-```python
-api_key = "T2pS4kaW7BQBP0eoXJU5HHhvYtYYJfGTWorsyviz3Kc+7eFxyboqdJYc4xAEyptg1eURGJdeURGCjlE3sjffFw=="
-def twinword(token1, token2):
-    """
-    """
-    url = "https://api.twinword.com/api/text/similarity/latest/"
-    headers = {
-        'Host': "api.twinword.com",
-        "X-Twaip-Key":api_key
-    }
-    querystring = {
-        "text1": token1,
-        "text2": token2
-    }
-    response = requests.get(url, headers=headers,params=querystring)
-    return response.json()['similarity']
-    
-```
-
-```python
-match_author = (
-    pd.DataFrame(
-        index=pd.MultiIndex.from_product(
-            [
-                pd.json_normalize(list_paper_semantic, "authors")["name"].unique(),
-                df_authors["author.name"].unique(),
-            ],
-            names=["semantic", "google"],
-        )
-    )
-    .reset_index()
-    .apply(lambda x: x.str.lower())
-    .assign(
-        semantic=lambda x: x.apply(
-            lambda x: "".join(
-                (
-                    c
-                    for c in unicodedata.normalize("NFD", x["semantic"])
-                    if unicodedata.category(c) != "Mn"
-                )
-            ),
-            axis=1,
-        ),
-        google=lambda x: x.apply(
-            lambda x: "".join(
-                (
-                    c
-                    for c in unicodedata.normalize("NFD", x["google"])
-                    if unicodedata.category(c) != "Mn"
-                )
-            ),
-            axis=1,
-        ),
-        score_lev = lambda x: x.apply(lambda x: jellyfish.levenshtein_distance(x['semantic'], x['google']),axis =1),
-        min_score_lev = lambda x: x.groupby('google')['score_lev'].transform(min),
-        score_hamming= lambda x: x.apply(lambda x: jellyfish.hamming_distance(x['semantic'], x['google']),axis =1),
-        min_score_hamming = lambda x: x.groupby('google')['score_hamming'].transform(min)
-    )
-)
-```
-
-Filter 1: Potential candidates
-
-- Filter rows where the lowest score from the levensthein distance equals the levensthein distance
-- Compute the similary algorithm
-- Filter the rows with a similarity score of 0
-
-```python
-test = (
-    match_author
-    .loc[lambda x: x['score_lev'] == x['min_score_lev']]
-    .sort_values(by = ['min_score_lev', "semantic",'google'])
-    .assign( 
-        similarity = lambda x: x.apply(lambda x: twinword(x['semantic'], x['google']), axis= 1),
-        max_similarity = lambda x: x.groupby('semantic')['similarity'].transform(max)
-    )
-)
-```
-
-```python
-test.shape
-```
-
-```python
-test.head()
-```
-
-```python
-test.tail()
-```
-
-```python
-test['google'].nunique()
-```
-
-Filter 1: 124 exact match
-
-- Compute the number of candidates within Google authors
-- Filter when number of candidates equals to 1 (one choice only) and similarity score above .1
-- Filter when max similarity with Google author equals similarity
-
-```python
-test_1 = (
-    test
-    .assign( 
-        size = lambda x: x.groupby('google')['google'].transform("size"),
-    )
-    .loc[lambda x: (x['size'] ==1) & (x['max_similarity'] >0.1)]
-    .loc[lambda x: (x['similarity'] ==x['max_similarity'])]
-    .sort_values(by = ['max_similarity', "semantic",'google'])
-)
-test_1['google'].nunique()
-```
-
-Test 2: 7 exact match
-
-- Exclude authors from Semantic scholar
-- Exclude rows with similarity equals to 0
-- Compute minimum Hamming distance within Google authors
-- Keep when minimum Hamming distance equals Hamming distance
-
-```python
-test_2 = (
-    test
-    .loc[lambda x: ~x['google'].isin(test_1['google'].unique())]
-    .loc[lambda x:(x['similarity'] >0)]
-    .assign( 
-        size = lambda x: x.groupby('google')['google'].transform("size"),
-        min_score_hamming = lambda x: x.groupby('google')['score_hamming'].transform(min)
-    )
-    .loc[lambda x:(x['min_score_hamming'] == x['score_hamming'])]
-)
-test_2['google'].nunique()
-```
-
-We found 131 authors among the 266:
-
-
-### Authors ESG expertise
+## Flag ESG paper
 
 Semantic scholar provides the list all papers for any authors. In the previous steps, we saved this list. 
 
@@ -1500,7 +1065,7 @@ For instance, the author Abderrahman Jahmane wrote 3 papers in his carreer
 
 [{'paperId': '44af7948d66a4dc62952a863e957faaa5770d13c', 'title': 'Corporate social responsibility and firm value: Guiding through economic policy uncertainty'}, {'paperId': '57bf8e616da8230ca7a961be19affeb8b8ae619d', 'title': 'Corporate social responsibility, financial instability and corporate financial performance: Linear, non-linear and spillover effects – The case of the CAC 40 companies'}, {'paperId': 'eff6f21cc09c572f3bdc8add0d0f43badecbf977', 'title': 'Accounting for endogeneity and the dynamics of corporate social – Corporate financial performance relationship'}]
 
-![image.png](attachment:506ed69f-90a8-4fcf-957a-963786c803d1.png)
+![image.png](attachment:0f6eb258-c66c-4c70-88f5-1d70ac077f7c.png)
 
 Source: https://www.semanticscholar.org/author/Abderrahmane-Jahmane/122677227 
 
@@ -1513,9 +1078,9 @@ The technique is the following:
 - Create a clean list of words from the title (removing English stop words, special characters, and lower case)
 - Flag if clean list contains "esg environmental social governance"
 
-![image.png](attachment:fca29c37-1181-4bf3-85e0-6c1f0b07df1c.png)
+![image.png](attachment:bf6949b8-7614-4b51-8c90-f0331ceeeb1c.png)
 
-In total 857 papers deals with ESG among the 14,443 papers (5.9%)  
+In total 2094 papers deals with ESG among the 14,443 papers (5.9%)  
 
 The last step to create the authors table concatenates the common authors from Semantic scholar and Google scholar with the authors not in Google scholar. When the concatenatation is done, we compute the expertise score as follow, within author:
 
@@ -1523,11 +1088,15 @@ The last step to create the authors table concatenates the common authors from S
 
 The distribution of expertise:
 
-![image.png](attachment:ce26dcd9-f233-48f9-854f-0891ae91c0ea.png)
+![image.png](attachment:d418cdba-0b54-47de-95a2-4489fcaf62b0.png)
 
 The distribution of gender:
 
-![image.png](attachment:44f68bd0-7fb1-4063-aadd-b442b532d001.png)
+![image.png](attachment:affd21cc-d672-4a17-b123-4539f048f240.png)
+
+```python
+list_paper_semantic = pickle.load( open( "MODELS_AND_DATA/list_paper_semantic.pickle", "rb" ))
+```
 
 ```python
 from gensim.models import Word2Vec
@@ -1536,40 +1105,16 @@ from nltk.corpus import stopwords
 from scipy.spatial import distance
 import string
 #nltk.download('stopwords')
-```
-
-```python
 stop = stopwords.words('english')
 ```
 
 ```python
 def basic_clean(text):
     return re.sub(r'[^\w\s]|[|]', '', text).split()
-```
 
-```python
 def dumb_search(items):
     #return any(item in 'esg environmental social governance' for item in items)
     return True if len([i for i in ['esg',"environmental","social","governance"] if i in items]) > 0 else False
-```
-
-```python
-def count_esg(papers):
-    """
-    papers list with keys paperId and title
-    """
-    return sum([all_connected_paper.loc[lambda x: x['paperId'].isin([item['paperId']])]['esg'].values[0] for item in papers])
-```
-
-```python
-def compute_cosine(entity_1, entity_2):
-    """
-    entity_2: list of words to compare
-    """
-    return [{'word':i, 'cosine': 1 - distance.cosine(
-     np.array(model_weights.loc[lambda x: x[0].isin([entity_1])].iloc[0,1:]),
-     np.array(model_weights.loc[lambda x: x[0].isin([i])].iloc[0,1:])
- )} for i in entity_2 if not model_weights.loc[lambda x: x[0].isin([i])].empty]
 ```
 
 ```python
@@ -1587,7 +1132,6 @@ all_connected_paper = (
         esg = lambda x: x.apply(
             lambda x:
             dumb_search(x['name_clean']), axis = 1)
-                #compute_cosine(entity_1 = 'esg',entity_2 = x['name_clean']), axis = 1)
     )
 )
 all_connected_paper.shape
@@ -1602,175 +1146,10 @@ all_connected_paper['esg'].value_counts(normalize = True)
 ```
 
 ```python
-#!pip install --upgrade gensim
+all_connected_paper['esg'].value_counts(normalize = False)
 ```
 
-```python
-#%%time 
-#model = Word2Vec(sentences = all_connected_paper['name_clean'].tolist(),
-#                 vector_size = 100,
-#                 window = 5,
-#                 min_count=5,
-#                 sg = 0)
-#model.wv.save_word2vec_format('word2vec_weights_100.txt', binary=False)
-#list_header = ['Words'].extend(list(range(1, 101)))
-#model_weights = pd.read_csv('word2vec_weights_100.txt',
-#                            sep = ' ', skiprows= 1,
-#                           header= list_header)
-```
-
-```python
-%%time
-df_authors_full = (
-    pd.concat(
-        [
-            (
-                pd.concat([test_2, test_1])
-                .reindex(columns=["google", "semantic", "similarity"])
-                .merge(
-                    (
-                        df_authors.drop_duplicates(subset="author.name").assign(
-                            google=lambda x: x.apply(
-                                lambda x: "".join(
-                                    (
-                                        c
-                                        for c in unicodedata.normalize("NFD", x["author.name"])
-                                        if unicodedata.category(c) != "Mn"
-                                    )
-                                ),
-                                axis=1,
-                            ).str.lower()
-                        )
-                    ),
-                    how="left",
-                    on=["google"],
-                )
-                .assign(
-                    size=lambda x: x.groupby("semantic")[
-                        "semantic"].transform("size"),
-                    max_similarity=lambda x: x.groupby(
-                        "semantic")["similarity"].transform(max),
-                )
-                .loc[lambda x: x["max_similarity"] == x["similarity"]]
-            ),
-            (
-                pd.json_normalize(list_paper_semantic, "authors_detail")
-                .assign(
-                    name=lambda x:x['name'].str.lower(),
-                    semantic=lambda x: x.apply(
-                        lambda x: "".join(
-                            (
-                                c
-                                for c in unicodedata.normalize("NFD", x["name"])
-                                if unicodedata.category(c) != "Mn"
-                            )
-                        ),
-                        axis=1,
-                    )
-                )
-                .drop_duplicates(subset=['name'])
-                .loc[
-                    lambda x: ~x["semantic"].isin(
-                        list(pd.concat([test_2, test_1])["semantic"])
-                    )
-                ]
-                .drop(columns=["name"])
-            ),
-        ],
-        axis=0,
-    )
-    .assign(
-        missing=lambda x: x['google'].isin([np.nan]),
-    )
-    .sort_values(by=['missing', 'semantic'])
-    .drop(columns=[
-        'url',
-        'aliases',
-        'affiliations',
-        'homepage',
-        'papers',
-        'externalIds.DBLP',
-        "authorId"
-    ])
-    .merge(
-        (
-            pd.json_normalize(list_paper_semantic, "authors_detail")
-            .assign(
-                name=lambda x: x['name'].str.lower(),
-                semantic=lambda x: x.apply(
-                    lambda x: "".join(
-                        (
-                            c
-                            for c in unicodedata.normalize("NFD", x["name"])
-                            if unicodedata.category(c) != "Mn"
-                        )
-                    ),
-                    axis=1,
-                )
-            )
-            .drop_duplicates(subset=['name'])
-            .drop(columns=['gender.gender', 'gender.probability'])
-        ),
-        how='right',
-        on=['semantic']
-    )
-    .reindex(
-        columns=[
-            'missing',
-            'authorId',
-            'name',
-            'author.name',
-            'aliases',
-            'google',
-            'semantic',
-            'gender.gender',
-            'gender.probability',
-            'similarity',
-            'status',
-            'url',
-            'affiliations',
-            'author.affiliations',
-            'homepage',
-            'author.website',
-            'author.email',
-            'email_extensition',
-            'author.interests',
-            'interest',
-            'search_parameters.engine',
-            'search_parameters.author_id',
-            'search_parameters.hl',
-            'author.thumbnail',
-            'size',
-            'max_similarity',
-            'papers'
-        ])
-    .assign(
-        total_paper = lambda x: x['papers'].str.len(),
-        esg = lambda x: x.apply(
-            lambda x:
-            count_esg(x['papers']), axis = 1),
-        pct_esg = lambda x: x['esg']/x['total_paper']
-    )
-)
-```
-
-```python
-df_authors_full.head(1)
-```
-
-```python
-df_authors_full['pct_esg'].describe()
-```
-
-```python
-df_authors_full['gender.gender'].value_counts()
-```
-
-```python
-df_authors_full.shape
-```
-
-### Cluster abstract
+## Sentiment and Clustering
 
 The last batch of informations relates to the pertinance and details of the abstract. We might think that the abstract contains information about the "quality" or "emotion" behind the paper. Therefore, we propose to compute the following variables:
 
@@ -1782,7 +1161,7 @@ The last batch of informations relates to the pertinance and details of the abst
 - verb: Number of verbs
 - cluster: Clusters the paper belongs to
 
-#### Processus
+### Processus
 
 - Step 1: Clean the abstract:
     - Lowercase words
@@ -1799,14 +1178,6 @@ The last batch of informations relates to the pertinance and details of the abst
 - Step 4: Get the vector's embedding from the pre-trained model `word2vec-google-news-300` and look up each word in the list. Compute the average to get a vector of 100 weights for a given document
 - Step 5: Label the sentiment 0/1 and standardise "lenght", "adj","noun","verb"
 - Step 6: Compute the cluster: max 3
-    
-    
-
-```python
-#from nltk.sentiment import SentimentIntensityAnalyzer
-#nltk.download('vader_lexicon')
-#nltk.download('averaged_perceptron_tagger')
-```
 
 ```python
 #!pip install flair
@@ -1817,15 +1188,8 @@ from flair.models import TextClassifier
 from flair.data import Sentence
 import gensim.downloader as api
 import nltk
-```
 
-```python
 wv = api.load('word2vec-google-news-300')
-```
-
-```python
-#with open('MODELS_AND_DATA/word2vec-google-news-300.pickle', 'wb') as handle:
-#    pickle.dump(wv, handle)
 ```
 
 ```python
@@ -1902,9 +1266,7 @@ def average_embedding(doc, stopwords, list_embedding):
     }
 ```
 
-```python
-#pd.DataFrame(list_paper_semantic).loc[lambda x: x['abstract'].isin([None])]
-```
+### Sentiment
 
 ```python
 %%time
@@ -1955,37 +1317,10 @@ df_embedding = (
 ```
 
 ```python
-(
-    df_embedding
-    .agg(
-    {
-        'lenght':'describe',
-        'adj':'describe',
-        'noun':'describe',
-        'verb':'describe',
-    })
-)
-```
-
-```python
 df_embedding['sentiment'].value_counts()
 ```
 
-```python
-(
-    df_embedding
-    .groupby('sentiment')
-    .agg(
-    {
-        'adj':'describe',
-        'noun':'describe',
-        'verb':'describe',
-    })
-    .T
-)
-```
-
-Compute the clusters
+### Clustering
 
 ```python
 from sklearn.cluster import KMeans
@@ -2039,10 +1374,6 @@ df_tsne = (
     )
     .assign(
         sentiment = lambda x: le.fit_transform(x["sentiment"]),
-        #lenght = lambda x: (x['lenght']-x['lenght'].min())/(x['lenght'].max()-x['lenght'].min()),
-        #adj = lambda x: (x['adj']-x['adj'].min())/(x['adj'].max()-x['adj'].min()),
-        #noun = lambda x: (x['noun']-x['noun'].min())/(x['noun'].max()-x['noun'].min()),
-        #verb = lambda x: (x['verb']-x['verb'].min())/(x['verb'].max()-x['verb'].min())
     )
 )
 df_tsne = (
@@ -2061,15 +1392,10 @@ df_tsne = (
         'd9041bee67c6cfacc2e28b66e5702d7141648816'
     ])]
 )
-df_tsne.drop(columns = ["abstract"]).head()
 ```
 
-#### Compute K-mean
-
-Use vector embedding and pre-processed sentiment, lenght, adj, noun and verb.
-
 ```python
-df_tsne.drop(columns = ["abstract"]).head().iloc[:3, -10:]
+df_tsne.drop(columns = ["abstract"]).head().iloc[:3, -10:].drop(columns = ['sentiment',  'size' ])
 ```
 
 ```python
@@ -2080,8 +1406,6 @@ kmeans_w_emb = KMeans(n_clusters=3, random_state=1).fit(
 )
 pd.Series(kmeans_w_emb.labels_).value_counts()
 ```
-
-Explore data with T-sne
 
 ```python
 model = manifold.TSNE(n_components=3,
@@ -2138,15 +1462,27 @@ df_tsne = (
     )
 
 )
-df_tsne.head(1)
 ```
 
 ```python
-(
-    df_tsne
-    .groupby('cluster_w_emb')['sentiment'].value_counts()
-    .unstack(-1)
-    .assign(total = lambda x:x.sum(axis =1))
+pd.concat(
+    [
+        (
+            df_tsne.groupby("cluster_w_emb")["sentiment"]
+            .value_counts()
+            .unstack(-1)
+            .assign(total=lambda x: x.sum(axis=1))
+        ),
+        (
+            df_tsne.groupby("cluster_w_emb")["sentiment"]
+            .value_counts()
+            .unstack(-1)
+            .assign(total=lambda x: x.sum(axis=1))
+            .apply(lambda x: x / x["total"], axis=1)
+            .drop(columns=["total"])
+        ),
+    ],
+    axis=1,
 )
 ```
 
@@ -2163,6 +1499,7 @@ for v in ["lenght","verb","adj","noun", "size"]:
         }
     )
 )
+
 ```
 
 ```python
@@ -2182,74 +1519,57 @@ pd.concat([(
 )
 ```
 
-### Add paper information
+## Add paper-author information
 
 ```python
-list_papers_google = pickle.load( open( "MODELS_AND_DATA/list_papers_google.pickle", "rb" ))
-df_google_scholar = (
-    pd.json_normalize(list_papers_google)
-    .assign(
-        nb_authors_google=lambda x: x['publication_info.authors'].str.len()
-    )
-)
+def count_esg(papers):
+    """
+    papers list with keys paperId and title
+    """
+    return sum([all_connected_paper.loc[lambda x: 
+                                        x['paperId'].isin([item['paperId']])]['esg'].values[0] for item in papers])
 ```
 
 ```python
-df_paper_info_full = (
-    pd.json_normalize(list_paper_semantic, meta=["externalIds"]).rename(columns = {'authors_detail':'author_details_semantic'})
-    .drop(columns=["paper_name_source"])
-    .assign(nb_authors=lambda x: x["authors"].str.len())
-    .merge(
-        df_google_scholar.drop(columns=["title", "status"]).rename(columns = {'authors_details':'author_details_google'}),
-        how="left",
-        left_on=["externalIds.DOI"],
-        right_on=["search_parameters.q"],
-    )
-    .assign(missing_authors_info=lambda x: x["nb_authors"] != x["nb_authors_google"])
-    .reindex(
-        columns=[
-            "paperId",
-            "url",
-            "title",
-            "abstract",
-            "venue",
-            "year",
-            "nb_authors",
-            "nb_authors_google",
-            "missing_authors_info",
-            "authors",
-            "author_details_semantic",
-            "author_details_google",
-            "referenceCount",
-            "citationCount",
-            "cited_by.total",
-            "cited_by.link",
-            "cited_by.cites_id",
-            "cited_by.serpapi_scholar_link",
-            "influentialCitationCount",
-            "isOpenAccess",
-            "fieldsOfStudy",
-            "status",
-            "Levenshtein_score",
-            "externalIds.MAG",
-            "externalIds.DOI",
-            "externalIds.DBLP",   
-            "result_id",
-            "link",
-            "snippet",       
-            "search_parameters.engine",
-            "search_parameters.q",
-            "search_parameters.hl",
-            "publication_info.summary",
-            "publication_info.authors"
-        ]
-    )
-)
+df_temp =(
+            pd.json_normalize(list_paper_semantic, "authors_detail")
+            .assign(
+                name=lambda x: x["name"].str.lower(),
+                semantic=lambda x: x.apply(
+                    lambda x: "".join(
+                        (
+                            c
+                            for c in unicodedata.normalize("NFD", x["name"])
+                            if unicodedata.category(c) != "Mn"
+                        )
+                    ),
+                    axis=1,
+                ),
+            )
+            .drop_duplicates(subset=["name"])
+            .assign(
+                total_paper=lambda x: x["papers"].str.len(),
+                esg=lambda x: x.apply(
+                    lambda x: count_esg(x["papers"]), axis=1),
+                pct_esg=lambda x: x["esg"] / x["total_paper"],
+            )
+        )
+```
+
+```python
+df_temp['pct_esg'].describe()
+```
+
+```python
+df_temp['gender.gender'].value_counts()
 ```
 
 ```python
 df_authors_journal_full = (
-    df_paper_info_full.assign(
+    (
+    pd.json_normalize(list_paper_semantic, meta=["externalIds"]).rename(columns = {'authors_detail':'author_details_semantic'})
+    .drop(columns=["paper_name_source"])
+    .assign(nb_authors=lambda x: x["authors"].str.len(),
         authors_list=lambda x: x.apply(
             lambda x: [i["name"]
                        for i in x["authors"] if x["authors"] != np.nan]
@@ -2271,11 +1591,92 @@ df_authors_journal_full = (
             ),
             axis=1,
         ),
+        )
     )
-    .merge(df_authors_full, how="left", on=["semantic"])
-    .merge(df_tsne.drop(columns = ['abstract']).rename(columns = {'size':'size_abstract'}), how="left", on=["paperId"])
+    .merge(
+        (
+            pd.json_normalize(list_paper_semantic, "authors_detail")
+            .assign(
+                name=lambda x: x["name"].str.lower(),
+                semantic=lambda x: x.apply(
+                    lambda x: "".join(
+                        (
+                            c
+                            for c in unicodedata.normalize("NFD", x["name"])
+                            if unicodedata.category(c) != "Mn"
+                        )
+                    ),
+                    axis=1,
+                ),
+            )
+            .drop_duplicates(subset=["name"])
+            .assign(
+                total_paper=lambda x: x["papers"].str.len(),
+                esg=lambda x: x.apply(
+                    lambda x: count_esg(x["papers"]), axis=1),
+                pct_esg=lambda x: x["esg"] / x["total_paper"],
+            )
+        ),
+        how="left",
+        on=["semantic"],
+    )
+    .merge(
+        df_tsne.drop(columns=["abstract"]).rename(
+            columns={"size": "size_abstract"}),
+        how="left",
+        on=["paperId"],
+    )
+    .reindex(columns=['paperId',
+                      'externalIds.MAG',
+                      'externalIds.DOI',
+                      'url_x',
+                      'title',
+                      'nb_authors',
+                      'abstract',
+                      'venue',
+                      'year',
+                      'referenceCount',
+                      'citationCount',
+                      'influentialCitationCount',
+                      'isOpenAccess',
+                      'fieldsOfStudy',
+                      'cluster_w_emb',
+                      'sentiment',
+                      'lenght',
+                      'adj',
+                      'noun',
+                      'verb',
+                      'size_abstract',
+                      'pct_adj',
+                      'pct_noun',
+                      'pct_verb',
+                      'authors',
+                      'status',
+                      'author_details_semantic',
+                      'Levenshtein_score',
+                      #'authors_list',
+                      #'semantic',
+                      'name',
+                      'authorId',
+                      "gender.gender",
+                      "gender.probability",
+                      'aliases',
+                      'affiliations',
+                      'homepage',
+                      'papers',
+                      'total_paper',
+                      'esg',
+                      'pct_esg',
+                     ])
+    .rename(columns = {'url_x':'url',
+                      "gender.gender":"gender",
+                       "gender.probability":"gender_proba"})
 )
 df_authors_journal_full.shape
+```
+
+```python
+df_authors_journal_full.head(1)
 ```
 
 ```python
