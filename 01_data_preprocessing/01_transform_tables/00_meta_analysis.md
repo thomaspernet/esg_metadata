@@ -137,362 +137,6 @@ if pandas_setting:
     pd.set_option('display.max_colwidth', None)
 ```
 
-# Prepare query 
-
-Write query and save the CSV back in the S3 bucket `datalake-datascience` 
-
-
-# Steps
-
-
-## Merge journal and papers table
-
-```python
-DatabaseName = 'esg'
-s3_output_example = 'SQL_OUTPUT_ATHENA'
-```
-
-```python
-query = """
-WITH merge AS (
-  SELECT 
-    id, 
-    image,
-    row_id_excel,
-    table_refer,
-    row_id_google_spreadsheet,
-    incremental_id,
-    paper_name, 
-    publication_year, 
-    publication_type, 
-    regexp_replace(
-      regexp_replace(
-        lower(publication_name), 
-        '\&', 
-        'and'
-      ), 
-      '\-', 
-      ' '
-    ) as publication_name, 
-    cnrs_ranking, 
-    UPPER(peer_reviewed) as peer_reviewed, 
-    UPPER(study_focused_on_social_environmental_behaviour) as study_focused_on_social_environmental_behaviour, 
-    type_of_data, 
-    CASE WHEN regions = 'ARAB WORLD' THEN 'WORLDWIDE' ELSE regions END AS regions,
-    CASE WHEN study_focusing_on_developing_or_developed_countries = 'Europe' THEN 'WORLDWIDE' ELSE UPPER(study_focusing_on_developing_or_developed_countries) END AS study_focusing_on_developing_or_developed_countries,
-    first_date_of_observations,
-    last_date_of_observations,
-    CASE WHEN first_date_of_observations >= 1997 THEN 'YES' ELSE 'NO' END AS kyoto,
-    CASE WHEN first_date_of_observations >= 2009 THEN 'YES' ELSE 'NO' END AS financial_crisis,
-    last_date_of_observations - first_date_of_observations as windows,
-    adjusted_model_name,
-    adjusted_model,
-    dependent, 
-    adjusted_dependent,
-    independent,
-    adjusted_independent, 
-    social,
-    environmental,
-    governance,
-    sign_of_effect,
-    target,
-    p_value_significant,
-    sign_positive,
-    sign_negative,
-    lag, 
-    interaction_term, 
-    quadratic_term, 
-    n, 
-    r2, 
-    beta, 
-    to_remove,
-    test_standard_error,
-    test_p_value,
-    test_t_value,
-    adjusted_standard_error,
-    adjusted_t_value
-  FROM 
-    esg.papers_meta_analysis_new 
-    LEFT JOIN (
-      SELECT 
-        DISTINCT(title),
-        nr, 
-        publication_year, 
-        publication_type, 
-        publication_name, 
-        cnrs_ranking, 
-        peer_reviewed, 
-        study_focused_on_social_environmental_behaviour, 
-        type_of_data, 
-        study_focusing_on_developing_or_developed_countries
-      FROM 
-        esg.papers_meta_analysis
-    ) as old on papers_meta_analysis_new.id = old.nr
-    -- WHERE to_remove = 'TO_KEEP'
-LEFT JOIN (
-SELECT 
-        nr,
-        CAST(MIN(first_date_of_observations) as int) as first_date_of_observations,
-        CAST(MAX(last_date_of_observations)as int) as last_date_of_observations,
-        min(row_id_excel) as row_id_excel
-      FROM 
-        esg.papers_meta_analysis
-        GROUP BY nr
-) as date_pub on papers_meta_analysis_new.id = date_pub.nr
-LEFT JOIN (
-SELECT 
-  nr, 
-  MIN(regions) as regions 
-FROM 
-  (
-    SELECT 
-      nr, 
-      CASE WHEN regions_of_selected_firms in (
-        'Cameroon', 'Egypt', 'Libya', 'Morocco', 
-        'Nigeria'
-      ) THEN 'AFRICA' WHEN regions_of_selected_firms in ('GCC countries') THEN 'ARAB WORLD' WHEN regions_of_selected_firms in (
-        'India', 'Indonesia', 'Taiwan', 'Vietnam', 
-        'Australia', 'China', 'Iran', 'Malaysia', 
-        'Pakistan', 'South Korea', 'Bangladesh'
-      ) THEN 'ASIA AND PACIFIC' WHEN regions_of_selected_firms in (
-        'Spain', '20 European countries', 
-        'United Kingdom', 'France', 'Germany, Italy, the Netherlands and United Kingdom', 
-        'Turkey', 'UK'
-      ) THEN 'EUROPE' WHEN regions_of_selected_firms in ('Latin America', 'Brazil') THEN 'LATIN AMERICA' WHEN regions_of_selected_firms in ('USA', 'US', 'U.S.', 'Canada') THEN 'NORTH AMERICA' ELSE 'WORLDWIDE' END AS regions 
-    FROM 
-      papers_meta_analysis
-  ) 
-GROUP BY 
-  nr
-) as reg on papers_meta_analysis_new.id = reg.nr
-) 
-SELECT 
-    to_remove, 
-    id, 
-    image,
-    row_id_excel,
-    row_id_google_spreadsheet,
-    table_refer,
-    incremental_id,
-    paper_name,
-    publication_name,
-    rank,
-    sjr, 
-    sjr_best_quartile, 
-    h_index, 
-    total_docs_2020, 
-    total_docs_3years, 
-    total_refs, 
-    total_cites_3years, 
-    citable_docs_3years, 
-    cites_doc_2years, 
-    country ,
-    publication_year, 
-    publication_type, 
-    cnrs_ranking, 
-    peer_reviewed, 
-    study_focused_on_social_environmental_behaviour, 
-    type_of_data, 
-    regions,
-    study_focusing_on_developing_or_developed_countries,
-    first_date_of_observations,
-    last_date_of_observations - (windows/2) as mid_year,
-    last_date_of_observations,
-    kyoto,
-    financial_crisis,
-    windows,
-    adjusted_model_name,
-    adjusted_model,
-    dependent, 
-    adjusted_dependent,
-    independent,
-    adjusted_independent, 
-    social,
-    environmental,
-    governance,
-    sign_of_effect,
-    target,
-    p_value_significant,
-    sign_positive,
-    sign_negative,
-    lag, 
-    interaction_term, 
-    quadratic_term, 
-    n, 
-    r2, 
-    beta, 
-    test_standard_error,
-    test_p_value,
-    test_t_value,
-    adjusted_standard_error,
-    adjusted_t_value 
-FROM 
-  merge 
-  LEFT JOIN (
-    SELECT 
-      rank, 
-      regexp_replace(
-        regexp_replace(
-          lower(title), 
-          '\&', 
-          'and'
-        ), 
-        '\-', 
-        ' '
-      ) as title, 
-      sjr, 
-      sjr_best_quartile, 
-      h_index, 
-      total_docs_2020, 
-      total_docs_3years, 
-      total_refs, 
-      total_cites_3years, 
-      citable_docs_3years, 
-      cites_doc_2years, 
-      country 
-    FROM 
-      "scimago"."journals_scimago"
-    WHERE sourceid not in (16400154787)
-  ) as journal on merge.publication_name = journal.title
-"""
-output = (
-    s3.run_query(
-    query=query,
-    database=DatabaseName,
-    s3_output=s3_output_example,
-    filename='example_1',
-        dtype = {'publication_year':'string'}
-)
-    .sort_values(by = ['id', 'first_date_of_observations'])
-    .drop_duplicates()
-    .assign(weight = lambda x: x.groupby(['id'])['id'].transform('size'))
-)
-output.head()
-```
-
-```python
-output.shape
-```
-
-Missing journals
-
-```python
-output.loc[lambda x: x['rank'].isin([np.nan])]['publication_name'].unique()
-```
-
-Currently, the missing values come from the rows to check in [METADATA_TABLES_COLLECTION](https://docs.google.com/spreadsheets/d/1d66_CVtWni7wmKlIMcpaoanvT2ghmjbXARiHgnLWvUw/edit#gid=899172650)
-
-```python
-output.isna().sum().loc[lambda x: x> 0].sort_values()
-```
-
-## Explain missings:
-
-### Date
-
-- 'Does Corporate Social Responsibility Pay Off in Times of Crisis? An Alternate Perspective on the Relationship between Financial and Corporate Social Performance':
-    - No date
-- 'How does corporate social responsibility contribute to firm financial performance? The mediating role of competitive advantage reputation and customer satisfaction',
-    - No date
-- 'L’impact de la responsabilité sociale (RSE) sur la performance financière des entreprises (PFE) au Cameroun'
-    - Poor date formating: 2007 Semester I, 2007 Semester I
-
-```python
-def make_clickable(val):
-    return '<a href="{}">{}</a>'.format(val,val)
-```
-
-```python
-(
-    output
-    .loc[lambda x: x['first_date_of_observations'].isin([np.nan])]
-    .reindex(columns = ['paper_name', 'row_id_excel'])
-    .drop_duplicates()
-    .style
-    .format(make_clickable, subset = ['row_id_excel'])
-)
-```
-
-### location
-
-- Corporate social responsibility and financial performance in Islamic banks
-    - Missing
-- Corporate social responsibility and financial performance: the ‘‘virtuous circle’’ revisited
-    - Missing
-
-```python
-(
-    output
-    .loc[lambda x: x['study_focusing_on_developing_or_developed_countries'].isin([np.nan])]
-    .reindex(columns = ['paper_name', 'row_id_excel'])
-    .drop_duplicates()
-    .style
-    .format(make_clickable, subset = ['row_id_excel'])
-)
-```
-
-### peer_reviewed
-
-- L’impact de la responsabilité sociale (RSE) sur la performance financière des entreprises (PFE) au Cameroun
-    - Missing
-- Looking for evidence of the relationship between CSR and CFP in an Emerging Market
-    - Missing
-- The Relationship of CSR and Financial Performance: New Evidence From Indonesian Companies
-    - Missing
-- Exploring the moderating effect of financial performance on the relationship between corporate environmental responsibility and institutional investors: some Egyptian evidence
-    - Missing
-- STRATEGIC USE OF CSR AS A SIGNAL FOR GOOD MANAGEMENT
-    - Missing
-
-```python
-(
-    output
-    .loc[lambda x: x['peer_reviewed'].isin([np.nan])]
-    .reindex(columns = ['paper_name', 'row_id_excel'])
-    .drop_duplicates()
-    .style
-    .format(make_clickable, subset = ['row_id_excel'])
-)
-```
-
-## adjusted_independent
-
-- Need to be adjusted
-
-```python
-(
-    output
-    .loc[lambda x: x['adjusted_independent'].isin([np.nan])]
-    .reindex(columns = ['paper_name', 'row_id_google_spreadsheet'])
-    .drop_duplicates()
-    .head(5)
-    .style
-    .format(make_clickable, subset = ['row_id_google_spreadsheet'])
-)
-```
-
-### Save data to Google Spreadsheet for sharing
-
-- Link: [METADATA_MODEL](https://docs.google.com/spreadsheets/d/13gpRy93l7POWGe-rKjytt7KWOcD1oSLACngTEpuqCTg/edit#gid=0)
-
-```python
-#!pip install --upgrade git+git://github.com/thomaspernet/GoogleDrive-python
-```
-
-```python
-FILENAME_SPREADSHEET = "METADATA_MODEL"
-spreadsheet_id = drive.find_file_id(FILENAME_SPREADSHEET, to_print=False)
-```
-
-```python
-drive.add_data_to_spreadsheet(
-    data =output.fillna(""),
-    sheetID =spreadsheet_id,
-    sheetName = "MODEL_DATA",
-    detectRange = True,
-    rangeData = None)
-```
-
 # Author information
 
 During a presentation (Desir Seminar), it has been pointed out that characteristic of an author might impact the desire results. Most of the information are available from the internet. 
@@ -501,8 +145,6 @@ We use two sources of information:
 
 - [Semantic scholar](https://www.semanticscholar.org/me/research)
     - API: https://www.semanticscholar.org/product/api
-- [Google scholar](https://scholar.google.com/schhp?hl=en&as_sdt=0,5)
-    - API: https://serpapi.com/
 
 Using both data sourcs, we will retrieve or compute the following information:
 
@@ -566,11 +208,10 @@ names_df.head()
 <!-- #region heading_collapsed="true" -->
 ### Clean up and pre-process
 
-1. Lowercase the name since each character’s case doesn’t convey any information about a person’s gender.
-2. Split each character: The basic idea of the ML model we’re building is to read characters in a name to identify patterns that could indicate masculinity or femininity. Thus we split the name into each character.
-3. Pad names with empty spaces until a max of 50 characters ensures the ML model sees the same length for all the names.
-4. Encode each character to a unique number since ML models can only work with numbers. In this case, we encode ‘ ’ (space) to 0, ‘a’ to 1, ‘b’ to 2, and so on.
-5. Encode each gender to a unique number since ML models can only work with numbers. In this case, we encode ‘F’ to 0 and ‘M’ to 1.
+1. Clean up name ->Lowercase the name.
+2. Get a list of characters from the name.
+3. Create a padding: each name as a length of 50 characters max. The padding fills the empty values with 0 to reach 50.
+4. Encode characters and gender as specify in Keras. Note, the character 'space' is encoded as 0
 
 For example, the preprocessing step does the following:
 
@@ -624,9 +265,9 @@ names_df.head()
 <!-- #region heading_collapsed="true" -->
 ### Model Architecture
 
-1. Embedding layer: to “embed” each input character’s encoded number into a dense 256 dimension vector. The choice of embedding_dim is a hyperparameter that can be tuned to get the desired accuracy.
-2. Bidirectional LSTM layer: read the sequence of character embeddings from the previous step and output a single vector representing that sequence. The values for units and dropouts are hyperparameters as well.
-3. Final Dense layer: to output a single value close to 0 for ‘F’ or close to 1 for ‘M’ since this is the encoding we used in the preprocessing step.
+1. Embedding layer: to “embed” each input character’s encoded number into a dense 256 dimension vector..
+2. Bidirectional LSTM layer: .
+3. Final Dense layer: Prediction 0/1 for male/female
 
 Note: Embedding layer enables us to convert each word into a fixed length vector of defined size. The resultant vector is a dense one with having real values instead of just 0’s and 1’s. The fixed length of word vectors helps us to represent words in a better way along with reduced dimensions
 <!-- #endregion -->
@@ -686,13 +327,7 @@ output_array[0]
 <!-- #region heading_collapsed="true" -->
 ### Training the Model
 
-We’ll use the standard tensorflow.keras training pipeline as below
-
-1. Instantiate the model using the function we wrote in the model architecture step.
-2. Split the data into 80% training and 20% validation.
-3. Call model.fit with EarlyStopping callback to stop training once the model starts to overfit.
-4. Save the trained model
-5. Plot the training and validation accuracies to visually check the model performance.
+We’ll use the standard tensorflow.keras training pipeline
 <!-- #endregion -->
 
 ```python
@@ -747,33 +382,24 @@ plt.ylabel('Accuracy')
 plt.legend()
 ```
 
-# Download authors and paper information
+# Semantic scolar
 
-To get the most information possible about an author, we need to rely on two differents data source:
-
-- [Semantic scholar](https://www.semanticscholar.org/me/research)
-    - API: https://www.semanticscholar.org/product/api
-In this steps, we will begin with fetching data from Scemantic scholar, and do the following:
-
-- Download data
-- Add Gender
-- Compute ESG expertise
-- Compute cluster
-
-Our primary objective is to get the information about the gender, but also to evaluate the expertise of an author about ESG. The data source Semantic Scholar has 198,182,311 papers from all fields of science. 
+Our primary objective is to get the information about gender, evaluate the expertise of an author about ESG but also derive meaningful information from the abstract. The data source [Semantic Scholar](https://www.semanticscholar.org/me/research) has 198,182,311 papers from all fields of science.
 
 Our strategy is to use the API to search for a paper in order to get the related information (DOI, cite, performance) and more importantly, the ID of the author(s). Indeed, to get information about an author, we need to know his/her ID. As soon as we have the ID, we can collect and compute all other information (i.e. gender and expertise)
 
 The workflow is the following:
 
-1. Find the paper's ID in Semantic scholar from the spreadsheet [CSR Excel File Meta-Analysis - Version 4 - 01.02.2021](https://docs.google.com/spreadsheets/d/11A3l50yfiGxxRuyV-f3WV9Z-4DcsQLYW6XBl4a7U4bQ/edit?usp=sharing)
-2. Fetch paper information using the ID, including the list of authors
-3. Fetch author information using the author ID (including all the authors publication)
-4. Use the author name and aliases to predict the gender
-5. Save the results in S3: [DATA/JOURNALS/SEMANTIC_SCHOLAR/PAPERS](s3://datalake-london/DATA/JOURNALS/SEMANTIC_SCHOLAR/PAPERS/)
+1. Download data and predict gender
+2. Flag ESG papers
+3. Compute sentiment and cluster papers using the abstract
+4. Compute ESG expertise score
+5. Combine all information
+
+![](https://cdn-images-1.medium.com/max/1600/1*rEcC_x1CRlWx1KRCySotIg.png)
 
 ```python
-from serpapi import GoogleSearch
+#from serpapi import GoogleSearch
 from tqdm import tqdm
 import time
 import pickle
@@ -783,7 +409,21 @@ import unicodedata
 import requests
 ```
 
-## Download paper-author information and predict gender
+## 1. Download data and predict gender
+
+We follow four steps approaches to get the paper and author information 
+
+1. We fetch the data from the spreadsheet [CSR Excel File Meta-Analysis — Version 4–01.02.2021](https://docs.google.com/spreadsheets/d/11A3l50yfiGxxRuyV-f3WV9Z-4DcsQLYW6XBl4a7U4bQ/edit?usp=sharing) (note, I use the library [GoogleDrive-python](https://github.com/thomaspernet/GoogleDrive-python) to get the data from the spreadsheet). 
+2. We pass the paper’s title into Semantic Scholar API to find the paper’s ID and use the ID to download the paper information (including the authors’ ID)
+3. We pass the author’s ID into Semantic Scholar API to download the author’s information
+4. We predict the gender from the first name of the author
+
+![](https://cdn-images-1.medium.com/max/1600/1*jsBIqWumazLCekrlKbUg_A.png)
+
+
+### Step 1: Download data from Google spreadsheet
+
+The original data was collected on a Google spreadsheet ([CSR Excel File Meta-Analysis — Version 4–01.02.2021](https://docs.google.com/spreadsheets/d/11A3l50yfiGxxRuyV-f3WV9Z-4DcsQLYW6XBl4a7U4bQ/edit?usp=sharing)) with some relevant information but it also contains errors. The detection of errors has been done separately and won’t be covered in this post. From this spreadsheet, we will only use the title and the publication name. All the other information is discarded and will be retrieved using Semantic Scholar. 
 
 ```python
 pred_model = load_model('MODELS_AND_DATA/boyorgirl.h5')
@@ -796,16 +436,27 @@ pred_model = load_model('MODELS_AND_DATA/boyorgirl.h5')
 ```python
 FILENAME_SPREADSHEET = "CSR Excel File Meta-Analysis - Version 4 -  01.02.2021"
 spreadsheet_id = drive.find_file_id(FILENAME_SPREADSHEET, to_print=False)
-```
-
-```python
 doi = drive.download_data_from_spreadsheet(
     sheetID = spreadsheet_id,
     sheetName = "Feuil1",
     to_dataframe = True)
 ```
 
-Get paper name
+```python
+doi.loc[lambda x: x['Title'].isin(['The corporate social performance–financial performance link'])].head(1)
+```
+
+### Steps 2–3: paper information and author ID
+
+In the second step, we want to use the unique title’s name from the spreadsheet to get the information we need (gender, abstract, publication year, etc). 
+
+The previous image show one paper written by S. Waddock and S. Graves. We can look at the paper in [Semantic Scholar](https://www.semanticscholar.org/me/research)
+
+- [The corporate social performance-financial performance](https://www.semanticscholar.org/paper/2e899bc9e49e4a55374f26fdfd3f777658d460ab)
+
+![](https://cdn-images-1.medium.com/max/1600/1*RsOxfDRLtIu-_pUbmn--pw.png)
+
+The DOI is “*10.1002/(SICI)1097–0266(199704)18:4<03::AID-SMJ869>3.0.CO;2-G*”
 
 ```python
 headers = {
@@ -858,7 +509,7 @@ def find_doi(paper_name):
     to keep thing simple, assume first results in the best option
     """
     paper_name_clean = (
-         paper_name
+        paper_name
         .lower()
         .replace("  ", "+")
         .replace(" ", "+")
@@ -878,11 +529,20 @@ def find_doi(paper_name):
                 response_1['data'][0]['paperId'], ",".join(field_paper))
             response_2 = requests.get(url_paper, headers=headers)
             if response_2.status_code == 200:
+                # find publication name because not available in the API
+                publication_name = (
+                    doi
+                    .loc[lambda x: x['Title'].isin([paper_name])]
+                    .reindex(columns=['Publication name'])
+                    .drop_duplicates()
+                    .values[0][0]
+                )
                 response_2 = response_2.json()
                 response_2['paper_name_source'] = paper_name
+                response_2['publication_name'] = publication_name
                 response_2['status'] = 'found'
-                
-                ### find authors details information
+
+                # find authors details information
                 authors_fulls = []
                 for aut in response_1['data'][0]['authors']:
                     url_author = 'https://api.semanticscholar.org/graph/v1/author/{}?fields={}'.format(
@@ -891,17 +551,17 @@ def find_doi(paper_name):
                     response_3 = requests.get(url_author, headers=headers)
                     if response_3.status_code == 200:
                         authors_fulls.append(response_3.json())
-                        
-                if len(authors_fulls) >0:
+
+                if len(authors_fulls) > 0:
                     response_2['authors_detail'] = authors_fulls
-                
+
                 return response_2
             else:
                 return {'paper_name': paper_name, 'status': 'not found'}
         else:
             return {'paper_name': paper_name, 'status': 'not found'}
     else:
-        return {'paper_name': paper_name, 'status': 'not found', 'status_code':response_1.status_code}
+        return {'paper_name': paper_name, 'status': 'not found', 'status_code': response_1.status_code}
 ```
 
 ```python
@@ -933,33 +593,78 @@ def prediction_gender(name=["sarah"]):
     ))
 ```
 
-Below is an example with the following paper:
+To find the information from steps 2 to 3, we need to use 2 different [APIs](https://api.semanticscholar.org/graph/v1):
 
-- [The corporate social performance-financial performance link](https://drive.google.com/file/d/1-QRrQ_jgKGOJ5vDaTmYViElJDKcbtbSy/view?usp=sharing) and in [semantic scholar](https://www.semanticscholar.org/paper/2e899bc9e49e4a55374f26fdfd3f777658d460ab)
+**Publication**
 
-![image.png](attachment:4bff35c2-9018-478a-81a7-1036fad1463d.png)
+- To find the paper ID, we use https://api.semanticscholar.org/graph/v1/paper/search?query=
 
-the authors are:
+we construct the URL by cleaning the title, and we explicitly add the list of the fields to be returned:
 
-- S. Waddock 
-- S. Graves
+https://api.semanticscholar.org/graph/v1/paper/search?query=the+corporate+social+performancefinancial+performance+link&fields=url,title,abstract,venue,year,referenceCount,citationCount,influentialCitationCount,isOpenAccess,fieldsOfStudy,authors
 
-and the DOI is "10.1002/(SICI)1097-0266(199704)18:4<303::AID-SMJ869>3.0.CO;2-G"
+You can copy/paste the URL in your web browser to see all the information.
+
+The response gives the paper ID:
+
+```
+{"paperId": "2e899bc9e49e4a55374f26fdfd3f777658d460ab", "url": "https://www.semanticscholar.org/paper/2e899bc9e49e4a55374f26fdfd3f777658d460ab", "title": "The corporate social performance-financial performance link"
+```
+
+but also, the authors( and ID)
+
+```
+"authors": [{"authorId": "66042905", "name": "S. Waddock"}, {"authorId": "2367938", "name": "S. Graves"}
+```
+
+Note that, we need an intermediary API call to get the DOI from the following URL https://api.semanticscholar.org/graph/v1/paper/2e899bc9e49e4a55374f26fdfd3f777658d460ab?fields=externalIds,url,title,abstract,venue,year,referenceCount,citationCount,influentialCitationCount,isOpenAccess,fieldsOfStudy,authors
+
+**Authors**
+
+- We use the following API to download the information of each author https://api.semanticscholar.org/graph/v1/author/66042905?fields=externalIds,url,name,aliases,affiliations,homepage,papers
+
+The response provides two information we will use to compute the gender and the ESG score:
+
+- *aliases*: all possible names of the author's
+- *papers*: All papers from the authors. From the image below, we can see the author S. Waddock has 313 publications
+
+![](https://cdn-images-1.medium.com/max/1600/1*caiIQivJ1fR2AJIPWxR_Jg.png)
+
+https://www.semanticscholar.org/author/S.-Waddock/66042905?sort=influence
+
+in the response, we store all of the 313 publications because we will use this information to compute the ESG expertise score.
+
+```
+[{'authorId': '66042905',
+   'externalIds': {},
+   'url': 'https://www.semanticscholar.org/author/66042905',
+   'name': 'S. Waddock',
+   'aliases': ['S Waddock',
+    'Sandra Waddock',
+    'Sandr A Waddock',
+    'Sandra A. Waddock'],
+   'affiliations': [],
+   'homepage': None,
+   'papers': [{'paperId': '39657170f4d0496f79d7c766e1911c48e5b8f25c',
+     'title': 'The UN Guiding Principles on Business and Human Rights: Implications for Corporate Social Responsibility Research'}, ....]
+```
 
 ```python
 response = find_doi(paper_name = list(doi['Title'].unique())[-2]) 
 response['externalIds']['DOI']
 ```
 
-In the next steps, we want to predict the gender of the author. The first author is `S. Waddock` which is impossible to detect the gender because only one letter displays for the first name. Therefor, we will combine the first name with all the aliases. We add another constraint, the first name should have more than 2 characters:
+### Steps 4: Gender prediction
 
-- 'S. Waddock',
-- 'S Waddock',
-- 'Sandra Waddock',
-- 'Sandr A Waddock',
-- 'Sandra A. Waddock'
+In the next step, we want to predict the gender of the author. The first author is *S. Waddock* which is impossible to detect the gender because only one letter displays for the first name. Therefore, we will combine the first name with all the aliases. We add another constraint, the first name should have more than 2 characters:
 
-Then we push all the candidates to the model, and return the average probability. The model gives an average probability of 43%, meaning the author is a female.
+- ‘S. Waddock’: discarded
+- ‘S Waddock’: discarded
+- ‘Sandra Waddock’,
+- ‘Sandr A Waddock’,
+- ‘Sandra A. Waddock’
+
+Then we push all the candidates to the model and return the average probability. The model gives an average probability of 43%, meaning the author is a female.
 
 ```python
 prediction_gender(
@@ -1057,42 +762,19 @@ with open('MODELS_AND_DATA/list_paper_semantic.pickle', 'wb') as handle:
     pickle.dump(list_paper_semantic, handle)
 ```
 
-## Flag ESG paper
+## 2. Flag ESG paper
 
-Semantic scholar provides the list all papers for any authors. In the previous steps, we saved this list. 
-
-For instance, the author Abderrahman Jahmane wrote 3 papers in his carreer
-
-[{'paperId': '44af7948d66a4dc62952a863e957faaa5770d13c', 'title': 'Corporate social responsibility and firm value: Guiding through economic policy uncertainty'}, {'paperId': '57bf8e616da8230ca7a961be19affeb8b8ae619d', 'title': 'Corporate social responsibility, financial instability and corporate financial performance: Linear, non-linear and spillover effects – The case of the CAC 40 companies'}, {'paperId': 'eff6f21cc09c572f3bdc8add0d0f43badecbf977', 'title': 'Accounting for endogeneity and the dynamics of corporate social – Corporate financial performance relationship'}]
-
-![image.png](attachment:0f6eb258-c66c-4c70-88f5-1d70ac077f7c.png)
-
-Source: https://www.semanticscholar.org/author/Abderrahmane-Jahmane/122677227 
-
-We will use the paper's title to flag whether it deals with ESG or not. 
-
-For the 266 authors, we have collected about 14,443 unique papers. We rely on a naive technique to flag all of the 14.443 papers. 
+The list of papers we saved in the previous steps contains 266 authors, with 14,443 unique publications. For each author, we want to evaluate how familiar he/she is with the topic of ESG. To flag an ESG publication (14.443), we rely on a naive technique.
 
 The technique is the following:
 
 - Create a clean list of words from the title (removing English stop words, special characters, and lower case)
-- Flag if clean list contains "esg environmental social governance"
+- Flag if the clean list contains “esg”, ”environmental”, ”social”, ”governance”
 
-![image.png](attachment:bf6949b8-7614-4b51-8c90-f0331ceeeb1c.png)
+The image below shows how we use the technique to flag the ESG paper. Take the title “*Corporate social responsibility and firm value: Guiding through
+economic policy uncertainty*”, after the cleaning process, we end up with the following list of keywords “[corporate, social, responsibility, firm, value, guiding, economic, policy, uncertainty]”. Since the list contains the word “social”, we flag it as an ESG topic. By analogy, the title “*Does financial development really spur nascent entrepreneurship in Europe? A panel data analysis*” does not contain any of the ESG keywords
 
-In total 2094 papers deals with ESG among the 14,443 papers (5.9%)  
-
-The last step to create the authors table concatenates the common authors from Semantic scholar and Google scholar with the authors not in Google scholar. When the concatenatation is done, we compute the expertise score as follow, within author:
-
-- Expertise ESG = Sum papers flag ESG / Sum papers
-
-The distribution of expertise:
-
-![image.png](attachment:d418cdba-0b54-47de-95a2-4489fcaf62b0.png)
-
-The distribution of gender:
-
-![image.png](attachment:affd21cc-d672-4a17-b123-4539f048f240.png)
+In total, 2094 papers deal with ESG among the 14,443 papers (14%). We will use this information later to construct the ESG expertise score.
 
 ```python
 list_paper_semantic = pickle.load( open( "MODELS_AND_DATA/list_paper_semantic.pickle", "rb" ))
@@ -1149,35 +831,42 @@ all_connected_paper['esg'].value_counts(normalize = True)
 all_connected_paper['esg'].value_counts(normalize = False)
 ```
 
-## Sentiment and Clustering
+## 3. Sentiment and cluster papers
 
-The last batch of informations relates to the pertinance and details of the abstract. We might think that the abstract contains information about the "quality" or "emotion" behind the paper. Therefore, we propose to compute the following variables:
+The last batch of information relates to the pertinence and details of the abstract. We might think that the abstract contains information about the “quality” or “emotion” behind the paper. Therefore, we propose to compute the following variables:
 
-- sentiment: positive or negative
-- size: number of words in the abstract
-- lenght: number of time the words 'esg', "environmental", "social", "governance" are mentioned
-- adj: Number of adjectives
-- noun: Number of nouns
-- verb: Number of verbs
-- cluster: Clusters the paper belongs to
+- **sentiment**: positive or negative. The overall feeling of the abstract. Positive means the abstract tend to have more words associated with a positive connotation.
+- **cluster**: 3 clusters computed using the words in the abstract (embeddings), the number of verbs, nouns, and adjectives but also the size of the abstract.
 
-### Processus
+### Construct sentiment
+
+We use the brilliant [Flair](https://github.com/flairNLP/flair) library to compute the sentiment for different reasons. First of all, we don’t have labels in the abstract, hence we cannot train our own model. Second, Flair uses state-of-the-art NLP architecture to train their model, meaning that it gives far better results than if we had to build our model. 
+
+The workflow to get the sentiment is the following
 
 - Step 1: Clean the abstract:
-    - Lowercase words
-    - Remove [+XYZ chars] in content
-    - Remove multiple spaces in content
-    - Remove ellipsis (and last word)
-    - Replace dash between words
-    - Remove punctuation
-    - Remove stopwords
-    - Remove digits
-    - Remove short tokens
+   — Lowercase words
+   — Remove [+XYZ chars] in content
+   — Remove multiple spaces in content
+   — Remove ellipsis (and last word)
+   — Replace dash between words
+   — Remove punctuation
+   — Remove stopwords
+   — Remove digits
+   — Remove short tokens
 - Step 2: Compute the sentiments using the [Flair](https://github.com/flairNLP/flair) library
-- Step 3: Count the number of adjectives, nouns and verbs
-- Step 4: Get the vector's embedding from the pre-trained model `word2vec-google-news-300` and look up each word in the list. Compute the average to get a vector of 100 weights for a given document
-- Step 5: Label the sentiment 0/1 and standardise "lenght", "adj","noun","verb"
-- Step 6: Compute the cluster: max 3
+
+Among the 106 papers we have, 71 have a positive sentiment derived from the abstract and 35 negative ones.
+
+### Clustering
+
+The abstract contains relevant information about the quality of the papers, and we want to extract them to group the papers into 3 clusters. To construct the cluster, we use the vector word embedding from “*word2vec-google-news-300”*. We don’t have enough data to train our model, and Google has already done the heavy lifting so it sounds more reasonable to use pre-computed vectors. We also include the number of ESG occurrences in the abstract, number of adjectives, nouns, and verbs. It seems plausible that the “quality” of the abstract is correlated with the number of verbs or adjectives since they give more emotion to the reader.
+
+- Step 1: Count the number of adjectives, nouns, and verbs
+- Step 2: Get the vector’s embedding from the pre-trained model `word2vec-google-news-300` and look up each word in the list. Compute the average to get a vector of 100 weights for a given document
+- Step 3: Standardize the number of occurrences, verbs, nouns, and adjectives. Beforehand, we normalize the number of each occurrence over the length of the abstract
+- Step 4: Compute the cluster using K-mean
+
 
 ```python
 #!pip install flair
@@ -1394,9 +1083,13 @@ df_tsne = (
 )
 ```
 
+The input fed into k-mean looks like the image below. There is a vector of 300 values corresponding to the word embedding, and four other features capturing the occurrences.
+
 ```python
 df_tsne.drop(columns = ["abstract"]).head().iloc[:3, -10:].drop(columns = ['sentiment',  'size' ])
 ```
+
+In the end, we have three clusters, with 32 observations in cluster 0, 29 in cluster 1, and 38 in cluster 2. 
 
 ```python
 kmeans_w_emb = KMeans(n_clusters=3, random_state=1).fit(
@@ -1405,41 +1098,6 @@ kmeans_w_emb = KMeans(n_clusters=3, random_state=1).fit(
                            ])
 )
 pd.Series(kmeans_w_emb.labels_).value_counts()
-```
-
-```python
-model = manifold.TSNE(n_components=3,
-                          #metric='precomputed',
-                          perplexity=20.0,
-                          early_exaggeration=13.0,
-                          learning_rate=10,
-                          n_iter=3000,
-                          n_iter_without_progress=300,
-                          min_grad_norm=1e-07,
-                          init='random',
-                          verbose=1,
-                          random_state=4,
-                          method='barnes_hut',
-                          angle=0.5,
-                          n_jobs=None)
-coords = model.fit_transform(df_tsne.drop(columns = ['sentiment', "lenght", "abstract"]))
-df_tsne = (
-    df_tsne
-    .assign(
-        tsne_2d_one = coords[:,0],
-        tsne_2d_two = coords[:,1],
-        cluster_w_emb = kmeans_w_emb.labels_
-        )
-)
-print(df_tsne['cluster_w_emb'].value_counts())
-
-plt.figure(figsize=(15,8))
-ax = sns.scatterplot(
-    data=df_tsne, 
-    x="tsne_2d_one",
-    y="tsne_2d_two",
-    hue="cluster_w_emb",
-    palette="deep")
 ```
 
 ```python
@@ -1458,11 +1116,13 @@ df_tsne = (
     .assign(
         pct_adj = lambda x: x['adj']/ x['size'],
         pct_noun = lambda x: x['noun']/ x['size'],
-        pct_verb = lambda x: x['verb']/ x['size']
+        pct_verb = lambda x: x['verb']/ x['size'],
+        cluster_w_emb = kmeans_w_emb.labels_
     )
-
 )
 ```
+
+Cluster 0 and 2 has more or less the same percentage of positive sentiments but cluster 1 leans toward positive sentiments.
 
 ```python
 pd.concat(
@@ -1474,7 +1134,8 @@ pd.concat(
             .assign(total=lambda x: x.sum(axis=1))
         ),
         (
-            df_tsne.groupby("cluster_w_emb")["sentiment"]
+            df_tsne
+            .groupby("cluster_w_emb")["sentiment"]
             .value_counts()
             .unstack(-1)
             .assign(total=lambda x: x.sum(axis=1))
@@ -1486,7 +1147,7 @@ pd.concat(
 )
 ```
 
-The clustering algorithm groups the paper based on the number of time ESG (and related term) is mentioned and pertinence of the abstract. For instance, the cluster 0 is the one with the highest number of time ESG is mentioned, but also with the largest number of verbs, and adjectives, indicating stronger emotion in the abstract.
+Cluster 1 has on average abstracts longer than the two other clusters (165 words vs 135/147) but contains much fewer occurrences of ESG. Cluster 2 is the most descriptive with on average 18 verbs.
 
 ```python
 for v in ["lenght","verb","adj","noun", "size"]:
@@ -1502,24 +1163,172 @@ for v in ["lenght","verb","adj","noun", "size"]:
 
 ```
 
+If we compare two abstracts drawn from clusters 0 and 2 we can catch the differences. First of all, the first paper (cluster 2), has much more words (193 vs. 128) and contains twice as many verbs as the second paper. If we read the abstract in detail, we can measure the sensibility of the first paper. It provides more details and is more convincing than the second one, indicating potentially a better "quality".
+
 ```python
-pd.concat([(
-    df_tsne
-    .loc[lambda x: x.index.isin(["02281aebff7110c8b6efb59ebba448ecb7e2a4cc"])]
-    .head(1)
-    .reindex(columns = ['cluster_w_emb','abstract',"lenght","verb","adj","noun", 'size'])
-),
-    (
-    df_tsne
-    .loc[lambda x: x.index.isin(["128fd0154eeaf6189fcff693abbd076aad42b900"])]
-    .head(1)
-    .reindex(columns = ['cluster_w_emb','abstract',"lenght","verb","adj","noun", 'size'])
-)
-], axis = 0
+pd.concat(
+    [
+        (
+            df_tsne.loc[
+                lambda x: x.index.isin(["02281aebff7110c8b6efb59ebba448ecb7e2a4cc"])
+            ]
+            .head(1)
+            .reindex(
+                columns=[
+                    "cluster_w_emb",
+                    "abstract",
+                    "lenght",
+                    "verb",
+                    "adj",
+                    "noun",
+                    "size",
+                ]
+            )
+        ),
+        (
+            df_tsne.loc[
+                lambda x: x.index.isin(["128fd0154eeaf6189fcff693abbd076aad42b900"])
+            ]
+            .head(1)
+            .reindex(
+                columns=[
+                    "cluster_w_emb",
+                    "abstract",
+                    "lenght",
+                    "verb",
+                    "adj",
+                    "noun",
+                    "size",
+                ]
+            )
+        ),
+    ],
+    axis=0,
 )
 ```
 
-## Add paper-author information
+## 4. CNRS journal ranking
+
+Our intuition is that the journal ranking matters to finding a statistical link (or not) between ESG and CFP. If this is the case, there is a publication bias in the data. To validate our assumption, we rely on two different metrics:
+
+1. **SJR**: The SCImago Journal Rank indicator is a measure of the scientific influence of scholarly journals that accounts for both the number of citations received by a journal and the importance or prestige of the journals where the citations come from
+2. **CNRS journal ranking**: The **French National Centre for Scientific Research** (French: *Centre national de la recherche scientifique*, **CNRS**) is the French state research organization and is the largest fundamental science agency in Europe. Each year, the CNRS releases a ranking for more than 1256 journals. The CNRS ranks the journal into 4 categories, ranging from 1 as the best journals and 4 as the lowest. 
+
+We have already downloaded the data from the [Scimago database](https://www.scimagojr.com/) and stored it in AWS S3. However, the CNRS does not have an available dataset (at least in CSV or spreadsheet format), therefore we need to use the release publication from the official website to get the ranking. 
+
+The official releases are available at this [URL](https://www.gate.cnrs.fr/spip.php?rubrique31&lang=en). For our research, we will use the most recent release, dating from 2020: [*CNRS Journal Ranking in Economics and Management June 2020*](https://www.gate.cnrs.fr/IMG/pdf/categorisation37_liste_juin_2020-2.pdf)*.* The PDF contains more than 80 tables, with the publication’s name, ISSN, domain, and rank.
+
+![](https://cdn-images-1.medium.com/max/1600/1*qT9-_dcn7AlTC94WRpH_-w.png)
+
+```python
+### release memory from large google word file
+del wv
+```
+
+```python
+# use terminal if cannot allocate memory
+#!sudo yum install java-1.8.0-openjdk -y
+#!pip install tabula-py
+```
+
+```python
+import tabula
+import requests
+```
+
+```python
+url = "https://www.gate.cnrs.fr/IMG/pdf/categorisation37_liste_juin_2020-2.pdf"
+r = requests.get(url, allow_redirects=True)
+open('categorisation37_liste_juin_2020-2.pdf', 'wb').write(r.content)
+```
+
+To extract the information, we rely on the [tabula library](https://pypi.org/project/tabula-py/) which is a simple Python wrapper of [tabula-java](https://github.com/tabulapdf/tabula-java), and can read tables in a PDF. 
+
+After converting the PDF into a Pandas dataframe, we get an extensive list of journals-ranking (see image below)
+
+```python
+list_tables = tabula.read_pdf('categorisation37_liste_juin_2020-2.pdf', pages='all')
+list_list_tables= [list_tables[i].values.tolist() for i in range(0, len(list_tables)) if len(list_tables[i])>0]
+df_cnrs = (
+    pd.DataFrame([item for sublist in list_list_tables for item in sublist], columns = [
+    "NAME","ISSN","DOMAINE","RANK"
+])
+    .assign(
+        publication_name = lambda x:x['NAME'].str.lower()
+    )
+    .drop_duplicates()
+)
+df_cnrs.head(10)
+```
+
+```python
+df_cnrs.shape
+```
+
+```python
+df_publication_rank = (
+    df_cnrs.merge(
+        (
+            pd.DataFrame(list_paper_semantic)
+            .reindex(columns=["publication_name"])
+            .drop_duplicates()
+            .rename(columns={"Publication name": "publication_name"})
+            .assign(publication_name=lambda x: x["publication_name"].str.lower())
+            .drop_duplicates()
+            .replace(
+                {
+                    "publication_name": {
+                        "brq business research quarterly": "business research quarterly"
+                    }
+                }
+            )
+            .replace("\&", "and", regex=True)
+        ),
+        how="right",
+        indicator=True,
+    )
+    .sort_values(by=["_merge"])
+    .assign(
+        RANK=lambda x: x["RANK"].astype("str"),
+        rang_digit=lambda x: x["RANK"].str.extract("(\d+)"),
+    )
+    .assign(rang_digit=lambda x: x["rang_digit"].fillna("5"))
+    .reindex(columns=["publication_name", "rang_digit"])
+    .drop_duplicates()
+    .sort_values(by=["rang_digit"], ascending=True)
+)
+df_publication_rank.head()
+```
+
+The list of journals we collected is available from *steps 2–3: paper information and author ID*. The comparison between the two files is trivial and we end up with the following CNRS ranking distribution:
+
+- 37 journals are missing from the CNRS ranking
+- 10 belongs to the second tiers
+- 9 to the top tiers
+- 3 in the fourth tiers
+- 2 in the third tiers
+
+I admit the paper collection process wasn’t as scientific as one can expect. I also cannot deny that the data might have a selection bias too, but it is something that was beyond my reach when I joined the project.
+
+```python
+df_publication_rank['rang_digit'].value_counts()
+```
+
+## 5. Wrapping up 
+
+We managed to construct the following information from the list of papers available in Google Spreadsheet ([CSR Excel File Meta-Analysis — Version 4–01.02.2021](https://docs.google.com/spreadsheets/d/11A3l50yfiGxxRuyV-f3WV9Z-4DcsQLYW6XBl4a7U4bQ/edit?usp=sharing)):
+
+- Papers information
+- Authors information
+- Sentiment derived from the abstract
+- Clustering derived from the abstract
+- Journal ranking from the CNRS
+
+The final step of the strategy consists to merge every piece of information together into a single dataframe. The task is straightforward since we already have all the authors for a given paper. The “[*explode*](https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.explode.html)” function from Pandas takes every author from the dictionary and creates a row for each author (if the paper has two authors, then the function creates two rows, one for the first author, and another one for the second). The other information can be merged using the paper ID or the publication name. 
+
+At last, we can compute the ESG expertise score for each author by dividing the number of papers dealing with ESG over the total number of papers published. 
+
+Our dataset is composed of 182 males and 83 females. The average author ESG expertise score is 0.22, with 75% of the data falling under 30%.
 
 ```python
 def count_esg(papers):
@@ -1561,22 +1370,27 @@ df_temp['pct_esg'].describe()
 ```
 
 ```python
+df_temp['pct_esg'].loc[lambda x:x> 0].plot.hist(bins=12, alpha=0.5, title = 'Distribution author ESG expertise',figsize=(10,8))
+```
+
+```python
 df_temp['gender.gender'].value_counts()
 ```
 
 ```python
 df_authors_journal_full = (
-    (
-    pd.json_normalize(list_paper_semantic, meta=["externalIds"]).rename(columns = {'authors_detail':'author_details_semantic'})
+    # Journal list
+    pd.json_normalize(list_paper_semantic, meta=["externalIds"])
+    .rename(columns={"authors_detail": "author_details_semantic"})
     .drop(columns=["paper_name_source"])
-    .assign(nb_authors=lambda x: x["authors"].str.len(),
+    .assign(
+        nb_authors=lambda x: x["authors"].str.len(),
         authors_list=lambda x: x.apply(
-            lambda x: [i["name"]
-                       for i in x["authors"] if x["authors"] != np.nan]
+            lambda x: [i["name"] for i in x["authors"] if x["authors"] != np.nan]
             if isinstance(x["authors"], list)
             else np.nan,
             axis=1,
-        )
+        ),
     )
     .explode("authors_list")
     .assign(
@@ -1591,8 +1405,13 @@ df_authors_journal_full = (
             ),
             axis=1,
         ),
-        )
     )
+    .rename(columns={
+        "url": "url_paper",
+        "externalIds.DBLP": "dblp_paper",
+        "externalIds.MAG":"mag_paper",
+        "externalIds.DOI":"doi_paper",
+    })
     .merge(
         (
             pd.json_normalize(list_paper_semantic, "authors_detail")
@@ -1612,71 +1431,95 @@ df_authors_journal_full = (
             .drop_duplicates(subset=["name"])
             .assign(
                 total_paper=lambda x: x["papers"].str.len(),
-                esg=lambda x: x.apply(
-                    lambda x: count_esg(x["papers"]), axis=1),
+                esg=lambda x: x.apply(lambda x: count_esg(x["papers"]), axis=1),
                 pct_esg=lambda x: x["esg"] / x["total_paper"],
             )
+            .rename(columns={"url": "url_author",
+                             "externalIds.DBLP": "dblp_author"})
         ),
         how="left",
         on=["semantic"],
     )
     .merge(
-        df_tsne.drop(columns=["abstract"]).rename(
-            columns={"size": "size_abstract"}),
+        df_tsne.drop(columns=["abstract"]).rename(columns={"size": "size_abstract"}),
         how="left",
         on=["paperId"],
     )
-    .reindex(columns=['paperId',
-                      'externalIds.MAG',
-                      'externalIds.DOI',
-                      'url_x',
-                      'title',
-                      'nb_authors',
-                      'abstract',
-                      'venue',
-                      'year',
-                      'referenceCount',
-                      'citationCount',
-                      'influentialCitationCount',
-                      'isOpenAccess',
-                      'fieldsOfStudy',
-                      'cluster_w_emb',
-                      'sentiment',
-                      'lenght',
-                      'adj',
-                      'noun',
-                      'verb',
-                      'size_abstract',
-                      'pct_adj',
-                      'pct_noun',
-                      'pct_verb',
-                      'authors',
-                      'status',
-                      'author_details_semantic',
-                      'Levenshtein_score',
-                      #'authors_list',
-                      #'semantic',
-                      'name',
-                      'authorId',
-                      "gender.gender",
-                      "gender.probability",
-                      'aliases',
-                      'affiliations',
-                      'homepage',
-                      'papers',
-                      'total_paper',
-                      'esg',
-                      'pct_esg',
-                     ])
-    .rename(columns = {'url_x':'url',
+    .assign(publication_name=lambda x: x["publication_name"].str.lower())
+    .merge(df_publication_rank)
+    .reindex(
+        columns=[
+            "publication_name",
+            "rang_digit",
+            "paperId",
+            "url_paper",
+            "title",
+            "abstract",
+            "venue",
+            "year",
+            "referenceCount",
+            "citationCount",
+            "influentialCitationCount",
+            "isOpenAccess",
+            "fieldsOfStudy",
+            "mag_paper",
+            "doi_paper",
+            "dblp_paper",
+            "nb_authors",
+             "cluster_w_emb",
+            "sentiment",
+            "lenght",
+            "adj",
+            "noun",
+            "verb",
+            "size_abstract",
+            "pct_adj",
+            "pct_noun",
+            "pct_verb",
+            "authors",
+            "status",
+            "author_details_semantic",
+            "name",
+            "aliases",
+            "authorId",
+            "url_author",
+            "affiliations",
+            "homepage",
+            "papers",
+            "gender.gender",
+            "gender.probability",
+            "dblp_author",
+            "total_paper",
+            "esg",
+            "pct_esg"
+        ]
+    )
+    .rename(columns = {
                       "gender.gender":"gender",
                        "gender.probability":"gender_proba"})
 )
+```
+
+```python
 df_authors_journal_full.shape
 ```
 
 ```python
-df_authors_journal_full.head(1)
+df_authors_journal_full.head(2).reindex(
+        columns=[
+            "publication_name",
+            "rang_digit",
+            "title",
+             "cluster_w_emb",
+            "sentiment",
+            "status",
+            "name",
+            "gender",
+            "gender_proba",
+            "esg",
+            "pct_esg"
+        ]
+    )
 ```
 
 ```python
@@ -1703,6 +1546,8 @@ Choose a location in S3 to save the CSV. It is recommended to save in it the `da
 ```python
 s3_output = 'DATA/FINANCE/ESG/ESG_CFP'
 table_name = 'meta_analysis_esg_cfp'
+DatabaseName = 'esg'
+s3_output_example = 'SQL_OUTPUT_ATHENA'
 ```
 
 First, we need to delete the table (if exist)
@@ -1738,7 +1583,7 @@ WITH merge AS (
     row_id_google_spreadsheet,
     incremental_id,
     paper_name, 
-    publication_year, 
+    --publication_year, 
     publication_type, 
     regexp_replace(
       regexp_replace(
@@ -1851,7 +1696,7 @@ SELECT
     table_refer,
     incremental_id,
     paper_name,
-    publication_name,
+    --publication_name,
     rank,
     sjr, 
     sjr_best_quartile, 
@@ -1863,9 +1708,9 @@ SELECT
     citable_docs_3years, 
     cites_doc_2years, 
     country ,
-    publication_year, 
+    --publication_year, 
     publication_type, 
-    cnrs_ranking, 
+    --cnrs_ranking, 
     peer_reviewed, 
     study_focused_on_social_environmental_behaviour, 
     type_of_data, 
@@ -1940,6 +1785,7 @@ output = s3.run_query(
     filename = "temp"
                 )
 output.head()
+
 ```
 
 ```python
@@ -1991,6 +1837,10 @@ output = (
     .merge(output_csr)
     .merge(output_cfp)
 )
+```
+
+```python
+output.shape
 ```
 
 Use Semantic scholar to find ID
@@ -2083,6 +1933,12 @@ list_ids = pickle.load( open( "MODELS_AND_DATA/list_papers_id.pickle", "rb" ))
 
 
 ```python
+"referenceCount",
+            "citationCount",
+            "influentialCitationCount",
+```
+
+```python
 df_final = (
     df_authors_journal_full.groupby(["paperId"])
     .agg(
@@ -2090,7 +1946,7 @@ df_final = (
             "nb_authors": "max",
             "referenceCount": "sum",
             "citationCount": "sum",
-            "cited_by.total": "sum",
+            "influentialCitationCount": "sum",
             "isOpenAccess": "min",
             "total_paper": "sum",
             "esg": "sum",
@@ -2103,7 +1959,7 @@ df_final = (
     .merge(
         (
             df_authors_journal_full.groupby(
-                ["paperId"])['gender.gender'].value_counts()
+                ["paperId"])['gender'].value_counts()
             .unstack(-1)
             .fillna(0)
             .assign(
@@ -2116,11 +1972,11 @@ df_final = (
     )
     .merge(output, on=["paper_name"])
     .rename(columns={
-        'cited_by.total': 'cited_by_total',
-        'referenceCount': 'reference_count',
-        'citationCount': 'citation_count',
+        #'cited_by.total': 'cited_by_total',
+        #'referenceCount': 'reference_count',
+        #'citationCount': 'citation_count',
         'isOpenAccess': 'is_open_access',
-        'cited_by.total': 'cited_by_total',
+        #'cited_by.total': 'cited_by_total',
         'FEMALE': 'female',
         'MALE': 'male',
         'UNKNOWN': 'unknown'
@@ -2128,7 +1984,6 @@ df_final = (
     .replace(
         {
             'csr_20_categories': {
-
                 'BIST ESG score': 'OTHER',
                 'Vigeo score': 'OTHER',
                 'Charity': 'OTHER',
@@ -2157,6 +2012,9 @@ df_final = (
             df_authors_journal_full
             .reindex(columns=[
                 'paperId',
+                "year",
+                "publication_name",
+                "rang_digit",
                 'cluster_w_emb',
                 'sentiment',
                 'lenght',
@@ -2169,8 +2027,17 @@ df_final = (
                 'pct_verb'
             ])
             .drop_duplicates(subset=['paperId'])
+            
         )
     )
+    .rename(columns = 
+            {
+                'year':"publication_year",
+                "referenceCount":'reference_count',
+                "citationCount":'citation_count',
+                "influentialCitationCount":'influential_citation_count'
+                
+            })
 )
 
 df_final.shape
@@ -2218,7 +2085,7 @@ schema = [
 {'Name': 'nb_authors', 'Type': 'int', 'Comments': ''},
 {'Name': 'reference_count', 'Type': 'int', 'Comments': ''},
 {'Name': 'citation_count', 'Type': 'int', 'Comments': ''},
-{'Name': 'cited_by_total', 'Type': 'int', 'Comments': ''},
+{'Name': 'influential_citation_count', 'Type': 'int', 'Comments': ''},
 {'Name': 'is_open_access', 'Type': 'boolean', 'Comments': ''},
 {'Name': 'total_paper', 'Type': 'int', 'Comments': ''},
 {'Name': 'esg', 'Type': 'int', 'Comments': ''},
