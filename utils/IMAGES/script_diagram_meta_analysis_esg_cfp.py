@@ -7,7 +7,7 @@ from diagrams.aws.storage import S3
 
 with Diagram("META ANALYSIS ESG CFP", show=False, filename="/home/ec2-user/esg_metadata/utils/IMAGES/meta_analysis_esg_cfp", outformat="jpg"):
 
-     temp_1 = S3('journals_scimago')
+     temp_1 = S3('papers_meta_analysis_new')
 
      with Cluster("FINAL"):
 

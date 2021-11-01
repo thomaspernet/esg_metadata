@@ -118,65 +118,64 @@
 - Partitition: ['id', 'incremental_id']
 - Script: https://github.com/thomaspernet/esg_metadata/blob/master/01_data_preprocessing/01_transform_tables/00_meta_analysis.md
 
-|    | Name                       | Type    | Comment                    |
-|---:|:---------------------------|:--------|:---------------------------|
-|  0 | paperid                    | string  | paperid                    |
-|  1 | nb_authors                 | int     | nb authors                 |
-|  2 | reference_count            | int     | reference count            |
-|  3 | citation_count             | int     | citation count             |
-|  4 | influential_citation_count | int     | influential citation count |
-|  5 | is_open_access             | boolean | is open access             |
-|  6 | total_paper                | int     | total paper                |
-|  7 | esg                        | int     | esg                        |
-|  8 | pct_esg                    | float   | pct esg                    |
-|  9 | id_source                  | string  | id source                  |
-| 10 | female                     | int     | female                     |
-| 11 | male                       | int     | male                       |
-| 12 | unknown                    | int     | unknown                    |
-| 13 | pct_female                 | float   | pct female                 |
-| 14 | drive_url                  | string  | drive url                  |
-| 15 | image                      | string  | image                      |
-| 16 | row_id_google_spreadsheet  | string  | row id google spreadsheet  |
-| 17 | table_refer                | string  | table refer                |
-| 18 | adjusted_model             | string  | adjusted model             |
-| 19 | adjusted_dependent         | string  | adjusted dependent         |
-| 20 | adjusted_independent       | string  | adjusted independent       |
-| 21 | social                     | string  | social                     |
-| 22 | environmental              | string  | environmental              |
-| 23 | governance                 | string  | governance                 |
-| 24 | lag                        | string  | lag                        |
-| 25 | interaction_term           | string  | interaction term           |
-| 26 | quadratic_term             | string  | quadratic term             |
-| 27 | n                          | int     | n                          |
-| 28 | target                     | string  | target                     |
-| 29 | adjusted_standard_error    | float   | adjusted standard error    |
-| 30 | adjusted_t_value           | float   | adjusted t value           |
-| 31 | paper_name                 | string  | paper name                 |
-| 32 | first_date_of_observations | int     | first date of observations |
-| 33 | last_date_of_observations  | int     | last date of observations  |
-| 34 | csr_20_categories          | string  | csr 20 categories          |
-| 35 | regions_of_selected_firms  | string  | regions of selected firms  |
-| 36 | kyoto                      | string  | kyoto                      |
-| 37 | financial_crisis           | string  | financial crisis           |
-| 38 | windows                    | int     | windows                    |
-| 39 | mid_year                   | int     | mid year                   |
-| 40 | regions                    | string  | regions                    |
-| 41 | providers                  | string  | providers                  |
-| 42 | publication_year           | int     | publication year           |
-| 43 | publication_name           | string  | publication name           |
-| 44 | rank_digit                 | string  | rank digit                 |
-| 45 | cluster_w_emb              | int     | cluster w emb              |
-| 46 | sentiment                  | string  | sentiment                  |
-| 47 | lenght                     | int     | lenght                     |
-| 48 | adj                        | int     | adj                        |
-| 49 | noun                       | int     | noun                       |
-| 50 | verb                       | int     | verb                       |
-| 51 | size_abstract              | int     | size abstract              |
-| 52 | pct_adj                    | float   | pct adj                    |
-| 53 | pct_noun                   | float   | pct noun                   |
-| 54 | pct_verb                   | float   | pct verb                   |
-| 55 | rank                       | int     | journal rank               |
-| 56 | sjr                        | float   | SCImago Journal Rank       |
-| 57 | region_journal             | string  | region journal             |
+|    | Name                       | Type    | Comment                                                                                                     |
+|---:|:---------------------------|:--------|:------------------------------------------------------------------------------------------------------------|
+|  0 | paperid                    | string  | paperid                                                                                                     |
+|  1 | nb_authors                 | int     | nb authors                                                                                                  |
+|  2 | reference_count            | int     | reference count                                                                                             |
+|  3 | citation_count             | int     | citation count                                                                                              |
+|  4 | influential_citation_count | int     | influential citation count                                                                                  |
+|  5 | is_open_access             | boolean | is open access                                                                                              |
+|  6 | total_paper                | int     | total paper                                                                                                 |
+|  7 | esg                        | int     | esg                                                                                                         |
+|  8 | pct_esg                    | float   | pct esg                                                                                                     |
+|  9 | id_source                  | string  | id source                                                                                                   |
+| 10 | female                     | int     | female                                                                                                      |
+| 11 | male                       | int     | male                                                                                                        |
+| 12 | unknown                    | int     | unknown                                                                                                     |
+| 13 | pct_female                 | float   | pct female                                                                                                  |
+| 14 | drive_url                  | string  | paper link in Google Drive                                                                                  |
+| 15 | image                      | string  | Link row data image                                                                                         |
+| 16 | row_id_google_spreadsheet  | string  | Google spreadsheet link to raw data                                                                         |
+| 17 | table_refer                | string  | table number in the paper                                                                                   |
+| 18 | adjusted_model             | string  | reorganise model variable into smaller group                                                                |
+| 19 | adjusted_dependent         | string  | reorganise dependent variable into smaller groups                                                           |
+| 20 | adjusted_independent       | string  | reorganise independent variable into smaller group                                                          |
+| 21 | social                     | string  | if adjusted_independent in ENVIRONMENTAL AND SOCIAL, SOCIAL, CSP, CSR, ENVIRONMENTAL, SOCIAL and GOVERNANCE |
+| 22 | environmental              | string  | if adjusted_independent in ENVIRONMENTAL, ENVIRONMENTAL AND SOCIAL, ENVIRONMENTAL, SOCIAL and GOVERNANCE    |
+| 23 | governance                 | string  | if adjusted_independent in GOVERNANCE ENVIRONMENTAL, SOCIAL and GOVERNANCE                                  |
+| 24 | lag                        | string  | the table contains lag or not                                                                               |
+| 25 | interaction_term           | string  | the table contains interaction terms or not                                                                 |
+| 26 | quadratic_term             | string  | the table contains quadratic terms or not                                                                   |
+| 27 | n                          | int     | number of observations                                                                                      |
+| 28 | target                     | string  | indicate wheither or not the coefficient is significant. based on stars                                     |
+| 29 | adjusted_standard_error    | float   | reconstructed standard error                                                                                |
+| 30 | adjusted_t_value           | float   | reconstructed t value                                                                                       |
+| 31 | paper_name                 | string  | Paper name                                                                                                  |
+| 32 | first_date_of_observations | int     | first date of observations                                                                                  |
+| 33 | last_date_of_observations  | int     | last date of observations                                                                                   |
+| 34 | csr_20_categories          | string  | csr 20 categories                                                                                           |
+| 35 | kyoto                      | string  | kyoto                                                                                                       |
+| 36 | financial_crisis           | string  | financial crisis                                                                                            |
+| 37 | windows                    | int     | windows                                                                                                     |
+| 38 | mid_year                   | float   | mid year                                                                                                    |
+| 39 | regions                    | string  | regions                                                                                                     |
+| 40 | providers                  | string  | providers                                                                                                   |
+| 41 | publication_year           | int     | publication year                                                                                            |
+| 42 | publication_name           | string  | publication name                                                                                            |
+| 43 | rank_digit                 | string  | rank digit                                                                                                  |
+| 44 | cluster_w_emb              | int     | cluster w emb                                                                                               |
+| 45 | sentiment                  | string  | sentiment                                                                                                   |
+| 46 | lenght                     | int     | lenght                                                                                                      |
+| 47 | adj                        | int     | adj                                                                                                         |
+| 48 | noun                       | int     | noun                                                                                                        |
+| 49 | verb                       | int     | verb                                                                                                        |
+| 50 | size_abstract              | int     | size abstract                                                                                               |
+| 51 | pct_adj                    | float   | pct adj                                                                                                     |
+| 52 | pct_noun                   | float   | pct noun                                                                                                    |
+| 53 | pct_verb                   | float   | pct verb                                                                                                    |
+| 54 | rank                       | int     | rank                                                                                                        |
+| 55 | sjr                        | float   | sjr                                                                                                         |
+| 56 | region_journal             | string  | region journal                                                                                              |
 
     

@@ -6,7 +6,7 @@ Create table with journal information, papers and coefficients for the meta anal
 Create table with journal information, papers and coefficients for the meta analysis
 
     * CREATION
-        * [journals_scimago](https://github.com/thomaspernet/esg_metadata/01_data_preprocessing/00_download_data/SCIMAGO/scimagojr.py): SCImago journal database
+        * [papers_meta_analysis_new](https://github.com/thomaspernet/esg_metadata/01_data_preprocessing/00_download_data/METADATA_TABLES/esg_metaanalysis.py): upload new values for papers in Drive
 
 ### ETL diagrams
 

@@ -409,6 +409,7 @@ import unicodedata
 import requests
 ```
 
+<!-- #region heading_collapsed="true" -->
 ## 1. Download data and predict gender
 
 We follow four steps approaches to get the paper and author information 
@@ -419,7 +420,7 @@ We follow four steps approaches to get the paper and author information
 4. We predict the gender from the first name of the author
 
 ![](https://cdn-images-1.medium.com/max/1600/1*jsBIqWumazLCekrlKbUg_A.png)
-
+<!-- #endregion -->
 
 ### Step 1: Download data from Google spreadsheet
 
@@ -1320,7 +1321,7 @@ The list of journals we collected is available from *steps 2–3: paper informat
 I admit the paper collection process wasn’t as scientific as one can expect. I also cannot deny that the data might have a selection bias too, but it is something that was beyond my reach when I joined the project.
 
 ```python
-df_publication_rank['rang_digit'].value_counts()
+df_publication_rank['rank_digit'].value_counts()
 ```
 
 ## 5. Wrapping up 
@@ -1961,7 +1962,12 @@ df_final = (
     )
     .drop(columns=["_merge"])
     .merge(df_srj, how="left", indicator=True)
-    .assign(paper_name=lambda x: clean_paper_name(x["paper_name"]))
+    .assign(
+        paper_name=lambda x: clean_paper_name(x["paper_name"]),
+        lag = lambda x: x['lag'].fillna('NO'),
+        interaction_term = lambda x: x['interaction_term'].fillna('NO'),
+        quadratic_term = lambda x: x['quadratic_term'].fillna('NO'),
+    )
 )
 ```
 
@@ -1991,8 +1997,12 @@ df_final = (
     df_final
     .loc[lambda x: ~x['_merge'].isin(['left_only'])]
     .drop(columns = ['_merge'])
-    .dropna(subset = ['paper_name', 'sentiment', 'interaction_term'])
+    .dropna(subset = ['paper_name', 'sentiment', 'environmental'])
 )
+```
+
+```python
+df_final.isna().sum()
 ```
 
 ```python
