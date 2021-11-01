@@ -537,7 +537,16 @@ def find_doi(paper_name):
                     .drop_duplicates()
                     .values[0][0]
                 )
+                # Find ID source spreadsheet
+                id_source = (
+                    doi
+                    .loc[lambda x: x['Title'].isin([paper_name])]
+                    .reindex(columns=['Nr. '])
+                    .drop_duplicates()
+                    .values[0][0]
+                )
                 response_2 = response_2.json()
+                response_2['id_source'] = id_source
                 response_2['paper_name_source'] = paper_name
                 response_2['publication_name'] = publication_name
                 response_2['status'] = 'found'
@@ -1290,12 +1299,12 @@ df_publication_rank = (
     .sort_values(by=["_merge"])
     .assign(
         RANK=lambda x: x["RANK"].astype("str"),
-        rang_digit=lambda x: x["RANK"].str.extract("(\d+)"),
+        rank_digit=lambda x: x["RANK"].str.extract("(\d+)"),
     )
-    .assign(rang_digit=lambda x: x["rang_digit"].fillna("5"))
-    .reindex(columns=["publication_name", "rang_digit"])
+    .assign(rank_digit=lambda x: x["rank_digit"].fillna("5"))
+    .reindex(columns=["publication_name", "rank_digit"])
     .drop_duplicates()
-    .sort_values(by=["rang_digit"], ascending=True)
+    .sort_values(by=["rank_digit"], ascending=True)
 )
 df_publication_rank.head()
 ```
@@ -1450,10 +1459,11 @@ df_authors_journal_full = (
     .reindex(
         columns=[
             "publication_name",
-            "rang_digit",
+            "rank_digit",
             "paperId",
             "url_paper",
             "title",
+            "id_source",
             "abstract",
             "venue",
             "year",
@@ -1466,7 +1476,7 @@ df_authors_journal_full = (
             "doi_paper",
             "dblp_paper",
             "nb_authors",
-             "cluster_w_emb",
+            "cluster_w_emb",
             "sentiment",
             "lenght",
             "adj",
@@ -1508,8 +1518,9 @@ df_authors_journal_full.shape
 df_authors_journal_full.head(2).reindex(
         columns=[
             "publication_name",
-            "rang_digit",
+            "rank_digit",
             "title",
+            "id_source",
              "cluster_w_emb",
             "sentiment",
             "status",
@@ -1569,332 +1580,19 @@ Clean up the folder with the previous csv file. Be careful, it will erase all fi
 s3.remove_all_bucket(path_remove = s3_output)
 ```
 
-```python
-%%time
-query = """
--- CREATE TABLE {0}.{1} WITH (format = 'PARQUET') AS
-WITH merge AS (
-  SELECT 
-    id, 
-    id_old,
-    image,
-    row_id_excel,
-    table_refer,
-    row_id_google_spreadsheet,
-    incremental_id,
-    paper_name, 
-    --publication_year, 
-    publication_type, 
-    regexp_replace(
-      regexp_replace(
-        lower(publication_name), 
-        '\&', 
-        'and'
-      ), 
-      '\-', 
-      ' '
-    ) as publication_name, 
-    cnrs_ranking, 
-    UPPER(peer_reviewed) as peer_reviewed, 
-    UPPER(study_focused_on_social_environmental_behaviour) as study_focused_on_social_environmental_behaviour, 
-    type_of_data, 
-    CASE WHEN regions = 'ARAB WORLD' THEN 'WORLDWIDE' ELSE regions END AS regions,
-    CASE WHEN study_focusing_on_developing_or_developed_countries = 'Europe' THEN 'WORLDWIDE' ELSE UPPER(study_focusing_on_developing_or_developed_countries) END AS study_focusing_on_developing_or_developed_countries,
-    first_date_of_observations,
-    last_date_of_observations,
-    CASE WHEN first_date_of_observations >= 1997 THEN 'YES' ELSE 'NO' END AS kyoto,
-    CASE WHEN first_date_of_observations >= 2009 THEN 'YES' ELSE 'NO' END AS financial_crisis,
-    last_date_of_observations - first_date_of_observations as windows,
-    adjusted_model_name,
-    adjusted_model,
-    dependent, 
-    adjusted_dependent,
-    independent,
-    adjusted_independent, 
-    social,
-    environmental,
-    governance,
-    sign_of_effect,
-    target,
-    p_value_significant,
-    sign_positive,
-    sign_negative,
-    lag, 
-    interaction_term, 
-    quadratic_term, 
-    n, 
-    r2, 
-    beta, 
-    to_remove,
-    test_standard_error,
-    test_p_value,
-    test_t_value,
-    adjusted_standard_error,
-    adjusted_t_value
-  FROM 
-    esg.papers_meta_analysis_new 
-    LEFT JOIN (
-      SELECT 
-        DISTINCT(title),
-        nr as id_old, 
-        publication_year, 
-        publication_type, 
-        publication_name, 
-        cnrs_ranking, 
-        peer_reviewed, 
-        study_focused_on_social_environmental_behaviour, 
-        type_of_data, 
-        study_focusing_on_developing_or_developed_countries
-      FROM 
-        esg.papers_meta_analysis
-    ) as old on papers_meta_analysis_new.id = old.id_old
-    -- WHERE to_remove = 'TO_KEEP'
-LEFT JOIN (
-SELECT 
-        nr,
-        CAST(MIN(first_date_of_observations) as int) as first_date_of_observations,
-        CAST(MAX(last_date_of_observations)as int) as last_date_of_observations,
-        min(row_id_excel) as row_id_excel
-      FROM 
-        esg.papers_meta_analysis
-        GROUP BY nr
-) as date_pub on papers_meta_analysis_new.id = date_pub.nr
-LEFT JOIN (
-SELECT 
-  nr, 
-  MIN(regions) as regions 
-FROM 
-  (
-    SELECT 
-      nr, 
-      CASE WHEN regions_of_selected_firms in (
-        'Cameroon', 'Egypt', 'Libya', 'Morocco', 
-        'Nigeria'
-      ) THEN 'AFRICA' WHEN regions_of_selected_firms in ('GCC countries') THEN 'ARAB WORLD' WHEN regions_of_selected_firms in (
-        'India', 'Indonesia', 'Taiwan', 'Vietnam', 
-        'Australia', 'China', 'Iran', 'Malaysia', 
-        'Pakistan', 'South Korea', 'Bangladesh'
-      ) THEN 'ASIA AND PACIFIC' WHEN regions_of_selected_firms in (
-        'Spain', '20 European countries', 
-        'United Kingdom', 'France', 'Germany, Italy, the Netherlands and United Kingdom', 
-        'Turkey', 'UK'
-      ) THEN 'EUROPE' WHEN regions_of_selected_firms in ('Latin America', 'Brazil') THEN 'LATIN AMERICA' WHEN regions_of_selected_firms in ('USA', 'US', 'U.S.', 'Canada') THEN 'NORTH AMERICA' ELSE 'WORLDWIDE' END AS regions 
-    FROM 
-      papers_meta_analysis
-  ) 
-GROUP BY 
-  nr
-) as reg on papers_meta_analysis_new.id = reg.nr
-) 
-SELECT 
-    to_remove, 
-    id, 
-    id_old,
-    image,
-    row_id_excel,
-    row_id_google_spreadsheet,
-    table_refer,
-    incremental_id,
-    paper_name,
-    --publication_name,
-    rank,
-    sjr, 
-    sjr_best_quartile, 
-    h_index, 
-    total_docs_2020, 
-    total_docs_3years, 
-    total_refs, 
-    total_cites_3years, 
-    citable_docs_3years, 
-    cites_doc_2years, 
-    country ,
-    --publication_year, 
-    publication_type, 
-    --cnrs_ranking, 
-    peer_reviewed, 
-    study_focused_on_social_environmental_behaviour, 
-    type_of_data, 
-    regions,
-    region_journal,
-    study_focusing_on_developing_or_developed_countries,
-    first_date_of_observations,
-    last_date_of_observations - (windows/2) as mid_year,
-    last_date_of_observations,
-    kyoto,
-    financial_crisis,
-    windows,
-    adjusted_model_name,
-    adjusted_model,
-    dependent, 
-    adjusted_dependent,
-    independent,
-    adjusted_independent, 
-    social,
-    environmental,
-    governance,
-    sign_of_effect,
-    target,
-    p_value_significant,
-    sign_positive,
-    sign_negative,
-    lag, 
-    interaction_term, 
-    quadratic_term, 
-    n, 
-    r2, 
-    beta, 
-    test_standard_error,
-    test_p_value,
-    test_t_value,
-    adjusted_standard_error,
-    adjusted_t_value 
-FROM 
-  merge 
-  LEFT JOIN (
-    SELECT 
-      rank, 
-      regexp_replace(
-        regexp_replace(
-          lower(title), 
-          '\&', 
-          'and'
-        ), 
-        '\-', 
-        ' '
-      ) as title, 
-      sjr, 
-      sjr_best_quartile, 
-      h_index, 
-      total_docs_2020, 
-      total_docs_3years, 
-      total_refs, 
-      total_cites_3years, 
-      citable_docs_3years, 
-      cites_doc_2years, 
-      country,
-      region as region_journal
-    FROM 
-      "scimago"."journals_scimago"
-    WHERE sourceid not in (16400154787)
-  ) as journal on merge.publication_name = journal.title
-""".format(DatabaseName, table_name)
-output = s3.run_query(
-                    query=query,
-                    database=DatabaseName,
-                    s3_output=s3_output_example,
-    filename = "temp"
-                )
-output.head()
+## Combine Statistical tables with authors journal information
 
-```
+At the very beginning of the project, the main spreadsheet contained sufficiently large amount of errors so we decided to extract the data by implementing auditing tools to make sure of the quality of the data. However, some informations such as the data provider and panel's year was ok to use. However, some tidy work need to be done because the panel year is not unique across paper.
 
-```python
-output.shape
-```
+In this part, we will proceed as follow:
 
-We also want to add csr_20_categories and cfp_4_categories, but the original data are not unique so we will keep the unique values using brute force method. 
+1. Download Scimago data
+2. Download new meta analysis data
+3. Downmoad old meta analysis data
+4. Aggregate paper-author information
+5. Merge step 1-4
 
-```python
-query_csr = """
-SELECT DISTINCT(csr_20_categories), nr as id_old
-FROM "esg"."papers_meta_analysis" 
-ORDER BY nr
-"""
-output_csr = (
-    s3.run_query(
-                    query=query_csr,
-                    database=DatabaseName,
-                    s3_output=s3_output_example,
-    filename = "temp"
-                )
-    .drop_duplicates(subset = ['id_old'])
-)
-output_csr.head()
-```
-
-```python
-query_csr = """
-SELECT DISTINCT(cfp_4_categories
-), nr as id_old
-FROM "esg"."papers_meta_analysis" 
-ORDER BY nr
-"""
-output_cfp = (
-    s3.run_query(
-                    query=query_csr,
-                    database=DatabaseName,
-                    s3_output=s3_output_example,
-    filename = "temp"
-                )
-    .drop_duplicates(subset = ['id_old'])
-)
-output_cfp.head()
-```
-
-```python
-output = (
-    output
-    .merge(output_csr)
-    .merge(output_cfp)
-)
-```
-
-```python
-output.shape
-```
-
-Use Semantic scholar to find ID
-
-```python
-def find_id(paper_name):
-    """
-    to keep thing simple, assume first results in the best option
-    """
-    paper_name_clean = (
-         paper_name
-        .lower()
-        .replace("  ", "+")
-        .replace(" ", "+")
-        .replace("\n", "+")
-        .replace(",", "+")
-        .replace("–", "")
-        .replace("++", "+")
-        .replace(":", "")
-    )
-    url_paper = 'https://api.semanticscholar.org/graph/v1/paper/search?query={}&fields={}'.format(
-        paper_name_clean, ",".join(field))
-    response_1 = requests.get(url_paper, headers=headers)
-    if response_1.status_code == 200:
-        response_1 = response_1.json()
-        if len(response_1['data']) > 0:
-            url_paper = "https://api.semanticscholar.org/graph/v1/paper/{}?fields={}".format(
-                response_1['data'][0]['paperId'], ",".join(field_paper))
-            response_2 = requests.get(url_paper, headers=headers)
-            return {'paper_name': paper_name, 'paperId':response_2.json()['paperId']}
-```
-
-```python
-find_list = False
-if find_list:
-    list_ids = []
-    failure = []
-    for p in tqdm(list(output['paper_name'].unique())):
-        time.sleep(8)
-        try:
-            list_ids.append(find_id(p))
-        except:
-            failure.append(p)
-    with open('MODELS_AND_DATA/list_papers_id.pickle', 'wb') as handle:
-        pickle.dump(list_ids, handle)
-```
-
-```python
-list_ids = pickle.load( open( "MODELS_AND_DATA/list_papers_id.pickle", "rb" ))
-```
-
-### Add authors information:
-
-- Add the following information from [AUTHOR_SEMANTIC_GOOGLE](https://docs.google.com/spreadsheets/d/1GrrQBip4qNcDuT_MEG9KhNhfTC3yFsVZUtP8-SvXBL4/edit?usp=sharing)
+### Data construction
 
 **Regroup data provider**
 
@@ -1914,7 +1612,9 @@ list_ids = pickle.load( open( "MODELS_AND_DATA/list_papers_id.pickle", "rb" ))
     - 'Surveys':'OTHER',
     - 'Environmental disclosure':'OTHER',
     - 'Disclosure of CSR and GRI':'OTHER'
-
+    
+Then construct a dummy `providers` taking the value of 1 if MSCI otherwise 0
+    
 **Regroup journal region**
 
 - Europe
@@ -1930,12 +1630,256 @@ list_ids = pickle.load( open( "MODELS_AND_DATA/list_papers_id.pickle", "rb" ))
     - Middle East
     - Africa/Middle East
     - Africa
+    
+- Region:
+  - AFRICA: 'Cameroon', 'Egypt', 'Libya', 'Morocco', 'Nigeria'
+  - ASIA AND PACIFIC: 'India', 'Indonesia', 'Taiwan', 'Vietnam', 'Australia', 'China', 'Iran', 'Malaysia', 'Pakistan', 'South Korea', 'Bangladesh'
+  - EUROPE: 'Spain', '20 European countries', 'United Kingdom', 'France', 'Germany, Italy, the Netherlands and United Kingdom', 'Turkey', 'UK'
+  - LATIN AMERICA: 'Latin America', 'Brazil'
+  - NORTH AMERICA: 'USA', 'US', 'U.S.', 'Canada'
+  - ELSE WORLDWIDE
+- Kyoto first_date_of_observations >= 1997 THEN TRUE ELSE FALSE ,
+- Financial crisis first_date_of_observations >= 2009 THEN TRUE ELSE FALSE
+- windows: last_date_of_observations - first_date_of_observations
+- mid-year: last_date_of_observations - (windows/2)
+- is_open_access: True if the journal is an open access publication
+- region_journal: Region journal
+  - Europe
+    - Eastern Europe
+    - Western Europe
+  - Northern America
+- providers: If `csr_20_categories` equals to 'MSCI' then "MCSI" else "NOT_MSCI". MSCI is the main ESG's data provider
+
+
+### Download Scimago table
+
+```python
+query = """
+SELECT 
+      rank, 
+      regexp_replace(
+        regexp_replace(
+          lower(title), 
+          '\&', 
+          'and'
+        ), 
+        '\-', 
+        ' '
+      ) as publication, 
+      sjr,
+      region as region_journal
+    FROM 
+      "scimago"."journals_scimago"
+    WHERE sourceid not in (16400154787)
+"""
+df_srj = (
+    s3.run_query(
+                    query=query,
+                    database="scimago",
+                    s3_output=s3_output_example,
+    filename = "temp"
+                )
+    .replace(
+        {
+            'region_journal': {
+                'Eastern Europe': 'EUROPE',
+                'Western Europe': 'EUROPE',
+                'Northern America': 'NORTHERN AMERICA',
+                'Asiatic Region': 'ASIA-PACIFIC',
+                'Pacific Region': 'ASIA-PACIFIC',
+                'Latin America':'SOUTH AMERICA',
+                'Middle East': "AFRICA-MIDDLE EAST",
+                'Africa/Middle East': "AFRICA-MIDDLE EAST",
+                'Africa': "AFRICA-MIDDLE EAST"
+            }
+        }
+    )
+    .rename(columns = {'publication':'publication_name'})
+)
+df_srj.shape
+```
+
+```python
+df_srj.head(1)
+```
+
+### Download new data meta-analysis
+
+```python
+query = """
+SELECT  id,
+ drive_url,
+ image,
+ row_id_google_spreadsheet,
+ table_refer,
+ adjusted_model,
+ adjusted_dependent,
+ adjusted_independent,
+ social,
+ environmental,
+ governance,
+ lag,
+ interaction_term,
+ quadratic_term,
+ n,
+ target,
+ adjusted_standard_error,
+ adjusted_t_value
+FROM esg.papers_meta_analysis_new
+"""
+df_meta_new = s3.run_query(
+                    query=query,
+                    database=DatabaseName,
+                    s3_output=s3_output_example,
+    filename = "temp",
+    dtype = {'id':'string'}
+                )
+df_meta_new.shape
+```
+
+### Download previous data
+
+```python
+def create_region(x):
+    """
+    - AFRICA :'Cameroon', 'Egypt', 'Libya', 'Morocco', 'Nigeria'
+    - ARAB WORLD: GCC countries
+    - ASIA AND PACIFIC: 'India', 'Indonesia', 'Taiwan', 'Vietnam', 
+        'Australia', 'China', 'Iran', 'Malaysia', 
+        'Pakistan', 'South Korea', 'Bangladesh'
+    - EUROPE: 'Spain', '20 European countries', 
+        'United Kingdom', 'France', 'Germany, Italy, the Netherlands and United Kingdom', 
+        'Turkey', 'UK'
+    - LATIN AMERICA: 'Latin America', 'Brazil'
+    - NORTH AMERICA: 'USA', 'US', 'U.S.', 'Canada'
+
+    """
+    if x in ['Cameroon', 'Egypt', 'Libya', 'Morocco', 'Nigeria']:
+        region = 'AFRICA'
+    elif x in ['GCC countries']:
+        region = 'ARAB WORLD'
+    elif x in ['India', 'Indonesia', 'Taiwan', 'Vietnam',
+               'Australia', 'China', 'Iran', 'Malaysia',
+               'Pakistan', 'South Korea', 'Bangladesh']:
+        region = 'AFRICA'
+
+    elif x in ['Spain', '20 European countries',
+               'United Kingdom', 'France', 'Germany, Italy, the Netherlands and United Kingdom',
+               'Turkey', 'UK']:
+        region = 'EUROPE'
+
+    elif x in ['Latin America', 'Brazil']:
+        region = 'LATIN AMERICA'
+
+    elif x in ['USA', 'US', 'U.S.', 'Canada']:
+        region = 'NORTH AMERICA'
+
+    else:
+        region = 'WORLDWIDE'
+    return region
+```
+
+```python
+FILENAME_SPREADSHEET = "CSR Excel File Meta-Analysis - Version 4 -  01.02.2021"
+spreadsheet_id = drive.find_file_id(FILENAME_SPREADSHEET, to_print=False)
+df_meta_old = (
+    drive.download_data_from_spreadsheet(
+    sheetID = spreadsheet_id,
+    sheetName = "Feuil1",
+    to_dataframe = True)
+    .reindex(
+        columns=[
+            "Nr. ",
+            "Title",
+            "First date of observations",
+            "Last date of observations",
+            "CSR 20 Categories",
+            "Region(s) of selected firms",
+        ]
+    )
+    .rename(
+        columns={
+            "Nr. ": "id",
+            "Title": "paper_name",
+            "First date of observations": "first_date_of_observations",
+            "Last date of observations": "last_date_of_observations",
+            "CSR 20 Categories": "csr_20_categories",
+            "Region(s) of selected firms": "regions_of_selected_firms",
+        }
+    )
+     .assign(
+         first_date_of_observations = lambda x: pd.to_numeric(x['first_date_of_observations'], errors = 'coerce'),
+         last_date_of_observations = lambda x: pd.to_numeric(x['last_date_of_observations'], errors = 'coerce')
+    )
+    .drop_duplicates(subset=["paper_name", "id"])
+    .dropna()
+    .replace(
+        {
+            "csr_20_categories": {
+                "BIST ESG score": "OTHER",
+                "Vigeo score": "OTHER",
+                "Charity": "OTHER",
+                "EIRIS": "OTHER",
+                "Fortune": "OTHER",
+                "Ibase": "OTHER",
+                "ISO norms": "OTHER",
+                "RiskMetrics": "OTHER",
+                "Surveys": "OTHER",
+                "Environmental disclosure": "OTHER",
+                "Disclosure of CSR and GRI": "OTHER",
+                "Other": "OTHER",
+                "Bloomberg ESG score": "BLOOMBERG",
+                "Thomson": "THOMSON",
+                "KLD rating": "MSCI",
+            }
+        }
+    )
+        .assign(
+        kyoto=lambda x: x.apply(
+            lambda x: "YES" if x["first_date_of_observations"] >= 1997 else "NO", axis=1
+        ),
+        financial_crisis=lambda x: x.apply(
+            lambda x: "YES" if x["first_date_of_observations"] >= 2009 else "NO", axis=1
+        ),
+        windows=lambda x: x["last_date_of_observations"]
+        - x["first_date_of_observations"],
+        mid_year=lambda x: (x["last_date_of_observations"] - (x["windows"] / 2)).astype(
+            int
+        ),
+        regions=lambda x: x.apply(
+            lambda x: create_region(x["regions_of_selected_firms"]), axis=1
+        ),
+        providers=lambda x: x.apply(
+            lambda x: "MSCI" if x["csr_20_categories"] == "MSCI" else "NOT_MSCI", axis=1
+        )
+    )
+    .drop(columns = ['regions_of_selected_firms'])
+)
+```
+
+```python
+df_meta_old.head(1)
+```
+
+```python
+df_meta_new.shape
+```
+
+### Add authors information:
+
+- Add the following information from [AUTHOR_SEMANTIC_GOOGLE](https://docs.google.com/spreadsheets/d/1GrrQBip4qNcDuT_MEG9KhNhfTC3yFsVZUtP8-SvXBL4/edit?usp=sharing)
 
 
 ```python
-"referenceCount",
-            "citationCount",
-            "influentialCitationCount",
+def clean_paper_name(x):
+    name = (x
+            .replace('#N/A|#VALUE!|\?\?\?', np.nan, regex=True)
+            .replace('', np.nan)
+            .replace('\n', ' ', regex=True)
+            .replace('\,', ' ', regex=True)
+            .replace('\"', ' ', regex=True)
+            )
+    return name
 ```
 
 ```python
@@ -1954,97 +1898,105 @@ df_final = (
     )
     .assign(pct_esg=lambda x: x["esg"] / x["total_paper"])
     .reset_index()
-    .loc[lambda x: x['esg'] != 0]
-    .merge(pd.DataFrame([i for i in list_ids if i]), on=["paperId"])
+    .loc[lambda x: x["esg"] != 0]
+    # .merge(pd.DataFrame([i for i in list_ids if i]), on=["paperId"])
     .merge(
         (
-            df_authors_journal_full.groupby(
-                ["paperId"])['gender'].value_counts()
+            df_authors_journal_full.groupby(["paperId", "id_source"])["gender"]
+            .value_counts()
             .unstack(-1)
             .fillna(0)
             .assign(
                 total=lambda x: x.sum(axis=1),
-                pct_female=lambda x: x['FEMALE']/x['total']
+                pct_female=lambda x: x["FEMALE"] / x["total"],
             )
             .reset_index()
-            .drop(columns=['total'])
-        ), on=['paperId']
-    )
-    .merge(output, on=["paper_name"])
-    .rename(columns={
-        #'cited_by.total': 'cited_by_total',
-        #'referenceCount': 'reference_count',
-        #'citationCount': 'citation_count',
-        'isOpenAccess': 'is_open_access',
-        #'cited_by.total': 'cited_by_total',
-        'FEMALE': 'female',
-        'MALE': 'male',
-        'UNKNOWN': 'unknown'
-    })
-    .replace(
-        {
-            'csr_20_categories': {
-                'BIST ESG score': 'OTHER',
-                'Vigeo score': 'OTHER',
-                'Charity': 'OTHER',
-                'EIRIS': 'OTHER',
-                'Fortune': 'OTHER',
-                'Ibase': 'OTHER',
-                'ISO norms': 'OTHER',
-                'RiskMetrics': 'OTHER',
-                'Surveys': 'OTHER',
-                'Environmental disclosure': 'OTHER',
-                'Disclosure of CSR and GRI': 'OTHER',
-                'Other': 'OTHER',
-                'Bloomberg ESG score': 'BLOOMBERG',
-                'Thomson': 'THOMSON',
-                'KLD rating': 'MSCI',
-            },
-            'region_journal': {
-                'Eastern Europe': 'EUROPE',
-                'Western Europe': 'EUROPE',
-                'Northern America': 'NORTHERN AMERICA',
-            }
-        }
+            .drop(columns=["total"])
+        ),
+        on=["paperId"],
     )
     .merge(
         (
-            df_authors_journal_full
-            .reindex(columns=[
-                'paperId',
-                "year",
-                "publication_name",
-                "rang_digit",
-                'cluster_w_emb',
-                'sentiment',
-                'lenght',
-                'adj',
-                'noun',
-                'verb',
-                'size_abstract',
-                'pct_adj',
-                'pct_noun',
-                'pct_verb'
-            ])
-            .drop_duplicates(subset=['paperId'])
-            
+            df_meta_new.merge(df_meta_old, how="inner", on=["id"]).rename(
+                columns={"id": "id_source"}
+            )
+        ),
+        on=["id_source"],
+        how="left",
+        indicator=True,
+    )
+    .merge(
+        (
+            df_authors_journal_full.reindex(
+                columns=[
+                    "paperId",
+                    "year",
+                    "publication_name",
+                    "rank_digit",
+                    "cluster_w_emb",
+                    "sentiment",
+                    "lenght",
+                    "adj",
+                    "noun",
+                    "verb",
+                    "size_abstract",
+                    "pct_adj",
+                    "pct_noun",
+                    "pct_verb",
+                ]
+            ).drop_duplicates(subset=["paperId"])
         )
     )
-    .rename(columns = 
-            {
-                'year':"publication_year",
-                "referenceCount":'reference_count',
-                "citationCount":'citation_count',
-                "influentialCitationCount":'influential_citation_count'
-                
-            })
+    .rename(
+        columns={
+            "year": "publication_year",
+            "referenceCount": "reference_count",
+            "citationCount": "citation_count",
+            "influentialCitationCount": "influential_citation_count",
+            "isOpenAccess": "is_open_access",
+            "FEMALE": "female",
+            "MALE": "male",
+            "UNKNOWN": "unknown",
+        }
+    )
+    .drop(columns=["_merge"])
+    .merge(df_srj, how="left", indicator=True)
+    .assign(paper_name=lambda x: clean_paper_name(x["paper_name"]))
 )
-
-df_final.shape
 ```
 
 ```python
-df_final.head(1)
+#df_final.loc[lambda x :x['paperId'].isin(["57bf8e616da8230ca7a961be19affeb8b8ae619d"])].head()
+```
+
+```python
+df_final['_merge'].value_counts()
+```
+
+Unknown journals: Missing in both CNRS and Scimago
+
+```python
+(
+    df_final
+    .loc[lambda x: x['_merge'].isin(['left_only'])]
+    .reindex(columns = ['publication_name', 'rank_digit'])
+    .drop_duplicates()
+)
+```
+
+We need to remove the missing journals from Scimago
+
+```python
+df_final = (
+    df_final
+    .loc[lambda x: ~x['_merge'].isin(['left_only'])]
+    .drop(columns = ['_merge'])
+    .dropna(subset = ['paper_name', 'sentiment', 'interaction_term'])
+)
+```
+
+```python
+df_final.shape
 ```
 
 ```python
@@ -2079,8 +2031,15 @@ s3.upload_file(input_path, s3_output)
 ```
 
 ```python
+#for i in pd.io.json.build_table_schema(df_final)['fields']:
+#    if i['type'] in ['number', 'integer']:
+#        i['type'] = 'int'
+#    print("{},".format({'Name':i['name'], 'Type':i['type'],'Comments':''}))
+```
+
+```python
 schema = [
-    {'Name': 'index', 'Type': 'int', 'Comments': ''},
+   {'Name': 'index', 'Type': 'string', 'Comments': ''},
 {'Name': 'paperId', 'Type': 'string', 'Comments': ''},
 {'Name': 'nb_authors', 'Type': 'int', 'Comments': ''},
 {'Name': 'reference_count', 'Type': 'int', 'Comments': ''},
@@ -2090,82 +2049,55 @@ schema = [
 {'Name': 'total_paper', 'Type': 'int', 'Comments': ''},
 {'Name': 'esg', 'Type': 'int', 'Comments': ''},
 {'Name': 'pct_esg', 'Type': 'float', 'Comments': ''},
-{'Name': 'paper_name', 'Type': 'string', 'Comments': ''},
-{'Name': 'female', 'Type': 'float', 'Comments': ''},
-{'Name': 'male', 'Type': 'float', 'Comments': ''},
-{'Name': 'unknown', 'Type': 'float', 'Comments': ''},
+{'Name': 'id_source', 'Type': 'string', 'Comments': ''},
+{'Name': 'female', 'Type': 'int', 'Comments': ''},
+{'Name': 'male', 'Type': 'int', 'Comments': ''},
+{'Name': 'unknown', 'Type': 'int', 'Comments': ''},
 {'Name': 'pct_female', 'Type': 'float', 'Comments': ''},
-{'Name': 'to_remove', 'Type': 'string', 'Comments': ''},
-{'Name': 'id', 'Type': 'int', 'Comments': ''},
+{'Name': 'drive_url', 'Type': 'string', 'Comments': ''},
 {'Name': 'image', 'Type': 'string', 'Comments': ''},
-{'Name': 'row_id_excel', 'Type': 'string', 'Comments': ''},
 {'Name': 'row_id_google_spreadsheet', 'Type': 'string', 'Comments': ''},
 {'Name': 'table_refer', 'Type': 'string', 'Comments': ''},
-{'Name': 'incremental_id', 'Type': 'int', 'Comments': ''},
-{'Name': 'publication_name', 'Type': 'string', 'Comments': ''},
-{'Name': 'rank', 'Type': 'int', 'Comments': ''},
-{'Name': 'sjr', 'Type': 'float', 'Comments': ''},
-{'Name': 'sjr_best_quartile', 'Type': 'string', 'Comments': ''},
-{'Name': 'h_index', 'Type': 'int', 'Comments': ''},
-{'Name': 'total_docs_2020', 'Type': 'int', 'Comments': ''},
-{'Name': 'total_docs_3years', 'Type': 'int', 'Comments': ''},
-{'Name': 'total_refs', 'Type': 'int', 'Comments': ''},
-{'Name': 'total_cites_3years', 'Type': 'int', 'Comments': ''},
-{'Name': 'citable_docs_3years', 'Type': 'int', 'Comments': ''},
-{'Name': 'cites_doc_2years', 'Type': 'int', 'Comments': ''},
-{'Name': 'country', 'Type': 'string', 'Comments': ''},
-{'Name': 'publication_year', 'Type': 'int', 'Comments': ''},
-{'Name': 'publication_type', 'Type': 'string', 'Comments': ''},
-{'Name': 'cnrs_ranking', 'Type': 'int', 'Comments': ''},
-{'Name': 'peer_reviewed', 'Type': 'string', 'Comments': ''},
-{'Name': 'study_focused_on_social_environmental_behaviour', 'Type': 'string', 'Comments': ''},
-{'Name': 'type_of_data', 'Type': 'string', 'Comments': ''},
-{'Name': 'regions', 'Type': 'string', 'Comments': ''},
-{'Name': 'study_focusing_on_developing_or_developed_countries', 'Type': 'string', 'Comments': ''},
-{'Name': 'first_date_of_observations', 'Type': 'int', 'Comments': ''},
-{'Name': 'mid_year', 'Type': 'int', 'Comments': ''},
-{'Name': 'last_date_of_observations', 'Type': 'int', 'Comments': ''},
-{'Name': 'kyoto', 'Type': 'string', 'Comments': ''},
-{'Name': 'financial_crisis', 'Type': 'string', 'Comments': ''},
-{'Name': 'windows', 'Type': 'int', 'Comments': ''},
-{'Name': 'adjusted_model_name', 'Type': 'string', 'Comments': ''},
 {'Name': 'adjusted_model', 'Type': 'string', 'Comments': ''},
-{'Name': 'dependent', 'Type': 'string', 'Comments': ''},
 {'Name': 'adjusted_dependent', 'Type': 'string', 'Comments': ''},
-{'Name': 'independent', 'Type': 'string', 'Comments': ''},
 {'Name': 'adjusted_independent', 'Type': 'string', 'Comments': ''},
 {'Name': 'social', 'Type': 'string', 'Comments': ''},
 {'Name': 'environmental', 'Type': 'string', 'Comments': ''},
 {'Name': 'governance', 'Type': 'string', 'Comments': ''},
-{'Name': 'sign_of_effect', 'Type': 'string', 'Comments': ''},
-{'Name': 'target', 'Type': 'string', 'Comments': ''},
-{'Name': 'p_value_significant', 'Type': 'string', 'Comments': ''},
-{'Name': 'sign_positive', 'Type': 'string', 'Comments': ''},
-{'Name': 'sign_negative', 'Type': 'string', 'Comments': ''},
 {'Name': 'lag', 'Type': 'string', 'Comments': ''},
 {'Name': 'interaction_term', 'Type': 'string', 'Comments': ''},
 {'Name': 'quadratic_term', 'Type': 'string', 'Comments': ''},
 {'Name': 'n', 'Type': 'int', 'Comments': ''},
-{'Name': 'r2', 'Type': 'float', 'Comments': ''},
-{'Name': 'beta', 'Type': 'float', 'Comments': ''},
-{'Name': 'test_standard_error', 'Type': 'string', 'Comments': ''},
-{'Name': 'test_p_value', 'Type': 'string', 'Comments': ''},
-{'Name': 'test_t_value', 'Type': 'string', 'Comments': ''},
+{'Name': 'target', 'Type': 'string', 'Comments': ''},
 {'Name': 'adjusted_standard_error', 'Type': 'float', 'Comments': ''},
 {'Name': 'adjusted_t_value', 'Type': 'float', 'Comments': ''},
+{'Name': 'paper_name', 'Type': 'string', 'Comments': ''},
+{'Name': 'first_date_of_observations', 'Type': 'int', 'Comments': ''},
+{'Name': 'last_date_of_observations', 'Type': 'int', 'Comments': ''},
 {'Name': 'csr_20_categories', 'Type': 'string', 'Comments': ''},
-{'Name': 'cfp_4_categories', 'Type': 'string', 'Comments': ''},    
-{'Name': 'cluster_w_emb', 'Type': 'string', 'Comments': ''},
+{'Name': 'regions_of_selected_firms', 'Type': 'string', 'Comments': ''},
+{'Name': 'kyoto', 'Type': 'string', 'Comments': ''},
+{'Name': 'financial_crisis', 'Type': 'string', 'Comments': ''},
+{'Name': 'windows', 'Type': 'int', 'Comments': ''},
+{'Name': 'mid_year', 'Type': 'float', 'Comments': ''},
+{'Name': 'regions', 'Type': 'string', 'Comments': ''},
+{'Name': 'providers', 'Type': 'string', 'Comments': ''},
+{'Name': 'publication_year', 'Type': 'int', 'Comments': ''},
+{'Name': 'publication_name', 'Type': 'string', 'Comments': ''},
+{'Name': 'rank_digit', 'Type': 'string', 'Comments': ''},
+{'Name': 'cluster_w_emb', 'Type': 'int', 'Comments': ''},
 {'Name': 'sentiment', 'Type': 'string', 'Comments': ''},
-    {'Name': 'region_journal', 'Type': 'string', 'Comments': ''},
-{'Name': 'lenght', 'Type': 'float', 'Comments': ''},
-{'Name': 'adj', 'Type': 'float', 'Comments': ''},
+{'Name': 'lenght', 'Type': 'int', 'Comments': ''},
+{'Name': 'adj', 'Type': 'int', 'Comments': ''},
+{'Name': 'noun', 'Type': 'int', 'Comments': ''},
+{'Name': 'verb', 'Type': 'int', 'Comments': ''},
+{'Name': 'size_abstract', 'Type': 'int', 'Comments': ''},
 {'Name': 'pct_adj', 'Type': 'float', 'Comments': ''},
-{'Name': 'noun', 'Type': 'float', 'Comments': ''},
 {'Name': 'pct_noun', 'Type': 'float', 'Comments': ''},
-{'Name': 'verb', 'Type': 'float', 'Comments': ''},
 {'Name': 'pct_verb', 'Type': 'float', 'Comments': ''},
-{'Name': 'size_abstract', 'Type': 'float', 'Comments': ''}
+{'Name': 'rank', 'Type': 'int', 'Comments': ''},
+{'Name': 'sjr', 'Type': 'float', 'Comments': ''},
+{'Name': 'region_journal', 'Type': 'string', 'Comments': ''}
 ]
 
 ```
