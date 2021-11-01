@@ -58,7 +58,8 @@ from awsPy.aws_glue import service_glue
 from pathlib import Path
 import pandas as pd
 import numpy as np
-#import seaborn as sns
+import seaborn as sns
+import matplotlib.pyplot as plt
 import os, shutil, json
 import sys
 import janitor
@@ -233,7 +234,7 @@ FROM
             destination_key="SQL_OUTPUT_ATHENA/CSV",  # Use it temporarily
             dtype=dtypes,
         ).assign(
-            d_rang_digit=lambda x: np.where(
+            d_rank_digit=lambda x: np.where(
                 x["rank_digit"].isin(["1"]), "rank_1", "rank_2345"
             ),
             publication_year_int=lambda x: pd.factorize(x["publication_year"])[0],
@@ -925,7 +926,7 @@ pd.concat(
         pd.concat(
             [
                 (
-                    df.groupby("d_rang_digit")
+                    df.groupby("d_rank_digit")
                     .agg({"target": "value_counts"})
                     .unstack(-1)
                     .assign(
@@ -940,12 +941,12 @@ pd.concat(
         pd.concat(
             [
                 (
-                    df.groupby(["d_rang_digit", "target"])
+                    df.groupby(["d_rank_digit", "target"])
                     .agg({"id_source": "nunique"})
-                    .rename(columns={"id_source": "d_rang_digit"})
+                    .rename(columns={"id_source": "d_rank_digit"})
                     .unstack(-1)
                     .assign(
-                        pct_significant=lambda x: x[("d_rang_digit", "SIGNIFICANT")]
+                        pct_significant=lambda x: x[("d_rank_digit", "SIGNIFICANT")]
                         / x.sum(axis=1)
                     )
                 )
@@ -1169,6 +1170,94 @@ pd.concat(
 )
 ```
 
+```sos kernel="SoS"
+(
+            df.groupby(["cluster_w_emb", "environmental"])
+            .agg({"target": "value_counts"})
+            .unstack(0)
+     .rename(columns={"target": "environmental"})
+    .T
+        )
+```
+
+```sos kernel="SoS"
+pd.concat(
+    [
+        (
+            df.groupby(["cluster_w_emb", "environmental"])
+            .agg({"target": "value_counts"})
+            .unstack(0)
+            .rename(columns={"target": "environmental"})
+            .T
+        ),
+        (
+            df.groupby(["cluster_w_emb", "social"])
+            .agg({"target": "value_counts"})
+            .unstack(0)
+            .rename(columns={"target": "social"})
+            .T
+        ),
+        (
+            df.groupby(["cluster_w_emb", "governance"])
+            .agg({"target": "value_counts"})
+            .unstack(0)
+            .rename(columns={"target": "governance"})
+            .T
+        ),
+    ],
+    axis=0,
+)
+```
+
+<!-- #region kernel="SoS" -->
+#### Correlation among covariates
+
+- publication_year 
+<!-- #endregion -->
+
+```sos kernel="SoS"
+# Compute the correlation matrix
+corr = (
+    df
+    .reindex(columns = [
+        'publication_year',
+        'mid_year',
+        "sjr",
+        "windows",
+        "nb_authors",
+        "pct_female",
+        "pct_esg"
+    ])
+    .corr()
+)
+(
+    corr
+    .where(np.triu(np.ones_like(corr, dtype=bool)))
+    .T
+    .style
+    .format("{0:,.2f}",na_rep="-")
+    #.background_gradient()
+    #.applymap(lambda x: 'color: transparent' if pd.isnull(x) else '')
+)
+```
+
+```sos kernel="SoS"
+np.triu(np.ones_like(corr, dtype=bool))
+```
+
+```sos kernel="SoS"
+corr.where(np.triu(np.ones_like(corr, dtype=bool))).T
+```
+
+```sos kernel="SoS"
+(
+    df
+    .reindex(columns = ['publication_year', 'mid_year'])
+    .plot
+    .scatter(x = 'mid_year', y = 'publication_year', figsize= (6,6) )
+)
+```
+
 <!-- #region kernel="SoS" nteract={"transient": {"deleting": false}} -->
 ## Schema Latex table
 
@@ -1264,7 +1353,7 @@ mutate(
     cluster_w_emb = relevel(as.factor(cluster_w_emb), ref = 'CLUSTER_1'),
     citation_count_1 = normalit(citation_count),
     providers = relevel(as.factor(providers), ref = 'NOT_MSCI'),
-    d_rang_digit = relevel(as.factor(d_rang_digit), ref = 'rank_2345')
+    d_rank_digit = relevel(as.factor(d_rank_digit), ref = 'rank_2345')
 )
 ```
 
@@ -1533,7 +1622,7 @@ t_0 <- glm(target ~ environmental
            + windows
            + mid_year
            + regions
-           + d_rang_digit
+           + d_rank_digit
            + is_open_access
            + region_journal
            + providers,
@@ -1549,7 +1638,7 @@ t_1 <- glm(target ~ social
            + windows
            + mid_year
            + regions
-           + d_rang_digit
+           + d_rank_digit
            + is_open_access
            + region_journal
            + providers,
@@ -1563,7 +1652,7 @@ t_2 <- glm(target ~ governance
            + windows
            + mid_year
            + regions
-           + d_rang_digit
+           + d_rank_digit
            + is_open_access
            + region_journal
            + providers,
@@ -1578,7 +1667,7 @@ t_3 <- glm(target ~ environmental
            + windows
            + mid_year
            + regions
-           + d_rang_digit
+           + d_rank_digit
            + is_open_access
            + region_journal
            + providers
@@ -1597,7 +1686,7 @@ t_4 <- glm(target ~ social
            + windows
            + mid_year
            + regions
-           + d_rang_digit
+           + d_rank_digit
            + is_open_access
            + region_journal
            + providers
@@ -1614,7 +1703,7 @@ t_5 <- glm(target ~ governance
            + windows
            + mid_year
            + regions
-           + d_rang_digit
+           + d_rank_digit
            + is_open_access
            + region_journal
            + providers
@@ -1732,7 +1821,7 @@ t_0 <- glm(target ~ environmental
            + windows
            + mid_year
            + regions
-           + d_rang_digit
+           + d_rank_digit
            + is_open_access
            + region_journal
            + providers
@@ -1753,7 +1842,7 @@ t_1 <- glm(target ~ social
            + windows
            + mid_year
            + regions
-           + d_rang_digit
+           + d_rank_digit
            + is_open_access
            + region_journal
            + providers
@@ -1773,7 +1862,7 @@ t_2 <- glm(target ~ governance
            + windows
            + mid_year
            + regions
-           + d_rang_digit
+           + d_rank_digit
            + is_open_access
            + region_journal
            + providers
@@ -1818,7 +1907,7 @@ t_0 <- glm(target ~ environmental
            + financial_crisis
            + publication_year_int
            + windows
-           + mid_year
+           #+ mid_year
            + regions
            + sjr
            + is_open_access
@@ -1890,7 +1979,7 @@ t_0 <- glm(target ~ environmental
            + windows
            + mid_year
            + regions
-           + d_rang_digit
+           + d_rank_digit
            + is_open_access
            + region_journal
            + providers
@@ -1910,7 +1999,7 @@ t_1 <- glm(target ~ social
            + windows
            + mid_year
            + regions
-           + d_rang_digit
+           + d_rank_digit
            + is_open_access
            + region_journal
            + providers
@@ -1929,7 +2018,7 @@ t_2 <- glm(target ~ governance
            + windows
            + mid_year
            + regions
-           + d_rang_digit
+           + d_rank_digit
            + is_open_access
            + region_journal
            + providers
@@ -1947,10 +2036,10 @@ stargazer(list_final, type = "text",
               se_robust),
           coef=list_final.rrr,
           style = "qje",
-         out="TABLES/ttable_5.txt")
+         out="TABLES/table_5.txt")
 ```
 
-<!-- #region kernel="SoS" -->
+<!-- #region kernel="SoS" heading_collapsed="true" -->
 ## Model OLS: 
 
 $$
