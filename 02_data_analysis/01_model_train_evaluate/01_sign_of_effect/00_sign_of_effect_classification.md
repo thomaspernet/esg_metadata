@@ -128,217 +128,131 @@ for key, value in enumerate(schema):
 
 ```sos kernel="SoS"
 download_data = True
-filename = 'df_{}'.format(table)
-full_path_filename = 'SQL_OUTPUT_ATHENA/CSV/{}.csv'.format(filename)
-path_local = os.path.join(str(Path(path).parent.parent.parent), 
-                              "00_data_catalog/temporary_local_data")
-df_path = os.path.join(path_local, filename + '.csv')
+filename = "df_{}".format(table)
+full_path_filename = "SQL_OUTPUT_ATHENA/CSV/{}.csv".format(filename)
+path_local = os.path.join(
+    str(Path(path).parent.parent.parent), "00_data_catalog/temporary_local_data"
+)
+df_path = os.path.join(path_local, filename + ".csv")
 if download_data:
-    
-    s3 = service_s3.connect_S3(client = client,
-                          bucket = bucket, verbose = False)
+
+    s3 = service_s3.connect_S3(client=client, bucket=bucket, verbose=False)
     query = """
     WITH test as (
   SELECT 
     *, concat(environmental,  social, governance) as filters
-  FROM {}.{} 
+  FROM esg.meta_analysis_esg_cfp
   WHERE 
     first_date_of_observations IS NOT NULL 
     and last_date_of_observations IS NOT NULL 
     and adjusted_model != 'TO_REMOVE' 
 ) 
 SELECT 
-  filters, to_remove, test.id, image, row_id_excel, row_id_google_spreadsheet,
-       table_refer, incremental_id, paper_name, publication_name,
-       rank, sjr, sjr_best_quartile, h_index, total_docs_2020,
-       total_docs_3years, total_refs, total_cites_3years,
-       citable_docs_3years, cites_doc_2years, country,
-       publication_year, publication_type, cnrs_ranking, peer_reviewed,
-       study_focused_on_social_environmental_behaviour, type_of_data,
-       first_date_of_observations,mid_year, last_date_of_observations,
-       windows, adjusted_model_name,
-       adjusted_model, dependent, adjusted_dependent, independent,
-       adjusted_independent, 
-       social,
-       environmental,
-       governance,
-       financial_crisis,
-       kyoto,
-       regions,
-       study_focusing_on_developing_or_developed_countries,
-       lag,
-       interaction_term, quadratic_term, n, r2, beta,
-       sign_of_effect,
-       adjusted_t_value,
-       adjusted_standard_error,
-       target,
-       p_value_significant,
-       weight,
-       nb_authors,
-       reference_count,
-       citation_count,
-       cited_by_total,
-       CASE WHEN is_open_access = TRUE THEN 'YES' ELSE 'NO' END AS is_open_access,
-       total_paper,
-       esg,
-       pct_esg,
-       paper_name,
-       female,
-       male,
-       unknown,
-       pct_female,
-       region_journal,
-       csr_20_categories,
-       cfp_4_categories,
-       CASE WHEN cluster_w_emb = '0.0' THEN 'CLUSTER_0'
-       WHEN cluster_w_emb = '1.0' THEN 'CLUSTER_1'
+  filters,
+ paperid,
+ nb_authors,
+ reference_count,
+ citation_count,
+ influential_citation_count,
+  CASE WHEN is_open_access = TRUE THEN 'YES' ELSE 'NO' END AS is_open_access,
+ total_paper,
+ esg,
+ pct_esg,
+ test.id_source,
+ female,
+ male,
+ unknown,
+ pct_female,
+ drive_url,
+ image,
+ row_id_google_spreadsheet,
+ table_refer,
+ adjusted_model,
+ adjusted_dependent,
+ adjusted_independent,
+ social,
+ environmental,
+ governance,
+ lag,
+ interaction_term,
+ quadratic_term,
+ n,
+ target,
+ adjusted_standard_error,
+ adjusted_t_value,
+ paper_name,
+ first_date_of_observations,
+ last_date_of_observations,
+ csr_20_categories,
+ kyoto,
+ financial_crisis,
+ windows,
+ mid_year,
+ regions,
+ providers,
+ publication_year,
+ publication_name,
+ rank_digit,
+ CASE WHEN cluster_w_emb = 0 THEN 'CLUSTER_0'
+       WHEN cluster_w_emb = 1 THEN 'CLUSTER_1'
        ELSE 'CLUSTER_2' END AS cluster_w_emb,
-       sentiment,
-       lenght,
-       adj,
-       noun,
-       verb,
-       size_abstract,
-       pct_adj,
-       pct_noun,
-       pct_verb,
-       CASE WHEN pct_female > 0 THEN 'YES' ELSE 'NO' END AS d_female,
-       CASE WHEN 
-       csr_20_categories ='MSCI' 
-       -- csr_20_categories ='BLOOMBERG' OR 
-       -- csr_20_categories ='THOMSON'
-       THEN 'MSCI' ELSE 'NOT_MSCI' END AS providers
-       
+ sentiment,
+ lenght,
+ adj,
+ noun,
+ verb,
+ size_abstract,
+ pct_adj,
+ pct_noun,
+ pct_verb,
+ rank,
+ sjr,
+ region_journal,
+ weight
 FROM 
   test 
   LEFT JOIN (
     SELECT 
-      id, 
+      id_source, 
       COUNT(*) as weight 
     FROM 
       test 
     GROUP BY 
-      id
-  ) as c on test.id = c.id
-  WHERE filters != 'TrueTrueTrue' and filters != 'FalseFalseFalse' and sjr IS NOT NULL
-
-    """.format(db, table)
+      id_source
+  ) as c on test.id_source = c.id_source
+  WHERE filters != 'TrueTrueTrue' and filters != 'FalseFalseFalse' and regions != 'ARAB WORLD'
+    """.format(
+        db, table
+    )
     try:
         df = (s3.run_query(
             query=query,
             database=db,
-            s3_output='SQL_OUTPUT_ATHENA',
+            s3_output="SQL_OUTPUT_ATHENA",
             filename=filename,  # Add filename to print dataframe
-            destination_key='SQL_OUTPUT_ATHENA/CSV',  #Use it temporarily
-            dtype = dtypes
-        )
-                )
+            destination_key="SQL_OUTPUT_ATHENA/CSV",  # Use it temporarily
+            dtype=dtypes,
+        ).assign(
+            d_rang_digit=lambda x: np.where(
+                x["rank_digit"].isin(["1"]), "rank_1", "rank_2345"
+            ),
+            publication_year_int=lambda x: pd.factorize(x["publication_year"])[0],
+        ))
     except:
         pass
-df.head(2)
-```
-
-<!-- #region kernel="SoS" -->
-## CNRS ranking
-
-- Reconstruct CNRS ranking from ground truth PDF
-
-**Steps**
-
-1. Use this link to download data : https://www.gate.cnrs.fr/spip.php?rubrique31&lang=fr
-    - Select 2020 ranking: https://www.gate.cnrs.fr/IMG/pdf/categorisation37_liste_juin_2020-2.pdf
-2. Use tabula to download table
-3. Fetch the publication name from the main dataframe
-4. Extract digits only from the CNRS ranking
-5. When the publication is not in the CNRS, fill it with 5
-6. Merge back main dataframe
-<!-- #endregion -->
-
-```sos kernel="SoS"
-#!sudo apt-get install openjdk-8-jre -Y
+(df.to_csv(os.path.join(path_local, "df_meta_analysis_esg_cfp" + ".csv")))
+df = pd.read_csv(os.path.join(path_local, "df_meta_analysis_esg_cfp" + ".csv"))
 ```
 
 ```sos kernel="SoS"
-#!pip install tabula-py
-import tabula
-import requests
-```
-
-```sos kernel="SoS"
-url = "https://www.gate.cnrs.fr/IMG/pdf/categorisation37_liste_juin_2020-2.pdf"
-r = requests.get(url, allow_redirects=True)
-open('categorisation37_liste_juin_2020-2.pdf', 'wb').write(r.content)
-```
-
-```sos kernel="SoS"
-list_tables = tabula.read_pdf('categorisation37_liste_juin_2020-2.pdf', pages='all')
-list_list_tables= [list_tables[i].values.tolist() for i in range(0, len(list_tables)) if len(list_tables[i])>0]
-df_cnrs = (
-    pd.DataFrame([item for sublist in list_list_tables for item in sublist], columns = [
-    "NAME","ISSN","DOMAINE","RANK"
-])
-    .assign(
-        publication_name = lambda x:x['NAME'].str.lower()
-    )
-    .drop_duplicates()
-)
-df_cnrs.head()
-```
-
-<!-- #region kernel="SoS" -->
-The spreadsheet [CSR Excel File Meta-Analysis - Version 4 -  01.02.2021](https://docs.google.com/spreadsheets/d/11A3l50yfiGxxRuyV-f3WV9Z-4DcsQLYW6XBl4a7U4bQ/edit?usp=sharing) has 0 in the column Publication name
-<!-- #endregion -->
-
-```sos kernel="SoS"
-df = (
-    df_cnrs
-    .merge(
-        (
-            df[['publication_name']]
-            .drop_duplicates()
-            .replace({"publication_name":{"brq business research quarterly":"business research quarterly"}})
-        ),
-        how = 'right',
-        indicator = True
-    )
-    .sort_values(by = ['_merge'])
-    .assign(
-        RANK = lambda x: x['RANK'].astype('str'),
-        rang_digit = lambda x: x['RANK'].str.extract('(\d+)')
-    )
-    .assign(rang_digit = lambda x: x['rang_digit'].fillna('5'))
-    .reindex(columns = ['publication_name','rang_digit'])
-    .drop_duplicates()
-    .merge(
-        df
-    )
-    .assign(
-        d_rang_digit = lambda x: np.where(x['rang_digit'].isin(['1']), 'rank_1', 'rank_2345')
-    )
-)
-```
-
-```sos kernel="SoS"
-df.to_csv( os.path.join(path_local, filename + '.csv'))
-```
-
-```sos kernel="SoS"
-df.isna().sum().sort_values().loc[lambda x: x> 0]
-```
-
-```sos kernel="SoS"
-df['adjusted_model'].unique()
-```
-
-```sos kernel="SoS"
-df['target'].value_counts()
+df.shape
 ```
 
 ```sos kernel="SoS" nteract={"transient": {"deleting": false}}
 pd.DataFrame(schema)
 ```
 
-<!-- #region kernel="SoS" heading_collapsed="true" -->
+<!-- #region kernel="SoS" -->
 ### Save data to Google Spreadsheet
 
 Data is in [METADATA_MODEL-FINAL_DATA](https://docs.google.com/spreadsheets/d/13gpRy93l7POWGe-rKjytt7KWOcD1oSLACngTEpuqCTg/edit#gid=1219457110)
@@ -348,98 +262,62 @@ Data is in [METADATA_MODEL-FINAL_DATA](https://docs.google.com/spreadsheets/d/13
 #!pip install --upgrade git+git://github.com/thomaspernet/GoogleDrive-python
 ```
 
+```sos kernel="SoS"
+try:
+    os.mkdir(os.path.join(os.getcwd(),"creds"))
+except:
+    pass
+
+s3.download_file(key = "CREDS/Financial_dependency_pollution/creds/token.pickle",
+                     path_local = "creds")
+```
+
 ```sos kernel="python3"
 from GoogleDrivePy.google_drive import connect_drive
 from GoogleDrivePy.google_authorization import authorization_service
-```
-
-```sos kernel="python3"
-try:
-    os.mkdir("creds")
-except:
-    pass
-```
-
-```sos kernel="SoS"
-s3.download_file(key = "CREDS/Financial_dependency_pollution/creds/token.pickle", path_local = "creds")
-```
-
-```sos kernel="python3"
 import os
-auth = authorization_service.get_authorization(
-    #path_credential_gcp=os.path.join(parent_path, "creds", "service.json"),
-    path_credential_drive=os.path.join(os.getcwd(), "creds"),
-    verbose=False,
-    scope=['https://www.googleapis.com/auth/spreadsheets.readonly',
-           "https://www.googleapis.com/auth/drive"]
-)
-gd_auth = auth.authorization_drive(path_secret=os.path.join(
-    os.getcwd(), "creds", "credentials.json"))
-drive = connect_drive.drive_operations(gd_auth)
-```
-
-```sos kernel="python3"
 import shutil
-shutil.rmtree(os.path.join(os.getcwd(),"creds"))
-```
-
-```sos kernel="python3"
-FILENAME_SPREADSHEET = "METADATA_MODEL"
-spreadsheet_id = drive.find_file_id(FILENAME_SPREADSHEET, to_print=False)
-```
-
-```sos kernel="python3"
 import pandas as pd
 from pathlib import Path
-path_local = os.path.join(str(Path(os.getcwd()).parent.parent.parent), 
-                              "00_data_catalog/temporary_local_data")
-output = pd.read_csv( os.path.join(path_local, 'df_meta_analysis_esg_cfp' + '.csv'))
-drive.add_data_to_spreadsheet(
-    data =output.fillna(""),
-    sheetID =spreadsheet_id,
-    sheetName = "FINAL_DATA",
-    detectRange = True,
-    rangeData = None)
+
+auth = authorization_service.get_authorization(
+        path_credential_gcp=os.path.join(os.getcwd(), "creds", "service.json"),
+        path_credential_drive=os.path.join(os.getcwd(), "creds"),
+        verbose=False,
+        scope=['https://www.googleapis.com/auth/spreadsheets.readonly',
+               "https://www.googleapis.com/auth/drive"]
+    )
+gd_auth = auth.authorization_drive(path_secret=os.path.join(
+        os.getcwd(), "creds", "credentials.json"))
+drive = connect_drive.drive_operations(gd_auth)
+shutil.rmtree(os.path.join(os.getcwd(),"creds"))
+
+move_g_spreadsheet = False
+if move_g_spreadsheet:
+    FILENAME_SPREADSHEET = "METADATA_MODEL"
+    spreadsheet_id = drive.find_file_id(FILENAME_SPREADSHEET, to_print=False)
+
+    path_local = os.path.join(str(Path(os.getcwd()).parent.parent.parent), 
+                                  "00_data_catalog/temporary_local_data")
+    output = pd.read_csv( os.path.join(path_local, 'df_meta_analysis_esg_cfp' + '.csv'))
+    drive.add_data_to_spreadsheet(
+        data =output.fillna(""),
+        sheetID =spreadsheet_id,
+        sheetName = "FINAL_DATA",
+        detectRange = True,
+        rangeData = None)
 ```
 
-<!-- #region kernel="SoS" -->
-## unbalanced ID
+<!-- #region kernel="python3" -->
+# Statisitcs
 <!-- #endregion -->
 
-```sos kernel="SoS"
-df['weight'].describe()
-```
-
-```sos kernel="SoS"
-(
-    df
-    .loc[lambda x: x['adjusted_t_value'] <=10 ]
-    .reindex(columns = ['adjusted_t_value'])
-    .plot
-    .hist(10, figsize= (6,6))
-)
-```
-
-```sos kernel="SoS"
-df['adjusted_t_value'].describe()
-```
-
-```sos kernel="SoS"
-df['sjr'].describe()
-```
-
-```sos kernel="SoS"
-df.loc[lambda x: x['sjr'] == 0].head()
-```
-
-<!-- #region kernel="SoS" -->
-## Validation text
-
-"our final database includes 588 studies, divided into 51 journals, 90 titles and 87 different first authors. It is therefore important to note that, among all the studies ultimately selected for our study, 38% of the observations are concentrated in 10 papers and 10 authors"
+<!-- #region kernel="python3" -->
+## Basic information
 <!-- #endregion -->
 
-<!-- #region kernel="SoS" -->
-- includes 588 studies: CORRECT
+<!-- #region kernel="python3" -->
+- Number of observations
 <!-- #endregion -->
 
 ```sos kernel="SoS"
@@ -447,7 +325,7 @@ df.shape[0]
 ```
 
 <!-- #region kernel="SoS" -->
-- divided into 51 journals: It should be 39
+- Number of Journals
 <!-- #endregion -->
 
 ```sos kernel="SoS"
@@ -455,87 +333,840 @@ df['publication_name'].nunique()
 ```
 
 <!-- #region kernel="SoS" -->
-- 90 titles: It should be 78
+- Number of publications
 <!-- #endregion -->
 
 ```sos kernel="SoS"
-df['id'].nunique()
+df['paperid'].nunique()
 ```
 
 <!-- #region kernel="SoS" -->
-- 87 different first authors: TO CHECK
+- Number of Authors
 <!-- #endregion -->
 
-<!-- #region kernel="SoS" -->
-- 38% of the observations are concentrated in 10 papers: It should be 46
-<!-- #endregion -->
-
-```sos kernel="SoS"
-(
-    (df.groupby('id')['id'].count()/df.shape[0]).rename("count")
-    .reset_index()
-    .sort_values(by = ['count'], ascending = False)
-    .assign(cum_sum = lambda x: x['count'].cumsum())
-    .reset_index()
-    .drop(columns = ['index'])
-    .head(10)
+```sos kernel="python3"
+FILENAME_SPREADSHEET = "AUTHOR_SEMANTIC_GOOGLE"
+spreadsheet_id = drive.find_file_id(FILENAME_SPREADSHEET, to_print=False)
+df_author = (
+    drive.download_data_from_spreadsheet(
+    sheetID = spreadsheet_id,
+    sheetName = "Sheet1",
+    to_dataframe = True)
+    .to_csv('temp_author.csv', index= False)
 )
 ```
 
 ```sos kernel="SoS"
-(df.groupby('csr_20_categories')['csr_20_categories'].count())
+(
+    pd.read_csv('temp_author.csv')
+    .loc[lambda x: x['paperId'].isin(df['paperid'].unique())]
+    .reindex(columns = ['name'])
+    .drop_duplicates()
+    .count()
+)
+```
+
+<!-- #region kernel="SoS" -->
+- Number of papers per author
+<!-- #endregion -->
+
+```sos kernel="SoS"
+(
+    pd.read_csv('temp_author.csv')
+    .loc[lambda x: x['paperId'].isin(df['paperid'].unique())]
+    .groupby('name')
+    .agg(
+    {
+        'paperId':'nunique'
+    })
+    .sort_values(by = ['paperId'])
+    .groupby('paperId')
+    .agg(
+        {
+            'paperId':'count'
+        }
+    )
+    
+)
+```
+
+<!-- #region kernel="SoS" -->
+- unbalanced ID
+<!-- #endregion -->
+
+```sos kernel="SoS"
+(
+    df
+    .reindex(columns = ['weight'])
+    .plot
+    .hist(5, figsize= (6,6))
+)
 ```
 
 ```sos kernel="SoS"
-(df.groupby(['target','csr_20_categories'])['csr_20_categories'].count().unstack(-2))
+(
+    (df.groupby('id_source')['id_source'].count()/df.shape[0]).rename("count")
+    .reset_index()
+    .sort_values(by = ['count'], ascending = False)
+    .assign(cum_sum = lambda x: x['count'].cumsum())
+    .reset_index()
+    .drop(columns = ['index', 'count', 'id_source'])
+    .plot
+    .line(title = "cumulated number of observations per paper",figsize= (6,6))
+    
+    #.head(10)
+)
+```
+
+<!-- #region kernel="python3" -->
+## Statistic baseline
+
+- environmental 
+- social 
+- governance
+- adjusted_model  
+- kyoto 
+- financial_crisis
+- publication_year
+- windows
+- mid_year
+- regions
+- sjr
+- is_open_access
+- region_journal
+- providers
+<!-- #endregion -->
+
+```sos kernel="SoS"
+for v in [
+    "target",
+    "environmental",
+    "social",
+    "governance",
+    "adjusted_model",
+    "kyoto",
+    "financial_crisis",
+    "publication_year",
+    "regions",
+    "is_open_access",
+    "region_journal",
+    "providers",
+]:
+    print("\n\nDisplay variable: {}\n\n".format(v))
+    display(
+        pd.concat([df[v].value_counts(), df[v].value_counts(normalize=True)], axis=1)
+    )
 ```
 
 ```sos kernel="SoS"
-(df.groupby('providers')['providers'].count())
+for v in ['publication_year', "windows", "mid_year", "sjr"]:
+    #print("\n\nDisplay variable: {}\n\n".format(v))
+    (
+        df
+        .reindex(columns = [v])
+        .plot
+        .hist(10, figsize= (6,6), title = "{} From {} to {}".format(
+            v,
+            df[v].min(),
+            df[v].max()
+        ))
+    )
+```
+
+<!-- #region kernel="SoS" -->
+### Distribution baseline feature with target
+
+"adjusted_model",  
+"kyoto" ,
+"financial_crisis",
+"publication_year",
+"windows",
+"mid_year",
+"regions",
+"sjr",
+"is_open_access",
+"region_journal",
+"providers"
+<!-- #endregion -->
+
+<!-- #region kernel="SoS" -->
+#### environmental, social, governance
+<!-- #endregion -->
+
+```sos kernel="SoS"
+pd.concat(
+    [
+        pd.concat(
+            [
+                (
+                    pd.concat(
+                        [
+                            (
+                                df.groupby("environmental")
+                                .agg({"target": "value_counts"})
+                                .unstack(0)
+                            ).rename(columns={"target": "environment"}),
+                            (
+                                df.groupby("social")
+                                .agg({"target": "value_counts"})
+                                .unstack(0)
+                            ).rename(columns={"target": "social"}),
+                            (
+                                df.groupby("governance")
+                                .agg({"target": "value_counts"})
+                                .unstack(0)
+                            ).rename(columns={"target": "governance"}),
+                        ],
+                        axis=1,
+                    )
+                    .T.reset_index()
+                    .rename(columns={"environmental": "is_dummy", "level_0": "origin"})
+                    .set_index(["origin", "is_dummy"])
+                    .assign(
+                        pct_significant=lambda x: x[("SIGNIFICANT")] / x.sum(axis=1)
+                    )
+                )
+            ],
+            axis=1,
+            keys=["count"],
+        ),
+        pd.concat(
+            [
+                (
+                    pd.concat(
+                        [
+                            (
+                                df.groupby(["environmental", "target"])
+                                .agg({"id_source": "nunique"})
+                                .rename(columns={"id_source": "environment"})
+                                .unstack(0)
+                            ),
+                            (
+                                df.groupby(["social", "target"])
+                                .agg({"id_source": "nunique"})
+                                .rename(columns={"id_source": "social"})
+                                .unstack(0)
+                            ),
+                            (
+                                df.groupby(["governance", "target"])
+                                .agg({"id_source": "nunique"})
+                                .rename(columns={"id_source": "governance"})
+                                .unstack(0)
+                            ),
+                        ],
+                        axis=1,
+                    )
+                    .T.reset_index()
+                    .rename(columns={"environmental": "is_dummy", "level_0": "origin"})
+                    .set_index(["origin", "is_dummy"])
+                    .assign(
+                        pct_significant=lambda x: x[("SIGNIFICANT")] / x.sum(axis=1)
+                    )
+                )
+            ],
+            axis=1,
+            keys=["paper count"],
+        ),
+    ],
+    axis=1,
+)
+```
+
+<!-- #region kernel="SoS" -->
+#### adjusted_model
+<!-- #endregion -->
+
+```sos kernel="SoS"
+pd.concat(
+    [
+        pd.concat(
+            [
+                (
+                    df.groupby("adjusted_model")
+                    .agg({"target": "value_counts"})
+                    .unstack(0)
+                    .rename(columns={"target": "adjusted_model"})
+                    .T
+                )
+            ],
+            axis=1,
+            keys=["count"],
+        ),
+        pd.concat(
+            [
+                (
+                    df.groupby(["adjusted_model", "target"])
+                    .agg({"id_source": "nunique"})
+                    .rename(columns={"id_source": "adjusted_model"})
+                    .unstack(0)
+                    .T.assign(
+                        pct_significant=lambda x: x[("SIGNIFICANT")] / x.sum(axis=1)
+                    )
+                )
+            ],
+            axis=1,
+            keys=["paper count"],
+        ),
+    ],
+    axis=1,
+)
+```
+
+<!-- #region kernel="SoS" -->
+#### kyoto, financial_crisis
+<!-- #endregion -->
+
+```sos kernel="SoS"
+pd.concat(
+    [
+        pd.concat(
+            [
+                (
+                    pd.concat(
+                        [
+                            (
+                                df.groupby("kyoto")
+                                .agg({"target": "value_counts"})
+                                .unstack(0)
+                            ).rename(columns={"target": "kyoto"}),
+                            (
+                                df.groupby("financial_crisis")
+                                .agg({"target": "value_counts"})
+                                .unstack(0)
+                            ).rename(columns={"target": "financial_crisis"}),
+                        ],
+                        axis=1,
+                    )
+                    .T.reset_index()
+                    .rename(columns={"kyoto": "is_dummy", "level_0": "origin"})
+                    .set_index(["origin", "is_dummy"])
+                    .assign(
+                        pct_significant=lambda x: x[("SIGNIFICANT")] / x.sum(axis=1)
+                    )
+                )
+            ],
+            axis=1,
+            keys=["count"],
+        ),
+        pd.concat(
+            [
+                (
+                    pd.concat(
+                        [
+                            (
+                                df.groupby(["kyoto", "target"])
+                                .agg({"id_source": "nunique"})
+                                .rename(columns={"id_source": "kyoto"})
+                                .unstack(0)
+                            ),
+                            (
+                                df.groupby(["financial_crisis", "target"])
+                                .agg({"id_source": "nunique"})
+                                .rename(columns={"id_source": "financial_crisis"})
+                                .unstack(0)
+                            )
+                        ],
+                        axis=1,
+                    )
+                    .T.reset_index()
+                    .rename(columns={"kyoto": "is_dummy", "level_0": "origin"})
+                    .set_index(["origin", "is_dummy"])
+                    .assign(
+                        pct_significant=lambda x: x[("SIGNIFICANT")] / x.sum(axis=1)
+                    )
+                )
+            ],
+            axis=1,
+            keys=["paper count"],
+        ),
+    ],
+    axis=1,
+)
+```
+
+<!-- #region kernel="SoS" -->
+#### publication_year
+<!-- #endregion -->
+
+```sos kernel="SoS"
+pd.concat(
+    [
+        pd.concat(
+            [
+                (
+                    df.groupby("publication_year")
+                    .agg({"target": "value_counts"})
+                    .unstack(0)
+                    .rename(columns={"target": "publication_year"})
+                    .T
+                )
+            ],
+            axis=1,
+            keys=["count"],
+        ),
+        pd.concat(
+            [
+                (
+                    df.groupby(["publication_year", "target"])
+                    .agg({"id_source": "nunique"})
+                    .rename(columns={"id_source": "publication_year"})
+                    .unstack(0)
+                    .T.assign(
+                        pct_significant=lambda x: x[("SIGNIFICANT")] / x.sum(axis=1)
+                    )
+                )
+            ],
+            axis=1,
+            keys=["paper count"],
+        ),
+    ],
+    axis=1,
+)
+```
+
+<!-- #region kernel="SoS" -->
+#### is_open_access
+<!-- #endregion -->
+
+```sos kernel="SoS"
+pd.concat(
+    [
+        pd.concat(
+            [
+                (
+                    df.groupby("is_open_access")
+                    .agg({"target": "value_counts"})
+                    .unstack(0)
+                    .rename(columns={"target": "is_open_access"})
+                    .T
+                )
+            ],
+            axis=1,
+            keys=["count"],
+        ),
+        pd.concat(
+            [
+                (
+                    df.groupby(["is_open_access", "target"])
+                    .agg({"id_source": "nunique"})
+                    .rename(columns={"id_source": "is_open_access"})
+                    .unstack(0)
+                    .T.assign(
+                        pct_significant=lambda x: x[("SIGNIFICANT")] / x.sum(axis=1)
+                    )
+                )
+            ],
+            axis=1,
+            keys=["paper count"],
+        ),
+    ],
+    axis=1,
+)
+```
+
+<!-- #region kernel="SoS" -->
+#### region_journal
+<!-- #endregion -->
+
+```sos kernel="SoS"
+pd.concat(
+    [
+        pd.concat(
+            [
+                (
+                    df.groupby("region_journal")
+                    .agg({"target": "value_counts"})
+                    .unstack(0)
+                    .rename(columns={"target": "region_journal"})
+                    .T
+                )
+            ],
+            axis=1,
+            keys=["count"],
+        ),
+        pd.concat(
+            [
+                (
+                    df.groupby(["region_journal", "target"])
+                    .agg({"id_source": "nunique"})
+                    .rename(columns={"id_source": "region_journal"})
+                    .unstack(0)
+                    .T.assign(
+                        pct_significant=lambda x: x[("SIGNIFICANT")] / x.sum(axis=1)
+                    )
+                )
+            ],
+            axis=1,
+            keys=["paper count"],
+        ),
+    ],
+    axis=1,
+)
+```
+
+<!-- #region kernel="SoS" -->
+#### providers
+<!-- #endregion -->
+
+```sos kernel="SoS"
+pd.concat(
+    [
+        pd.concat(
+            [
+                (
+                    df.groupby("providers")
+                    .agg({"target": "value_counts"})
+                    .unstack(0)
+                    .rename(columns={"target": "providers"})
+                    .T
+                )
+            ],
+            axis=1,
+            keys=["count"],
+        ),
+        pd.concat(
+            [
+                (
+                    df.groupby(["providers", "target"])
+                    .agg({"id_source": "nunique"})
+                    .rename(columns={"id_source": "providers"})
+                    .unstack(0)
+                    .T.assign(
+                        pct_significant=lambda x: x[("SIGNIFICANT")] / x.sum(axis=1)
+                    )
+                )
+            ],
+            axis=1,
+            keys=["paper count"],
+        ),
+    ],
+    axis=1,
+)
+```
+
+<!-- #region kernel="SoS" -->
+#### regions
+<!-- #endregion -->
+
+```sos kernel="SoS"
+pd.concat(
+    [
+        pd.concat(
+            [
+                (
+                    df.groupby("regions")
+                    .agg({"target": "value_counts"})
+                    .unstack(0)
+                    .rename(columns={"target": "regions"})
+                    .T
+                )
+            ],
+            axis=1,
+            keys=["count"],
+        ),
+        pd.concat(
+            [
+                (
+                    df.groupby(["regions", "target"])
+                    .agg({"id_source": "nunique"})
+                    .rename(columns={"id_source": "regions"})
+                    .unstack(0)
+                    .T.assign(
+                        pct_significant=lambda x: x[("SIGNIFICANT")] / x.sum(axis=1)
+                    )
+                )
+            ],
+            axis=1,
+            keys=["paper count"],
+        ),
+    ],
+    axis=1,
+)
+```
+
+<!-- #region kernel="SoS" -->
+#### sjr
+<!-- #endregion -->
+
+```sos kernel="SoS"
+(df.groupby("target").agg({"sjr": "describe"}))
+```
+
+<!-- #region kernel="SoS" -->
+#### CNRS
+<!-- #endregion -->
+
+```sos kernel="SoS"
+pd.concat(
+    [
+        (
+            df.groupby("rank_digit").agg(
+                {"publication_name": "nunique", "id_source": "count"}
+            )
+        ),
+        (
+            df.groupby(["rank_digit", "target"])
+            .agg({"id_source": "nunique"})
+            .rename(columns={"id_source": "rank_digit"})
+            .unstack(-1)
+            .assign(
+                pct_significant=lambda x: x[("rank_digit", "SIGNIFICANT")]
+                / x.sum(axis=1)
+            )
+        ),
+    ],
+    axis=1,
+)
 ```
 
 ```sos kernel="SoS"
-(df.groupby(['target','providers'])['providers'].count().unstack(-2))
+pd.concat(
+    [
+        pd.concat(
+            [
+                (
+                    df.groupby("d_rang_digit")
+                    .agg({"target": "value_counts"})
+                    .unstack(-1)
+                    .assign(
+                        pct_significant=lambda x: x[("target", "SIGNIFICANT")]
+                        / x.sum(axis=1)
+                    )
+                )
+            ],
+            axis=1,
+            keys=["count"],
+        ),
+        pd.concat(
+            [
+                (
+                    df.groupby(["d_rang_digit", "target"])
+                    .agg({"id_source": "nunique"})
+                    .rename(columns={"id_source": "d_rang_digit"})
+                    .unstack(-1)
+                    .assign(
+                        pct_significant=lambda x: x[("d_rang_digit", "SIGNIFICANT")]
+                        / x.sum(axis=1)
+                    )
+                )
+            ],
+            axis=1,
+            keys=["paper count"],
+        ),
+    ],
+    axis=1,
+)
+```
+
+<!-- #region kernel="SoS" -->
+#### complexity model
+
+- lag
+- interaction_term
+- quadratic_term
+<!-- #endregion -->
+
+```sos kernel="SoS"
+pd.concat(
+    [
+        pd.concat(
+            [
+                (
+                    pd.concat(
+                        [
+                            (
+                                df.groupby("lag")
+                                .agg({"target": "value_counts"})
+                                .unstack(0)
+                            ).rename(columns={"target": "lag"}),
+                            (
+                                df.groupby("interaction_term")
+                                .agg({"target": "value_counts"})
+                                .unstack(0)
+                            ).rename(columns={"target": "interaction_term"}),
+                            (
+                                df.groupby("quadratic_term")
+                                .agg({"target": "value_counts"})
+                                .unstack(0)
+                            ).rename(columns={"target": "quadratic_term"}),
+                        ],
+                        axis=1,
+                    )
+                    .T.reset_index()
+                    .rename(columns={"lag": "is_dummy", "level_0": "origin"})
+                    .set_index(["origin", "is_dummy"])
+                    .assign(
+                        pct_significant=lambda x: x[("SIGNIFICANT")] / x.sum(axis=1)
+                    )
+                )
+            ],
+            axis=1,
+            keys=["count"],
+        ),
+        pd.concat(
+            [
+                (
+                    pd.concat(
+                        [
+                            (
+                                df.groupby(["lag", "target"])
+                                .agg({"id_source": "nunique"})
+                                .rename(columns={"id_source": "lag"})
+                                .unstack(0)
+                            ),
+                            (
+                                df.groupby(["interaction_term", "target"])
+                                .agg({"id_source": "nunique"})
+                                .rename(columns={"id_source": "interaction_term"})
+                                .unstack(0)
+                            ),
+                            (
+                                df.groupby(["quadratic_term", "target"])
+                                .agg({"id_source": "nunique"})
+                                .rename(columns={"id_source": "quadratic_term"})
+                                .unstack(0)
+                            ),
+                        ],
+                        axis=1,
+                    )
+                    .T.reset_index()
+                    .rename(columns={"lag": "is_dummy", "level_0": "origin"})
+                    .set_index(["origin", "is_dummy"])
+                    .assign(
+                        pct_significant=lambda x: x[("SIGNIFICANT")] / x.sum(axis=1)
+                    )
+                )
+            ],
+            axis=1,
+            keys=["paper count"],
+        ),
+    ],
+    axis=1,
+)
+```
+
+<!-- #region kernel="SoS" -->
+#### nb_authors, pct_female, pct_esg_1
+<!-- #endregion -->
+
+```sos kernel="SoS"
+pd.concat(
+    [
+        pd.concat(
+            [
+                (
+                    df.groupby("nb_authors")
+                    .agg({"target": "value_counts"})
+                    .unstack(0)
+                    .rename(columns={"target": "nb_authors"})
+                    .T
+                )
+            ],
+            axis=1,
+            keys=["count"],
+        ),
+        pd.concat(
+            [
+                (
+                    df.groupby(["nb_authors", "target"])
+                    .agg({"id_source": "nunique"})
+                    .rename(columns={"id_source": "nb_authors"})
+                    .unstack(0)
+                    .T.assign(
+                        pct_significant=lambda x: x[("SIGNIFICANT")] / x.sum(axis=1)
+                    )
+                )
+            ],
+            axis=1,
+            keys=["paper count"],
+        ),
+    ],
+    axis=1,
+)
 ```
 
 ```sos kernel="SoS"
-(df.groupby('cfp_4_categories')['cfp_4_categories'].count())
+(df.groupby("target").agg({"pct_female": "describe"}))
 ```
 
 ```sos kernel="SoS"
-(df.groupby('d_female')['d_female'].count())
+(df.groupby("target").agg({"pct_esg": "describe"}))
+```
+
+<!-- #region kernel="SoS" -->
+#### sentiment, cluster_w_emb
+<!-- #endregion -->
+
+```sos kernel="SoS"
+pd.concat(
+    [
+        pd.concat(
+            [
+                (
+                    df.groupby("sentiment")
+                    .agg({"target": "value_counts"})
+                    .unstack(0)
+                    .rename(columns={"target": "sentiment"})
+                    .T
+                )
+            ],
+            axis=1,
+            keys=["count"],
+        ),
+        pd.concat(
+            [
+                (
+                    df.groupby(["sentiment", "target"])
+                    .agg({"id_source": "nunique"})
+                    .rename(columns={"id_source": "sentiment"})
+                    .unstack(0)
+                    .T.assign(
+                        pct_significant=lambda x: x[("SIGNIFICANT")] / x.sum(axis=1)
+                    )
+                )
+            ],
+            axis=1,
+            keys=["paper count"],
+        ),
+    ],
+    axis=1,
+)
 ```
 
 ```sos kernel="SoS"
-(df.groupby('target')['pct_female'].describe())
-```
-
-```sos kernel="SoS"
-(df.groupby(['target','d_female'])['d_female'].count().unstack(-2))
-```
-
-```sos kernel="SoS"
-(df.groupby('cluster_w_emb')['cluster_w_emb'].count())
-```
-
-```sos kernel="SoS"
-(df.groupby(['target','cluster_w_emb'])['cluster_w_emb'].count().unstack(-2))
-```
-
-```sos kernel="SoS"
-(df.groupby('rang_digit')['publication_name'].nunique())
-```
-
-```sos kernel="SoS"
-(df.groupby('d_rang_digit')['publication_name'].nunique())
-```
-
-```sos kernel="SoS"
-(df.groupby(['target','d_rang_digit'])['publication_name'].nunique().unstack(-2))
-```
-
-```sos kernel="SoS"
-df.loc[lambda x: x['rang_digit'].isin(['4'])]['publication_name'].unique()
+pd.concat(
+    [
+        pd.concat(
+            [
+                (
+                    df.groupby("cluster_w_emb")
+                    .agg({"target": "value_counts"})
+                    .unstack(0)
+                    .rename(columns={"target": "cluster_w_emb"})
+                    .T
+                )
+            ],
+            axis=1,
+            keys=["count"],
+        ),
+        pd.concat(
+            [
+                (
+                    df.groupby(["cluster_w_emb", "target"])
+                    .agg({"id_source": "nunique"})
+                    .rename(columns={"id_source": "cluster_w_emb"})
+                    .unstack(0)
+                    .T.assign(
+                        pct_significant=lambda x: x[("SIGNIFICANT")] / x.sum(axis=1)
+                    )
+                )
+            ],
+            axis=1,
+            keys=["paper count"],
+        ),
+    ],
+    axis=1,
+)
 ```
 
 <!-- #region kernel="SoS" nteract={"transient": {"deleting": false}} -->
@@ -614,29 +1245,23 @@ df_final <- read_csv(df_path) %>%
 mutate_if(is.character, as.factor) %>%
 
 mutate(
-    sign_of_effect = relevel(sign_of_effect, ref='NEGATIVE'),
     adjusted_model = relevel(adjusted_model, ref='OTHER'),
     adjusted_dependent = relevel(adjusted_dependent, ref='OTHER'),
-      id = as.factor(id),
+    id_source = as.factor(id_source),
     governance = relevel(as.factor(governance), ref = 'NO'),
     social = relevel(as.factor(social), ref = 'NO'),
     environmental =relevel(as.factor(environmental), ref = 'NO'),
     financial_crisis =relevel(as.factor(financial_crisis), ref = 'NO'),
     kyoto =relevel(as.factor(kyoto), ref = 'NO'),
     target =relevel(as.factor(target), ref = 'NOT_SIGNIFICANT'),
-    study_focusing_on_developing_or_developed_countries =relevel(
-        as.factor(study_focusing_on_developing_or_developed_countries), ref = 'WORLDWIDE'),
     regions =relevel(as.factor(regions), ref = 'WORLDWIDE'),
-    cnrs_ranking =relevel(as.factor(cnrs_ranking), ref = '0'),
     is_open_access =relevel(as.factor(is_open_access), ref = 'NO'),
     sentiment =relevel(as.factor(sentiment), ref = 'NEGATIVE'),
     region_journal =relevel(as.factor(region_journal), ref = 'NORTHERN AMERICA'),
-    csr_20_categories =relevel(as.factor(csr_20_categories), ref = 'OTHER'),
     pct_esg_1 = normalit(pct_esg),
     esg_1 =  normalit(esg),
     sjr_1 =  normalit(sjr),
     cluster_w_emb = relevel(as.factor(cluster_w_emb), ref = 'CLUSTER_1'),
-    d_female = relevel(as.factor(d_female), ref = 'NO'),
     citation_count_1 = normalit(citation_count),
     providers = relevel(as.factor(providers), ref = 'NOT_MSCI'),
     d_rang_digit = relevel(as.factor(d_rang_digit), ref = 'rank_2345')
@@ -793,7 +1418,7 @@ t_0 <- glm(target ~ environmental
            + adjusted_model  
            + kyoto 
            + financial_crisis
-           + publication_year
+           + publication_year_int
            + windows
            + mid_year
            + regions
@@ -809,7 +1434,7 @@ t_1 <- glm(target ~ social
            + adjusted_model    
            + kyoto 
            + financial_crisis
-           + publication_year
+           + publication_year_int
            + windows
            + mid_year
            + regions
@@ -823,7 +1448,7 @@ t_2 <- glm(target ~ governance
            + adjusted_model
            + kyoto 
            + financial_crisis
-           + publication_year
+           + publication_year_int
            + windows
            + mid_year
            + regions
@@ -838,7 +1463,7 @@ t_3 <- glm(target ~ environmental
            + adjusted_model  
            + kyoto 
            + financial_crisis
-           + publication_year
+           + publication_year_int
            + windows
            + mid_year
            + regions
@@ -857,7 +1482,7 @@ t_4 <- glm(target ~ social
            + adjusted_model    
            + kyoto 
            + financial_crisis
-           + publication_year
+           + publication_year_int
            + windows
            + mid_year
            + regions
@@ -874,7 +1499,7 @@ t_5 <- glm(target ~ governance
            + adjusted_model
            + kyoto 
            + financial_crisis
-           + publication_year
+           + publication_year_int
            + windows
            + mid_year
            + regions
@@ -904,7 +1529,7 @@ t_0 <- glm(target ~ environmental
            + adjusted_model  
            + kyoto 
            + financial_crisis
-           + publication_year
+           + publication_year_int
            + windows
            + mid_year
            + regions
@@ -920,7 +1545,7 @@ t_1 <- glm(target ~ social
            + adjusted_model    
            + kyoto 
            + financial_crisis
-           + publication_year
+           + publication_year_int
            + windows
            + mid_year
            + regions
@@ -934,7 +1559,7 @@ t_2 <- glm(target ~ governance
            + adjusted_model
            + kyoto 
            + financial_crisis
-           + publication_year
+           + publication_year_int
            + windows
            + mid_year
            + regions
@@ -949,7 +1574,7 @@ t_3 <- glm(target ~ environmental
            + adjusted_model  
            + kyoto 
            + financial_crisis
-           + publication_year
+           + publication_year_int
            + windows
            + mid_year
            + regions
@@ -968,7 +1593,7 @@ t_4 <- glm(target ~ social
            + adjusted_model    
            + kyoto 
            + financial_crisis
-           + publication_year
+           + publication_year_int
            + windows
            + mid_year
            + regions
@@ -985,7 +1610,7 @@ t_5 <- glm(target ~ governance
            + adjusted_model
            + kyoto 
            + financial_crisis
-           + publication_year
+           + publication_year_int
            + windows
            + mid_year
            + regions
@@ -1030,7 +1655,7 @@ t_0 <- glm(target ~ environmental
            + adjusted_model
            + kyoto 
            + financial_crisis
-           + publication_year
+           + publication_year_int
            + windows
            + mid_year
            + regions
@@ -1051,7 +1676,7 @@ t_1 <- glm(target ~ social
            + adjusted_model
            + kyoto 
            + financial_crisis
-           + publication_year
+           + publication_year_int
            + windows
            + mid_year
            + regions
@@ -1071,7 +1696,7 @@ t_2 <- glm(target ~ governance
            + adjusted_model
            + kyoto 
            + financial_crisis
-           + publication_year
+           + publication_year_int
            + windows
            + mid_year
            + regions
@@ -1103,7 +1728,7 @@ t_0 <- glm(target ~ environmental
            + adjusted_model
            + kyoto 
            + financial_crisis
-           + publication_year
+           + publication_year_int
            + windows
            + mid_year
            + regions
@@ -1124,7 +1749,7 @@ t_1 <- glm(target ~ social
            + adjusted_model
            + kyoto 
            + financial_crisis
-           + publication_year
+           + publication_year_int
            + windows
            + mid_year
            + regions
@@ -1144,7 +1769,7 @@ t_2 <- glm(target ~ governance
            + adjusted_model
            + kyoto 
            + financial_crisis
-           + publication_year
+           + publication_year_int
            + windows
            + mid_year
            + regions
@@ -1191,7 +1816,7 @@ t_0 <- glm(target ~ environmental
            + adjusted_model
            + kyoto 
            + financial_crisis
-           + publication_year
+           + publication_year_int
            + windows
            + mid_year
            + regions
@@ -1211,7 +1836,7 @@ t_1 <- glm(target ~ social
            + adjusted_model
            + kyoto 
            + financial_crisis
-           + publication_year
+           + publication_year_int
            + windows
            + mid_year
            + regions
@@ -1230,7 +1855,7 @@ t_2 <- glm(target ~ governance
            + adjusted_model
            + kyoto 
            + financial_crisis
-           + publication_year
+           + publication_year_int
            + windows
            + mid_year
            + regions
@@ -1261,7 +1886,7 @@ t_0 <- glm(target ~ environmental
            + adjusted_model
            + kyoto 
            + financial_crisis
-           + publication_year
+           + publication_year_int
            + windows
            + mid_year
            + regions
@@ -1281,7 +1906,7 @@ t_1 <- glm(target ~ social
            + adjusted_model
            + kyoto 
            + financial_crisis
-           + publication_year
+           + publication_year_int
            + windows
            + mid_year
            + regions
@@ -1300,7 +1925,7 @@ t_2 <- glm(target ~ governance
            + adjusted_model
            + kyoto 
            + financial_crisis
-           + publication_year
+           + publication_year_int
            + windows
            + mid_year
            + regions
@@ -1371,7 +1996,7 @@ t_0 <- glm(adjusted_t_value ~ environmental
            + adjusted_model
            + kyoto 
            + financial_crisis
-           + publication_year
+           + publication_year_int
            + windows
            + mid_year
            + regions
@@ -1385,7 +2010,7 @@ t_1 <- glm(adjusted_t_value ~ social
            + adjusted_model
            + kyoto 
            + financial_crisis
-           + publication_year
+           + publication_year_int
            + windows
            + mid_year
            + regions
@@ -1399,7 +2024,7 @@ t_2 <- glm(adjusted_t_value ~ governance
            + adjusted_model
            + kyoto 
            + financial_crisis
-           + publication_year
+           + publication_year_int
            + windows
            + mid_year
            + regions
@@ -1414,7 +2039,7 @@ t_3 <- glm(adjusted_t_value ~ environmental
            + adjusted_model
            + kyoto 
            + financial_crisis
-           + publication_year
+           + publication_year_int
            + windows
            + mid_year
            + regions
@@ -1431,7 +2056,7 @@ t_4 <- glm(adjusted_t_value ~ social
            + adjusted_model
            + kyoto 
            + financial_crisis
-           + publication_year
+           + publication_year_int
            + windows
            + mid_year
            + regions
@@ -1448,7 +2073,7 @@ t_5 <- glm(adjusted_t_value ~ governance
            + adjusted_model
            + kyoto 
            + financial_crisis
-           + publication_year
+           + publication_year_int
            + windows
            + mid_year
            + regions
@@ -1475,7 +2100,7 @@ t_0 <- glm(adjusted_t_value ~ environmental
            + adjusted_model
            + kyoto 
            + financial_crisis
-           + publication_year
+           + publication_year_int
            + windows
            + mid_year
            + regions
@@ -1489,7 +2114,7 @@ t_1 <- glm(adjusted_t_value ~ social
            + adjusted_model
            + kyoto 
            + financial_crisis
-           + publication_year
+           + publication_year_int
            + windows
            + mid_year
            + regions
@@ -1503,7 +2128,7 @@ t_2 <- glm(adjusted_t_value ~ governance
             + adjusted_model
            + kyoto 
            + financial_crisis
-           + publication_year
+           + publication_year_int
            + windows
            + mid_year
            + regions
@@ -1518,7 +2143,7 @@ t_3 <- glm(adjusted_t_value ~ environmental
             + adjusted_model
            + kyoto 
            + financial_crisis
-           + publication_year
+           + publication_year_int
            + windows
            + mid_year
            + regions
@@ -1535,7 +2160,7 @@ t_4 <- glm(adjusted_t_value ~ social
             + adjusted_model
            + kyoto 
            + financial_crisis
-           + publication_year
+           + publication_year_int
            + windows
            + mid_year
            + regions
@@ -1552,7 +2177,7 @@ t_5 <- glm(adjusted_t_value ~ governance
             + adjusted_model
            + kyoto 
            + financial_crisis
-           + publication_year
+           + publication_year_int
            + windows
            + mid_year
            + regions
@@ -1583,7 +2208,7 @@ t_0 <- glm(adjusted_t_value ~ environmental
            + adjusted_model
            + kyoto 
            + financial_crisis
-           + publication_year
+           + publication_year_int
            + windows
            + mid_year
            + regions
@@ -1600,7 +2225,7 @@ t_1 <- glm(adjusted_t_value ~ social
            + adjusted_model
            + kyoto 
            + financial_crisis
-           + publication_year
+           + publication_year_int
            + windows
            + mid_year
            + regions
@@ -1618,7 +2243,7 @@ t_2 <- glm(adjusted_t_value ~ governance
            + adjusted_model
            + kyoto 
            + financial_crisis
-           + publication_year
+           + publication_year_int
            + windows
            + mid_year
            + regions
@@ -1645,7 +2270,7 @@ t_0 <- glm(adjusted_t_value ~ environmental
            + adjusted_model
            + kyoto 
            + financial_crisis
-           + publication_year
+           + publication_year_int
            + windows
            + mid_year
            + regions
@@ -1662,7 +2287,7 @@ t_1 <- glm(adjusted_t_value ~ social
            + adjusted_model
            + kyoto 
            + financial_crisis
-           + publication_year
+           + publication_year_int
            + windows
            + mid_year
            + regions
@@ -1680,7 +2305,7 @@ t_2 <- glm(adjusted_t_value ~ governance
            + adjusted_model
            + kyoto 
            + financial_crisis
-           + publication_year
+           + publication_year_int
            + windows
            + mid_year
            + regions
@@ -1711,7 +2336,7 @@ t_0 <- glm(adjusted_t_value ~ environmental
            + adjusted_model
            + kyoto 
            + financial_crisis
-           + publication_year
+           + publication_year_int
            + windows
            + mid_year
            + regions
@@ -1727,7 +2352,7 @@ t_1 <- glm(adjusted_t_value ~ social
            + adjusted_model
            + kyoto 
            + financial_crisis
-           + publication_year
+           + publication_year_int
            + windows
            + mid_year
            + regions
@@ -1744,7 +2369,7 @@ t_2 <- glm(adjusted_t_value ~ governance
            + adjusted_model
            + kyoto 
            + financial_crisis
-           + publication_year
+           + publication_year_int
            + windows
            + mid_year
            + regions
@@ -1770,7 +2395,7 @@ t_0 <- glm(adjusted_t_value ~ environmental
            + adjusted_model
            + kyoto 
            + financial_crisis
-           + publication_year
+           + publication_year_int
            + windows
            + mid_year
            + regions
@@ -1786,7 +2411,7 @@ t_1 <- glm(adjusted_t_value ~ social
            + adjusted_model
            + kyoto 
            + financial_crisis
-           + publication_year
+           + publication_year_int
            + windows
            + mid_year
            + regions
@@ -1803,7 +2428,7 @@ t_2 <- glm(adjusted_t_value ~ governance
            + adjusted_model
            + kyoto 
            + financial_crisis
-           + publication_year
+           + publication_year_int
            + windows
            + mid_year
            + regions
@@ -1821,456 +2446,6 @@ stargazer(list_final, type = "text",
   se = lapply(list_final,
               se_robust),
           style = "qje")
-```
-
-<!-- #region kernel="R" -->
-# Statistics
-
-## Target
-
-<!-- #endregion -->
-
-```sos kernel="SoS"
-pd.concat(
-    [
-        pd.concat(
-            [
-                (
-                    pd.concat(
-                        [
-                            (
-                                df.groupby("environmental")
-                                .agg({"target": "value_counts"})
-                                .unstack(0)
-                            ).rename(columns={"target": "environment"}),
-                            (
-                                df.groupby("social")
-                                .agg({"target": "value_counts"})
-                                .unstack(0)
-                            ).rename(columns={"target": "social"}),
-                            (
-                                df.groupby("governance")
-                                .agg({"target": "value_counts"})
-                                .unstack(0)
-                            ).rename(columns={"target": "governance"}),
-                        ],
-                        axis=1,
-                    )
-                    .T.reset_index()
-                    .rename(columns={"environmental": "is_dummy", "level_0": "origin"})
-                    .set_index(["origin", "is_dummy"])
-                    .assign(
-                        pct_significant=lambda x: x[("SIGNIFICANT")] / x.sum(axis=1)
-                    )
-                )
-            ],
-            axis=1,
-            keys=["count"],
-        ),
-        pd.concat(
-            [
-                (
-                    pd.concat(
-                        [
-                            (
-                                df.groupby(["environmental", "target"])
-                                .agg({"id": "nunique"})
-                                .rename(columns={"id": "environment"})
-                                .unstack(0)
-                            ),
-                            (
-                                df.groupby(["social", "target"])
-                                .agg({"id": "nunique"})
-                                .rename(columns={"id": "social"})
-                                .unstack(0)
-                            ),
-                            (
-                                df.groupby(["governance", "target"])
-                                .agg({"id": "nunique"})
-                                .rename(columns={"id": "governance"})
-                                .unstack(0)
-                            ),
-                        ],
-                        axis=1,
-                    )
-                    .T.reset_index()
-                    .rename(columns={"environmental": "is_dummy", "level_0": "origin"})
-                    .set_index(["origin", "is_dummy"])
-                    .assign(
-                        pct_significant=lambda x: x[("SIGNIFICANT")] / x.sum(axis=1)
-                    )
-                )
-            ],
-            axis=1,
-            keys=["paper count"],
-        ),
-    ],
-    axis=1,
-)
-```
-
-```sos kernel="SoS"
-pd.concat(
-    [
-        pd.concat(
-            [
-                (
-                    df.groupby("adjusted_model")
-                    .agg({"target": "value_counts"})
-                    .unstack(-1)
-                    .assign(
-                        pct_significant=lambda x: x[("target", "SIGNIFICANT")]
-                        / x.sum(axis=1)
-                    )
-                )
-            ],
-            axis=1,
-            keys=["count"],
-        ),
-        pd.concat(
-            [
-                (
-                    df.groupby(["adjusted_model", "target"])
-                    .agg({"id": "nunique"})
-                    .rename(columns={"id": "adjusted_model"})
-                    .unstack(-1)
-                    .assign(
-                        pct_significant=lambda x: x[("adjusted_model", "SIGNIFICANT")]
-                        / x.sum(axis=1)
-                    )
-                )
-            ],
-            axis=1,
-            keys=["paper count"],
-        ),
-    ],
-    axis=1,
-)
-```
-
-```sos kernel="SoS"
-(
-    pd.concat(
-        [
-            (df.groupby("kyoto").agg({"target": "value_counts"}).unstack(0)).rename(columns = {'target':'kyoto'}),
-            (df.groupby("financial_crisis").agg({"target": "value_counts"}).unstack(0)).rename(columns = {'target':'financial_crisis'}),
-        ],
-        axis=1,
-    )
-    .T
-    .reset_index()
-    .rename(columns = {'kyoto':'is_dummy', 'level_0':'origin'})
-    .set_index(['origin','is_dummy'])
-    .assign(pct_significant = lambda x: x[('SIGNIFICANT')]/x.sum(axis= 1))
-)
-```
-
-```sos kernel="SoS"
-pd.concat(
-    [
-        pd.concat(
-            [
-                (
-                    pd.concat(
-                        [
-                            (
-                                df.groupby("kyoto")
-                                .agg({"target": "value_counts"})
-                                .unstack(0)
-                            ).rename(columns={"target": "kyoto"}),
-                            (
-                                df.groupby("financial_crisis")
-                                .agg({"target": "value_counts"})
-                                .unstack(0)
-                            ).rename(columns={"target": "financial_crisis"}),
-                        ],
-                        axis=1,
-                    )
-                    .T.reset_index()
-                    .rename(columns={"kyoto": "is_dummy", "level_0": "origin"})
-                    .set_index(["origin", "is_dummy"])
-                    .assign(
-                        pct_significant=lambda x: x[("SIGNIFICANT")] / x.sum(axis=1)
-                    )
-                )
-            ],
-            axis=1,
-            keys=["count"],
-        ),
-        pd.concat(
-            [
-                (
-                    pd.concat(
-                        [
-                            (
-                                df.groupby(["kyoto", "target"])
-                                .agg({"id": "nunique"})
-                                .rename(columns={"id": "kyoto"})
-                                .unstack(0)
-                            ),
-                            (
-                                df.groupby(["financial_crisis", "target"])
-                                .agg({"id": "nunique"})
-                                .rename(columns={"id": "financial_crisis"})
-                                .unstack(0)
-                            ),
-                        ],
-                        axis=1,
-                    )
-                    .T.reset_index()
-                    .rename(columns={"kyoto": "is_dummy", "level_0": "origin"})
-                    .set_index(["origin", "is_dummy"])
-                    .assign(
-                        pct_significant=lambda x: x[("SIGNIFICANT")] / x.sum(axis=1)
-                    )
-                )
-            ],
-            axis=1,
-            keys=["paper count"],
-        ),
-    ],
-    axis=1,
-)
-```
-
-<!-- #region kernel="R" -->
-## Papers
-<!-- #endregion -->
-
-```sos kernel="SoS"
-(
-    df
-    .groupby('target')
-    .agg(
-    {
-        'windows':'describe'
-    })
-)
-```
-
-<!-- #region kernel="R" -->
-- lag
-- interaction_term
-- quadratic_term
-<!-- #endregion -->
-
-```sos kernel="SoS"
-(
-    pd.concat(
-        [
-            (df.groupby("lag").agg({"target": "value_counts"}).unstack(0)).rename(columns = {'target':'lag'}),
-            (df.groupby("interaction_term").agg({"target": "value_counts"}).unstack(0)).rename(columns = {'target':'interaction_term'}),
-            (df.groupby("quadratic_term").agg({"target": "value_counts"}).unstack(0)).rename(columns = {'target':'quadratic_term'}),
-        ],
-        axis=1,
-    )
-    .T
-    .reset_index()
-    .rename(columns = {'lag':'is_dummy', 'level_0':'origin'})
-    .set_index(['origin','is_dummy'])
-    .assign(pct_significant = lambda x: x[('SIGNIFICANT')]/x.sum(axis= 1))
-)
-```
-
-```sos kernel="SoS"
-pd.concat(
-    [
-        pd.concat(
-            [
-                (
-                    pd.concat(
-                        [
-                            (
-                                df.groupby("lag")
-                                .agg({"target": "value_counts"})
-                                .unstack(0)
-                            ).rename(columns={"target": "lag"}),
-                            (
-                                df.groupby("interaction_term")
-                                .agg({"target": "value_counts"})
-                                .unstack(0)
-                            ).rename(columns={"target": "interaction_term"}),
-                            (
-                                df.groupby("quadratic_term")
-                                .agg({"target": "value_counts"})
-                                .unstack(0)
-                            ).rename(columns={"target": "quadratic_term"}),
-                        ],
-                        axis=1,
-                    )
-                    .T.reset_index()
-                    .rename(columns={"lag": "is_dummy", "level_0": "origin"})
-                    .set_index(["origin", "is_dummy"])
-                    .assign(
-                        pct_significant=lambda x: x[("SIGNIFICANT")] / x.sum(axis=1)
-                    )
-                )
-            ],
-            axis=1,
-            keys=["count"],
-        ),
-        pd.concat(
-            [
-                (
-                    pd.concat(
-                        [
-                            (
-                                df.groupby(["lag", "target"])
-                                .agg({"id": "nunique"})
-                                .rename(columns={"id": "lag"})
-                                .unstack(0)
-                            ),
-                            (
-                                df.groupby(["interaction_term", "target"])
-                                .agg({"id": "nunique"})
-                                .rename(columns={"id": "interaction_term"})
-                                .unstack(0)
-                            ),
-                            (
-                                df.groupby(["quadratic_term", "target"])
-                                .agg({"id": "nunique"})
-                                .rename(columns={"id": "quadratic_term"})
-                                .unstack(0)
-                            ),
-                        ],
-                        axis=1,
-                    )
-                    .T.reset_index()
-                    .rename(columns={"lag": "is_dummy", "level_0": "origin"})
-                    .set_index(["origin", "is_dummy"])
-                    .assign(
-                        pct_significant=lambda x: x[("SIGNIFICANT")] / x.sum(axis=1)
-                    )
-                )
-            ],
-            axis=1,
-            keys=["paper count"],
-        ),
-    ],
-    axis=1,
-)
-```
-
-<!-- #region kernel="R" -->
-##  Region
-
-- regions
-- study_focusing_on_developing_or_developed_countries
-
-Comparison group: "WORLDWIDE"
-<!-- #endregion -->
-
-```sos kernel="SoS"
-pd.concat(
-    [
-        pd.concat(
-            [
-                (
-                    df.groupby("regions")
-                    .agg({"target": "value_counts"})
-                    .unstack(-1)
-                    .assign(
-                        pct_significant=lambda x: x[("target", "SIGNIFICANT")]
-                        / x.sum(axis=1)
-                    )
-                )
-            ],
-            axis=1,
-            keys=["count"],
-        ),
-        pd.concat(
-            [
-                (
-                    df.groupby(["regions", "target"])
-                    .agg({"id": "nunique"})
-                    .rename(columns={"id": "regions"})
-                    .unstack(-1)
-                    .assign(
-                        pct_significant=lambda x: x[("regions", "SIGNIFICANT")]
-                        / x.sum(axis=1)
-                    )
-                )
-            ],
-            axis=1,
-            keys=["paper count"],
-        ),
-    ],
-    axis=1,
-)
-```
-
-<!-- #region kernel="R" -->
-## Journal
-
-- sjr 
-- sjr_best_quartile: Q1
-- cnrs_ranking: 0
-- h_index
-<!-- #endregion -->
-
-```sos kernel="SoS"
-(
-    df
-    .groupby('target')
-    .agg(
-    {
-        'sjr':'describe'
-    })
-    #.unstack(-1)
-    #.assign(pct_significant = lambda x: x[('target','SIGNIFICANT')]/x.sum(axis= 1))
-)
-```
-
-```sos kernel="SoS"
-pd.concat(
-    [
-        pd.concat(
-            [
-                (
-                    df.groupby("d_rang_digit")
-                    .agg({"target": "value_counts"})
-                    .unstack(-1)
-                    .assign(
-                        pct_significant=lambda x: x[("target", "SIGNIFICANT")]
-                        / x.sum(axis=1)
-                    )
-                )
-            ],
-            axis=1,
-            keys=["count"],
-        ),
-        pd.concat(
-            [
-                (
-                    df.groupby(["d_rang_digit", "target"])
-                    .agg({"id": "nunique"})
-                    .rename(columns={"id": "d_rang_digit"})
-                    .unstack(-1)
-                    .assign(
-                        pct_significant=lambda x: x[("d_rang_digit", "SIGNIFICANT")]
-                        / x.sum(axis=1)
-                    )
-                )
-            ],
-            axis=1,
-            keys=["paper count"],
-        ),
-    ],
-    axis=1,
-)
-```
-
-```sos kernel="SoS"
-(
-    df
-    .groupby('target')
-    .agg(
-    {
-        'h_index':'describe'
-    })
-    #.unstack(-1)
-    #.assign(pct_significant = lambda x: x[('target','SIGNIFICANT')]/x.sum(axis= 1))
-)
 ```
 
 <!-- #region kernel="SoS" nteract={"transient": {"deleting": false}} -->
