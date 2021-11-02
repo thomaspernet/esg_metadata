@@ -387,6 +387,7 @@ df_author = (
             'paperId':'count'
         }
     )
+    .rename(columns = {'paperId':'count'})
     
 )
 ```
@@ -496,45 +497,6 @@ for v in ['publication_year', "windows", "mid_year", "sjr"]:
 
 ```sos kernel="SoS"
 pd.concat(
-            [
-                (
-                    pd.concat(
-                        [
-                            (
-                                df.groupby("environmental")
-                                .agg({"target": "value_counts"})
-                                .unstack(0)
-                            ).rename(columns={"target": "environment"}),
-                            (
-                                df.groupby("social")
-                                .agg({"target": "value_counts"})
-                                .unstack(0)
-                            ).rename(columns={"target": "social"}),
-                            (
-                                df.groupby("governance")
-                                .agg({"target": "value_counts"})
-                                .unstack(0)
-                            ).rename(columns={"target": "governance"}),
-                        ],
-                        axis=1,
-                    )
-                    .T.reset_index()
-                    .rename(columns={"environmental": "is_dummy", "level_0": "origin"})
-                    .set_index(["origin", "is_dummy"])
-                    .assign(
-                        pct_significant=lambda x: x[("SIGNIFICANT")] / x.sum(axis=1),
-                        total = lambda x: x['NOT_SIGNIFICANT'] + x['SIGNIFICANT'],
-                        pct_total = lambda x: x['total']/x.groupby(['origin'])['total'].transform('sum')
-                    )
-                )
-            ],
-            axis=1,
-            keys=["count"],
-        )
-```
-
-```sos kernel="SoS"
-pd.concat(
     [
         pd.concat(
             [
@@ -602,7 +564,9 @@ pd.concat(
                     .rename(columns={"environmental": "is_dummy", "level_0": "origin"})
                     .set_index(["origin", "is_dummy"])
                     .assign(
-                        pct_significant=lambda x: x[("SIGNIFICANT")] / x.sum(axis=1)
+                        pct_significant=lambda x: x[("SIGNIFICANT")] / x.sum(axis=1),
+                        total = lambda x: x['NOT_SIGNIFICANT'] + x['SIGNIFICANT'],
+                        pct_total = lambda x: x['total']/x.groupby(['origin'])['total'].transform('sum')
                     )
                 )
             ],
@@ -611,7 +575,12 @@ pd.concat(
         ),
     ],
     axis=1,
-)
+).style.format("{:,.2%}", subset = [
+    ('count','pct_significant'),
+    ('count','pct_total'),
+    ('paper count','pct_significant'),
+    ('paper count','pct_total'),
+])
 ```
 
 <!-- #region kernel="SoS" -->
@@ -647,8 +616,21 @@ pd.concat(
             axis=1,
             keys=["count"],
         ),
+         pd.concat(
+            [
+                (
+                    df.groupby("adjusted_model")
+                    .agg({"id_source": "nunique"})
+                    .rename(columns={"id_source": "count"})
+                    .assign(pct=lambda x: x["count"] / np.sum(x["count"]))
+                )
+            ],
+            axis=1,
+            keys=["count paper raw"],
+        ),
         pd.concat(
             [
+                
                 (
                     df.groupby(["adjusted_model", "target"])
                     .agg({"id_source": "nunique"})
@@ -665,7 +647,11 @@ pd.concat(
         ),
     ],
     axis=1,
-)
+).style.format("{:,.2%}", subset = [
+    ('count raw','pct'),
+    ('count paper raw','pct'),
+    ('paper count','pct_significant')
+])
 ```
 
 <!-- #region kernel="SoS" -->
@@ -697,7 +683,9 @@ pd.concat(
                     .rename(columns={"kyoto": "is_dummy", "level_0": "origin"})
                     .set_index(["origin", "is_dummy"])
                     .assign(
-                        pct_significant=lambda x: x[("SIGNIFICANT")] / x.sum(axis=1)
+                        pct_significant=lambda x: x[("SIGNIFICANT")] / x.sum(axis=1),
+                        total = lambda x: x['NOT_SIGNIFICANT'] + x['SIGNIFICANT'],
+                        pct_total = lambda x: x['total']/x.groupby(['origin'])['total'].transform('sum')
                     )
                 )
             ],
@@ -739,7 +727,12 @@ pd.concat(
         ),
     ],
     axis=1,
-)
+).style.format("{:,.2%}", subset = [
+    ('count','pct_significant'),
+    ('count','pct_total'),
+    ('paper count','pct_significant'),
+    ('paper count','pct_total')
+])
 ```
 
 <!-- #region kernel="SoS" -->
@@ -753,14 +746,39 @@ pd.concat(
             [
                 (
                     df.groupby("publication_year")
+                    .agg({"publication_year": "count"})
+                    .rename(columns={"publication_year": "count"})
+                    .assign(pct=lambda x: x["count"] / np.sum(x["count"]))
+                )
+            ],
+            axis=1,
+            keys=["count raw"],
+        ),
+        pd.concat(
+            [
+                (
+                    df.groupby("publication_year")
                     .agg({"target": "value_counts"})
                     .unstack(0)
                     .rename(columns={"target": "publication_year"})
+                    .droplevel(axis=1, level=0)
                     .T
                 )
             ],
             axis=1,
             keys=["count"],
+        ),
+         pd.concat(
+            [
+                (
+                    df.groupby("publication_year")
+                    .agg({"id_source": "nunique"})
+                    .rename(columns={"id_source": "count"})
+                    .assign(pct=lambda x: x["count"] / np.sum(x["count"]))
+                )
+            ],
+            axis=1,
+            keys=["count paper raw"],
         ),
         pd.concat(
             [
@@ -769,7 +787,9 @@ pd.concat(
                     .agg({"id_source": "nunique"})
                     .rename(columns={"id_source": "publication_year"})
                     .unstack(0)
-                    .T.assign(
+                    .droplevel(axis=1, level=0)
+                    .T
+                    .assign(
                         pct_significant=lambda x: x[("SIGNIFICANT")] / x.sum(axis=1)
                     )
                 )
@@ -779,7 +799,11 @@ pd.concat(
         ),
     ],
     axis=1,
-)
+).style.format("{:,.2%}", subset = [
+    ('count raw','pct'),
+    ('count paper raw','pct'),
+    ('paper count','pct_significant')
+])
 ```
 
 <!-- #region kernel="SoS" -->
@@ -792,12 +816,24 @@ pd.concat(
         pd.concat(
             [
                 (
-                    df.groupby("is_open_access")
-                    .agg({"target": "value_counts"})
-                    .unstack(0)
-                    .rename(columns={"target": "is_open_access"})
-                    .droplevel(axis=1, level=0)
-                    .T
+                    pd.concat(
+                        [
+                            (
+                                df.groupby("is_open_access")
+                                .agg({"target": "value_counts"})
+                                .unstack(0)
+                            ).rename(columns={"target": "is_open_access"}),
+                        ],
+                        axis=1,
+                    )
+                    .T.reset_index()
+                    .rename(columns={"is_open_access": "is_dummy", "level_0": "origin"})
+                    .set_index(["origin", "is_dummy"])
+                    .assign(
+                        pct_significant=lambda x: x[("SIGNIFICANT")] / x.sum(axis=1),
+                        total = lambda x: x['NOT_SIGNIFICANT'] + x['SIGNIFICANT'],
+                        pct_total = lambda x: x['total']/x.groupby(['origin'])['total'].transform('sum')
+                    )
                 )
             ],
             axis=1,
@@ -806,17 +842,24 @@ pd.concat(
         pd.concat(
             [
                 (
-                    df.groupby(["is_open_access", "target"])
-                    .agg({"id_source": "nunique"})
-                    .rename(columns={"id_source": "is_open_access"})
-                    .unstack(0)
-                    .droplevel(axis=1, level=0)
-                    .T
+                    pd.concat(
+                        [
+                            (
+                                df.groupby(["is_open_access", "target"])
+                                .agg({"id_source": "nunique"})
+                                .rename(columns={"id_source": "is_open_access"})
+                                .unstack(0)
+                            )
+                        ],
+                        axis=1,
+                    )
+                    .T.reset_index()
+                    .rename(columns={"is_open_access": "is_dummy", "level_0": "origin"})
+                    .set_index(["origin", "is_dummy"])
                     .assign(
                         pct_significant=lambda x: x[("SIGNIFICANT")] / x.sum(axis=1),
                         total = lambda x: x['NOT_SIGNIFICANT'] + x['SIGNIFICANT'],
-                        pct_total = lambda x: x['total']/x.groupby(['is_open_access'])['total'].transform('sum')
-                        
+                        pct_total = lambda x: x['total']/x.groupby(['origin'])['total'].transform('sum')
                     )
                 )
             ],
@@ -825,7 +868,12 @@ pd.concat(
         ),
     ],
     axis=1,
-)
+).style.format("{:,.2%}", subset = [
+    ('count','pct_significant'),
+    ('count','pct_total'),
+    ('paper count','pct_significant'),
+    ('paper count','pct_total')
+])
 ```
 
 <!-- #region kernel="SoS" -->
@@ -861,6 +909,18 @@ pd.concat(
             axis=1,
             keys=["count"],
         ),
+         pd.concat(
+            [
+                (
+                    df.groupby("region_journal")
+                    .agg({"id_source": "nunique"})
+                    .rename(columns={"id_source": "count"})
+                    .assign(pct=lambda x: x["count"] / np.sum(x["count"]))
+                )
+            ],
+            axis=1,
+            keys=["count paper raw"],
+        ),
         pd.concat(
             [
                 (
@@ -880,7 +940,11 @@ pd.concat(
         ),
     ],
     axis=1,
-)
+).style.format("{:,.2%}", subset = [
+    ('count raw','pct'),
+    ('count paper raw','pct'),
+    ('paper count','pct_significant')
+])
 ```
 
 <!-- #region kernel="SoS" -->
@@ -916,6 +980,18 @@ pd.concat(
             axis=1,
             keys=["count"],
         ),
+         pd.concat(
+            [
+                (
+                    df.groupby("providers")
+                    .agg({"id_source": "nunique"})
+                    .rename(columns={"id_source": "count"})
+                    .assign(pct=lambda x: x["count"] / np.sum(x["count"]))
+                )
+            ],
+            axis=1,
+            keys=["count paper raw"],
+        ),
         pd.concat(
             [
                 (
@@ -935,7 +1011,11 @@ pd.concat(
         ),
     ],
     axis=1,
-)
+).style.format("{:,.2%}", subset = [
+    ('count raw','pct'),
+    ('count paper raw','pct'),
+    ('paper count','pct_significant')
+])
 ```
 
 <!-- #region kernel="SoS" -->
@@ -971,6 +1051,18 @@ pd.concat(
             axis=1,
             keys=["count"],
         ),
+         pd.concat(
+            [
+                (
+                    df.groupby("regions")
+                    .agg({"id_source": "nunique"})
+                    .rename(columns={"id_source": "count"})
+                    .assign(pct=lambda x: x["count"] / np.sum(x["count"]))
+                )
+            ],
+            axis=1,
+            keys=["count paper raw"],
+        ),
         pd.concat(
             [
                 (
@@ -990,7 +1082,11 @@ pd.concat(
         ),
     ],
     axis=1,
-)
+).style.format("{:,.2%}", subset = [
+    ('count raw','pct'),
+    ('count paper raw','pct'),
+    ('paper count','pct_significant')
+])
 ```
 
 <!-- #region kernel="SoS" -->
@@ -1034,6 +1130,18 @@ pd.concat(
             axis=1,
             keys=["count"],
         ),
+         pd.concat(
+            [
+                (
+                    df.groupby("rank_digit")
+                    .agg({"id_source": "nunique"})
+                    .rename(columns={"id_source": "count"})
+                    .assign(pct=lambda x: x["count"] / np.sum(x["count"]))
+                )
+            ],
+            axis=1,
+            keys=["count paper raw"],
+        ),
         pd.concat(
             [
                 (
@@ -1053,7 +1161,11 @@ pd.concat(
         ),
     ],
     axis=1,
-)
+).style.format("{:,.2%}", subset = [
+    ('count raw','pct'),
+    ('count paper raw','pct'),
+    ('paper count','pct_significant')
+])
 ```
 
 ```sos kernel="SoS"
@@ -1085,6 +1197,18 @@ pd.concat(
             axis=1,
             keys=["count"],
         ),
+         pd.concat(
+            [
+                (
+                    df.groupby("d_rank_digit")
+                    .agg({"id_source": "nunique"})
+                    .rename(columns={"id_source": "count"})
+                    .assign(pct=lambda x: x["count"] / np.sum(x["count"]))
+                )
+            ],
+            axis=1,
+            keys=["count paper raw"],
+        ),
         pd.concat(
             [
                 (
@@ -1104,7 +1228,11 @@ pd.concat(
         ),
     ],
     axis=1,
-)
+).style.format("{:,.2%}", subset = [
+    ('count raw','pct'),
+    ('count paper raw','pct'),
+    ('paper count','pct_significant')
+])
 ```
 
 <!-- #region kernel="SoS" -->
@@ -1145,7 +1273,9 @@ pd.concat(
                     .rename(columns={"lag": "is_dummy", "level_0": "origin"})
                     .set_index(["origin", "is_dummy"])
                     .assign(
-                        pct_significant=lambda x: x[("SIGNIFICANT")] / x.sum(axis=1)
+                        pct_significant=lambda x: x[("SIGNIFICANT")] / x.sum(axis=1),
+                         total = lambda x: x['NOT_SIGNIFICANT'] + x['SIGNIFICANT'],
+                        pct_total = lambda x: x['total']/x.groupby(['origin'])['total'].transform('sum')
                     )
                 )
             ],
@@ -1193,7 +1323,12 @@ pd.concat(
         ),
     ],
     axis=1,
-)
+).style.format("{:,.2%}", subset = [
+    ('count','pct_significant'),
+    ('count','pct_total'),
+    ('paper count','pct_significant'),
+    ('paper count','pct_total'),
+])
 ```
 
 <!-- #region kernel="SoS" -->
@@ -1229,6 +1364,18 @@ pd.concat(
             axis=1,
             keys=["count"],
         ),
+         pd.concat(
+            [
+                (
+                    df.groupby("nb_authors")
+                    .agg({"id_source": "nunique"})
+                    .rename(columns={"id_source": "count"})
+                    .assign(pct=lambda x: x["count"] / np.sum(x["count"]))
+                )
+            ],
+            axis=1,
+            keys=["count paper raw"],
+        ),
         pd.concat(
             [
                 (
@@ -1248,7 +1395,11 @@ pd.concat(
         ),
     ],
     axis=1,
-)
+).style.format("{:,.2%}", subset = [
+    ('count raw','pct'),
+    ('count paper raw','pct'),
+    ('paper count','pct_significant')
+])
 ```
 
 ```sos kernel="SoS"
@@ -1292,6 +1443,18 @@ pd.concat(
             axis=1,
             keys=["count"],
         ),
+         pd.concat(
+            [
+                (
+                    df.groupby("sentiment")
+                    .agg({"id_source": "nunique"})
+                    .rename(columns={"id_source": "count"})
+                    .assign(pct=lambda x: x["count"] / np.sum(x["count"]))
+                )
+            ],
+            axis=1,
+            keys=["count paper raw"],
+        ),
         pd.concat(
             [
                 (
@@ -1311,7 +1474,11 @@ pd.concat(
         ),
     ],
     axis=1,
-)
+).style.format("{:,.2%}", subset = [
+    ('count raw','pct'),
+    ('count paper raw','pct'),
+    ('paper count','pct_significant')
+])
 ```
 
 ```sos kernel="SoS"
@@ -1343,6 +1510,18 @@ pd.concat(
             axis=1,
             keys=["count"],
         ),
+         pd.concat(
+            [
+                (
+                    df.groupby("cluster_w_emb")
+                    .agg({"id_source": "nunique"})
+                    .rename(columns={"id_source": "count"})
+                    .assign(pct=lambda x: x["count"] / np.sum(x["count"]))
+                )
+            ],
+            axis=1,
+            keys=["count paper raw"],
+        ),
         pd.concat(
             [
                 (
@@ -1362,7 +1541,11 @@ pd.concat(
         ),
     ],
     axis=1,
-)
+).style.format("{:,.2%}", subset = [
+    ('count raw','pct'),
+    ('count paper raw','pct'),
+    ('paper count','pct_significant')
+])
 ```
 
 ```sos kernel="SoS"
