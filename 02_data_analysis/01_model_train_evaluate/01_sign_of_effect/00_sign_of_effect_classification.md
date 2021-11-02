@@ -496,6 +496,45 @@ for v in ['publication_year', "windows", "mid_year", "sjr"]:
 
 ```sos kernel="SoS"
 pd.concat(
+            [
+                (
+                    pd.concat(
+                        [
+                            (
+                                df.groupby("environmental")
+                                .agg({"target": "value_counts"})
+                                .unstack(0)
+                            ).rename(columns={"target": "environment"}),
+                            (
+                                df.groupby("social")
+                                .agg({"target": "value_counts"})
+                                .unstack(0)
+                            ).rename(columns={"target": "social"}),
+                            (
+                                df.groupby("governance")
+                                .agg({"target": "value_counts"})
+                                .unstack(0)
+                            ).rename(columns={"target": "governance"}),
+                        ],
+                        axis=1,
+                    )
+                    .T.reset_index()
+                    .rename(columns={"environmental": "is_dummy", "level_0": "origin"})
+                    .set_index(["origin", "is_dummy"])
+                    .assign(
+                        pct_significant=lambda x: x[("SIGNIFICANT")] / x.sum(axis=1),
+                        total = lambda x: x['NOT_SIGNIFICANT'] + x['SIGNIFICANT'],
+                        pct_total = lambda x: x['total']/x.groupby(['origin'])['total'].transform('sum')
+                    )
+                )
+            ],
+            axis=1,
+            keys=["count"],
+        )
+```
+
+```sos kernel="SoS"
+pd.concat(
     [
         pd.concat(
             [
@@ -524,7 +563,9 @@ pd.concat(
                     .rename(columns={"environmental": "is_dummy", "level_0": "origin"})
                     .set_index(["origin", "is_dummy"])
                     .assign(
-                        pct_significant=lambda x: x[("SIGNIFICANT")] / x.sum(axis=1)
+                        pct_significant=lambda x: x[("SIGNIFICANT")] / x.sum(axis=1),
+                        total = lambda x: x['NOT_SIGNIFICANT'] + x['SIGNIFICANT'],
+                        pct_total = lambda x: x['total']/x.groupby(['origin'])['total'].transform('sum')
                     )
                 )
             ],
@@ -584,9 +625,22 @@ pd.concat(
             [
                 (
                     df.groupby("adjusted_model")
+                    .agg({"adjusted_model": "count"})
+                    .rename(columns={"adjusted_model": "count"})
+                    .assign(pct=lambda x: x["count"] / np.sum(x["count"]))
+                )
+            ],
+            axis=1,
+            keys=["count raw"],
+        ),
+        pd.concat(
+            [
+                (
+                    df.groupby("adjusted_model")
                     .agg({"target": "value_counts"})
                     .unstack(0)
                     .rename(columns={"target": "adjusted_model"})
+                    .droplevel(axis=1, level=0)
                     .T
                 )
             ],
@@ -600,6 +654,7 @@ pd.concat(
                     .agg({"id_source": "nunique"})
                     .rename(columns={"id_source": "adjusted_model"})
                     .unstack(0)
+                    .droplevel(axis=1, level=0)
                     .T.assign(
                         pct_significant=lambda x: x[("SIGNIFICANT")] / x.sum(axis=1)
                     )
@@ -673,7 +728,9 @@ pd.concat(
                     .rename(columns={"kyoto": "is_dummy", "level_0": "origin"})
                     .set_index(["origin", "is_dummy"])
                     .assign(
-                        pct_significant=lambda x: x[("SIGNIFICANT")] / x.sum(axis=1)
+                        pct_significant=lambda x: x[("SIGNIFICANT")] / x.sum(axis=1),
+                        total = lambda x: x['NOT_SIGNIFICANT'] + x['SIGNIFICANT'],
+                        pct_total = lambda x: x['total']/x.groupby(['origin'])['total'].transform('sum')
                     )
                 )
             ],
@@ -739,6 +796,7 @@ pd.concat(
                     .agg({"target": "value_counts"})
                     .unstack(0)
                     .rename(columns={"target": "is_open_access"})
+                    .droplevel(axis=1, level=0)
                     .T
                 )
             ],
@@ -752,8 +810,13 @@ pd.concat(
                     .agg({"id_source": "nunique"})
                     .rename(columns={"id_source": "is_open_access"})
                     .unstack(0)
-                    .T.assign(
-                        pct_significant=lambda x: x[("SIGNIFICANT")] / x.sum(axis=1)
+                    .droplevel(axis=1, level=0)
+                    .T
+                    .assign(
+                        pct_significant=lambda x: x[("SIGNIFICANT")] / x.sum(axis=1),
+                        total = lambda x: x['NOT_SIGNIFICANT'] + x['SIGNIFICANT'],
+                        pct_total = lambda x: x['total']/x.groupby(['is_open_access'])['total'].transform('sum')
+                        
                     )
                 )
             ],
@@ -776,9 +839,22 @@ pd.concat(
             [
                 (
                     df.groupby("region_journal")
+                    .agg({"region_journal": "count"})
+                    .rename(columns={"region_journal": "count"})
+                    .assign(pct=lambda x: x["count"] / np.sum(x["count"]))
+                )
+            ],
+            axis=1,
+            keys=["count raw"],
+        ),
+        pd.concat(
+            [
+                (
+                    df.groupby("region_journal")
                     .agg({"target": "value_counts"})
                     .unstack(0)
                     .rename(columns={"target": "region_journal"})
+                    .droplevel(axis=1, level=0)
                     .T
                 )
             ],
@@ -792,7 +868,9 @@ pd.concat(
                     .agg({"id_source": "nunique"})
                     .rename(columns={"id_source": "region_journal"})
                     .unstack(0)
-                    .T.assign(
+                    .droplevel(axis=1, level=0)
+                    .T
+                    .assign(
                         pct_significant=lambda x: x[("SIGNIFICANT")] / x.sum(axis=1)
                     )
                 )
@@ -816,9 +894,22 @@ pd.concat(
             [
                 (
                     df.groupby("providers")
+                    .agg({"providers": "count"})
+                    .rename(columns={"providers": "count"})
+                    .assign(pct=lambda x: x["count"] / np.sum(x["count"]))
+                )
+            ],
+            axis=1,
+            keys=["count raw"],
+        ),
+        pd.concat(
+            [
+                (
+                    df.groupby("providers")
                     .agg({"target": "value_counts"})
                     .unstack(0)
                     .rename(columns={"target": "providers"})
+                    .droplevel(axis=1, level=0)
                     .T
                 )
             ],
@@ -832,7 +923,9 @@ pd.concat(
                     .agg({"id_source": "nunique"})
                     .rename(columns={"id_source": "providers"})
                     .unstack(0)
-                    .T.assign(
+                    .droplevel(axis=1, level=0)
+                    .T
+                    .assign(
                         pct_significant=lambda x: x[("SIGNIFICANT")] / x.sum(axis=1)
                     )
                 )
@@ -856,9 +949,22 @@ pd.concat(
             [
                 (
                     df.groupby("regions")
+                    .agg({"regions": "count"})
+                    .rename(columns={"regions": "count"})
+                    .assign(pct=lambda x: x["count"] / np.sum(x["count"]))
+                )
+            ],
+            axis=1,
+            keys=["count raw"],
+        ),
+        pd.concat(
+            [
+                (
+                    df.groupby("regions")
                     .agg({"target": "value_counts"})
                     .unstack(0)
                     .rename(columns={"target": "regions"})
+                    .droplevel(axis=1, level=0)
                     .T
                 )
             ],
@@ -872,7 +978,9 @@ pd.concat(
                     .agg({"id_source": "nunique"})
                     .rename(columns={"id_source": "regions"})
                     .unstack(0)
-                    .T.assign(
+                    .droplevel(axis=1, level=0)
+                    .T
+                    .assign(
                         pct_significant=lambda x: x[("SIGNIFICANT")] / x.sum(axis=1)
                     )
                 )
@@ -900,20 +1008,48 @@ pd.concat(
 ```sos kernel="SoS"
 pd.concat(
     [
-        (
-            df.groupby("rank_digit").agg(
-                {"publication_name": "nunique", "id_source": "count"}
-            )
+        pd.concat(
+            [
+                (
+                    df.groupby("rank_digit")
+                    .agg({"rank_digit": "count"})
+                    .rename(columns={"rank_digit": "count"})
+                    .assign(pct=lambda x: x["count"] / np.sum(x["count"]))
+                )
+            ],
+            axis=1,
+            keys=["count raw"],
         ),
-        (
-            df.groupby(["rank_digit", "target"])
-            .agg({"id_source": "nunique"})
-            .rename(columns={"id_source": "rank_digit"})
-            .unstack(-1)
-            .assign(
-                pct_significant=lambda x: x[("rank_digit", "SIGNIFICANT")]
-                / x.sum(axis=1)
-            )
+        pd.concat(
+            [
+                (
+                    df.groupby("rank_digit")
+                    .agg({"target": "value_counts"})
+                    .unstack(0)
+                    .rename(columns={"target": "rank_digit"})
+                    .droplevel(axis=1, level=0)
+                    .T
+                )
+            ],
+            axis=1,
+            keys=["count"],
+        ),
+        pd.concat(
+            [
+                (
+                    df.groupby(["rank_digit", "target"])
+                    .agg({"id_source": "nunique"})
+                    .rename(columns={"id_source": "rank_digit"})
+                    .unstack(0)
+                    .droplevel(axis=1, level=0)
+                    .T
+                    .assign(
+                        pct_significant=lambda x: x[("SIGNIFICANT")] / x.sum(axis=1)
+                    )
+                )
+            ],
+            axis=1,
+            keys=["paper count"],
         ),
     ],
     axis=1,
@@ -927,12 +1063,23 @@ pd.concat(
             [
                 (
                     df.groupby("d_rank_digit")
+                    .agg({"d_rank_digit": "count"})
+                    .rename(columns={"d_rank_digit": "count"})
+                    .assign(pct=lambda x: x["count"] / np.sum(x["count"]))
+                )
+            ],
+            axis=1,
+            keys=["count raw"],
+        ),
+        pd.concat(
+            [
+                (
+                    df.groupby("d_rank_digit")
                     .agg({"target": "value_counts"})
-                    .unstack(-1)
-                    .assign(
-                        pct_significant=lambda x: x[("target", "SIGNIFICANT")]
-                        / x.sum(axis=1)
-                    )
+                    .unstack(0)
+                    .rename(columns={"target": "d_rank_digit"})
+                    .droplevel(axis=1, level=0)
+                    .T
                 )
             ],
             axis=1,
@@ -944,10 +1091,11 @@ pd.concat(
                     df.groupby(["d_rank_digit", "target"])
                     .agg({"id_source": "nunique"})
                     .rename(columns={"id_source": "d_rank_digit"})
-                    .unstack(-1)
+                    .unstack(0)
+                    .droplevel(axis=1, level=0)
+                    .T
                     .assign(
-                        pct_significant=lambda x: x[("d_rank_digit", "SIGNIFICANT")]
-                        / x.sum(axis=1)
+                        pct_significant=lambda x: x[("SIGNIFICANT")] / x.sum(axis=1)
                     )
                 )
             ],
@@ -1034,7 +1182,9 @@ pd.concat(
                     .rename(columns={"lag": "is_dummy", "level_0": "origin"})
                     .set_index(["origin", "is_dummy"])
                     .assign(
-                        pct_significant=lambda x: x[("SIGNIFICANT")] / x.sum(axis=1)
+                        pct_significant=lambda x: x[("SIGNIFICANT")] / x.sum(axis=1),
+                        total = lambda x: x['NOT_SIGNIFICANT'] + x['SIGNIFICANT'],
+                        pct_total = lambda x: x['total']/x.groupby(['origin'])['total'].transform('sum')
                     )
                 )
             ],
@@ -1057,9 +1207,22 @@ pd.concat(
             [
                 (
                     df.groupby("nb_authors")
+                    .agg({"nb_authors": "count"})
+                    .rename(columns={"nb_authors": "count"})
+                    .assign(pct=lambda x: x["count"] / np.sum(x["count"]))
+                )
+            ],
+            axis=1,
+            keys=["count raw"],
+        ),
+        pd.concat(
+            [
+                (
+                    df.groupby("nb_authors")
                     .agg({"target": "value_counts"})
                     .unstack(0)
                     .rename(columns={"target": "nb_authors"})
+                    .droplevel(axis=1, level=0)
                     .T
                 )
             ],
@@ -1073,7 +1236,9 @@ pd.concat(
                     .agg({"id_source": "nunique"})
                     .rename(columns={"id_source": "nb_authors"})
                     .unstack(0)
-                    .T.assign(
+                    .droplevel(axis=1, level=0)
+                    .T
+                    .assign(
                         pct_significant=lambda x: x[("SIGNIFICANT")] / x.sum(axis=1)
                     )
                 )
@@ -1105,9 +1270,22 @@ pd.concat(
             [
                 (
                     df.groupby("sentiment")
+                    .agg({"sentiment": "count"})
+                    .rename(columns={"sentiment": "count"})
+                    .assign(pct=lambda x: x["count"] / np.sum(x["count"]))
+                )
+            ],
+            axis=1,
+            keys=["count raw"],
+        ),
+        pd.concat(
+            [
+                (
+                    df.groupby("sentiment")
                     .agg({"target": "value_counts"})
                     .unstack(0)
                     .rename(columns={"target": "sentiment"})
+                    .droplevel(axis=1, level=0)
                     .T
                 )
             ],
@@ -1121,7 +1299,9 @@ pd.concat(
                     .agg({"id_source": "nunique"})
                     .rename(columns={"id_source": "sentiment"})
                     .unstack(0)
-                    .T.assign(
+                    .droplevel(axis=1, level=0)
+                    .T
+                    .assign(
                         pct_significant=lambda x: x[("SIGNIFICANT")] / x.sum(axis=1)
                     )
                 )
@@ -1141,9 +1321,22 @@ pd.concat(
             [
                 (
                     df.groupby("cluster_w_emb")
+                    .agg({"cluster_w_emb": "count"})
+                    .rename(columns={"cluster_w_emb": "count"})
+                    .assign(pct=lambda x: x["count"] / np.sum(x["count"]))
+                )
+            ],
+            axis=1,
+            keys=["count raw"],
+        ),
+        pd.concat(
+            [
+                (
+                    df.groupby("cluster_w_emb")
                     .agg({"target": "value_counts"})
                     .unstack(0)
                     .rename(columns={"target": "cluster_w_emb"})
+                    .droplevel(axis=1, level=0)
                     .T
                 )
             ],
@@ -1157,7 +1350,9 @@ pd.concat(
                     .agg({"id_source": "nunique"})
                     .rename(columns={"id_source": "cluster_w_emb"})
                     .unstack(0)
-                    .T.assign(
+                    .droplevel(axis=1, level=0)
+                    .T
+                    .assign(
                         pct_significant=lambda x: x[("SIGNIFICANT")] / x.sum(axis=1)
                     )
                 )
@@ -1212,7 +1407,7 @@ pd.concat(
 <!-- #region kernel="SoS" -->
 #### Correlation among covariates
 
-- publication_year 
+- publication_year and mid_year are highly correlated, so cannot use them simultaneously
 <!-- #endregion -->
 
 ```sos kernel="SoS"
@@ -1239,14 +1434,6 @@ corr = (
     #.background_gradient()
     #.applymap(lambda x: 'color: transparent' if pd.isnull(x) else '')
 )
-```
-
-```sos kernel="SoS"
-np.triu(np.ones_like(corr, dtype=bool))
-```
-
-```sos kernel="SoS"
-corr.where(np.triu(np.ones_like(corr, dtype=bool))).T
 ```
 
 ```sos kernel="SoS"
@@ -1509,12 +1696,12 @@ t_0 <- glm(target ~ environmental
            + financial_crisis
            + publication_year_int
            + windows
-           + mid_year
+           #+ mid_year
            + regions
-           + sjr
            + is_open_access
            + region_journal
-           + providers,
+           + providers
+           + sjr,
            data = df_final ,
            binomial(link = "probit")
           )
@@ -1525,12 +1712,12 @@ t_1 <- glm(target ~ social
            + financial_crisis
            + publication_year_int
            + windows
-           + mid_year
+           #+ mid_year
            + regions
-           + sjr
            + is_open_access
            + region_journal
-           + providers,
+           + providers
+           + sjr,
            data = df_final , binomial(link = "probit"))
 t_1.rrr <- exp(coef(t_1))
 t_2 <- glm(target ~ governance
@@ -1539,12 +1726,12 @@ t_2 <- glm(target ~ governance
            + financial_crisis
            + publication_year_int
            + windows
-           + mid_year
+           #+ mid_year
            + regions
-           + sjr
            + is_open_access
            + region_journal
-           + providers,
+           + providers
+           + sjr,
            data = df_final , binomial(link = "probit"))
 t_2.rrr <- exp(coef(t_2))
 ### Econometrics control
@@ -1554,12 +1741,12 @@ t_3 <- glm(target ~ environmental
            + financial_crisis
            + publication_year_int
            + windows
-           + mid_year
+           #+ mid_year
            + regions
-           + sjr
            + is_open_access
            + region_journal
            + providers
+           + sjr
            + lag
            + interaction_term
            + quadratic_term,
@@ -1573,12 +1760,12 @@ t_4 <- glm(target ~ social
            + financial_crisis
            + publication_year_int
            + windows
-           + mid_year
+           #+ mid_year
            + regions
-           + sjr
            + is_open_access
            + region_journal
            + providers
+           + sjr
            + lag
            + interaction_term
            + quadratic_term,
@@ -1590,12 +1777,12 @@ t_5 <- glm(target ~ governance
            + financial_crisis
            + publication_year_int
            + windows
-           + mid_year
+           #+ mid_year
            + regions
-           + sjr
            + is_open_access
            + region_journal
            + providers
+           + sjr
            + lag
            + interaction_term
            + quadratic_term,
@@ -1609,7 +1796,8 @@ stargazer(list_final, type = "text",
               se_robust),
           coef=list_final.rrr,
           style = "qje",
-         out="TABLES/table_0.txt")
+         out="TABLES/table_0.txt"
+         )
 ```
 
 ```sos kernel="R"
@@ -1620,12 +1808,12 @@ t_0 <- glm(target ~ environmental
            + financial_crisis
            + publication_year_int
            + windows
-           + mid_year
+           #+ mid_year
            + regions
-           + d_rank_digit
            + is_open_access
            + region_journal
-           + providers,
+           + providers
+           + d_rank_digit,
            data = df_final ,
            binomial(link = "probit")
           )
@@ -1636,12 +1824,12 @@ t_1 <- glm(target ~ social
            + financial_crisis
            + publication_year_int
            + windows
-           + mid_year
+           #+ mid_year
            + regions
-           + d_rank_digit
            + is_open_access
            + region_journal
-           + providers,
+           + providers
+           + d_rank_digit,
            data = df_final , binomial(link = "probit"))
 t_1.rrr <- exp(coef(t_1))
 t_2 <- glm(target ~ governance
@@ -1650,12 +1838,12 @@ t_2 <- glm(target ~ governance
            + financial_crisis
            + publication_year_int
            + windows
-           + mid_year
+           #+ mid_year
            + regions
-           + d_rank_digit
            + is_open_access
            + region_journal
-           + providers,
+           + providers
+           + d_rank_digit,
            data = df_final , binomial(link = "probit"))
 t_2.rrr <- exp(coef(t_2))
 ### Econometrics control
@@ -1665,12 +1853,12 @@ t_3 <- glm(target ~ environmental
            + financial_crisis
            + publication_year_int
            + windows
-           + mid_year
+           #+ mid_year
            + regions
-           + d_rank_digit
            + is_open_access
            + region_journal
            + providers
+           + d_rank_digit
            + lag
            + interaction_term
            + quadratic_term,
@@ -1684,12 +1872,12 @@ t_4 <- glm(target ~ social
            + financial_crisis
            + publication_year_int
            + windows
-           + mid_year
+           #+ mid_year
            + regions
-           + d_rank_digit
            + is_open_access
            + region_journal
            + providers
+           + d_rank_digit
            + lag
            + interaction_term
            + quadratic_term,
@@ -1701,12 +1889,12 @@ t_5 <- glm(target ~ governance
            + financial_crisis
            + publication_year_int
            + windows
-           + mid_year
+           #+ mid_year
            + regions
-           + d_rank_digit
            + is_open_access
            + region_journal
            + providers
+           + d_rank_digit
            + lag
            + interaction_term
            + quadratic_term,
@@ -1746,12 +1934,12 @@ t_0 <- glm(target ~ environmental
            + financial_crisis
            + publication_year_int
            + windows
-           + mid_year
+           #+ mid_year
            + regions
-           + sjr
            + is_open_access
            + region_journal
            + providers
+           + sjr
            + nb_authors
            + pct_female
            + pct_esg_1,
@@ -1767,12 +1955,12 @@ t_1 <- glm(target ~ social
            + financial_crisis
            + publication_year_int
            + windows
-           + mid_year
+           #+ mid_year
            + regions
-           + sjr
            + is_open_access
            + region_journal
            + providers
+           + sjr
            + nb_authors
            + pct_female
            + pct_esg_1,
@@ -1787,12 +1975,12 @@ t_2 <- glm(target ~ governance
            + financial_crisis
            + publication_year_int
            + windows
-           + mid_year
+           #+ mid_year
            + regions
+           + is_open_access
+           + region_journal
+           + providers
            + sjr
-           + is_open_access
-           + region_journal
-           + providers
            + nb_authors
            + pct_female
            + pct_esg_1,
@@ -1801,87 +1989,76 @@ t_2 <- glm(target ~ governance
           )
 t_2.rrr <- exp(coef(t_2))
 
-list_final = list(t_0, t_1, t_2)
-list_final.rrr = list(t_0.rrr,t_1.rrr,t_2.rrr)
+### CNRS
+t_3 <- glm(target ~ environmental
+           + adjusted_model
+           + kyoto 
+           + financial_crisis
+           + publication_year_int
+           + windows
+           #+ mid_year
+           + regions
+           + is_open_access
+           + region_journal
+           + providers
+           + d_rank_digit
+           + nb_authors
+           + pct_female
+           + pct_esg_1,
+           data = df_final ,
+           binomial(link = "probit")
+          )
+t_3.rrr <- exp(coef(t_3))
+
+
+t_4 <- glm(target ~ social
+           + adjusted_model
+           + kyoto 
+           + financial_crisis
+           + publication_year_int
+           + windows
+           #+ mid_year
+           + regions
+           + is_open_access
+           + region_journal
+           + providers
+           + d_rank_digit
+           + nb_authors
+           + pct_female
+           + pct_esg_1,
+           data = df_final ,
+           binomial(link = "probit")
+          )
+t_4.rrr <- exp(coef(t_4))
+
+t_5 <- glm(target ~ governance
+           + adjusted_model
+           + kyoto 
+           + financial_crisis
+           + publication_year_int
+           + windows
+           #+ mid_year
+           + regions
+           + is_open_access
+           + region_journal
+           + providers
+           + d_rank_digit
+           + nb_authors
+           + pct_female
+           + pct_esg_1,
+           data = df_final ,
+           binomial(link = "probit")
+          )
+t_5.rrr <- exp(coef(t_5))
+
+list_final = list(t_0, t_1, t_2,t_3, t_4, t_5)
+list_final.rrr = list(t_0.rrr,t_1.rrr,t_2.rrr,t_3.rrr,t_4.rrr,t_5.rrr)
 stargazer(list_final, type = "text", 
   se = lapply(list_final,
               se_robust),
           coef=list_final.rrr,
           style = "qje",
-         out="TABLES/table_3.txt")
-```
-
-```sos kernel="R"
-###
-t_0 <- glm(target ~ environmental
-           + adjusted_model
-           + kyoto 
-           + financial_crisis
-           + publication_year_int
-           + windows
-           + mid_year
-           + regions
-           + d_rank_digit
-           + is_open_access
-           + region_journal
-           + providers
-           + nb_authors
-           + pct_female
-           + pct_esg_1,
-           data = df_final ,
-           binomial(link = "probit")
-          )
-t_0.rrr <- exp(coef(t_0))
-
-
-t_1 <- glm(target ~ social
-           + adjusted_model
-           + kyoto 
-           + financial_crisis
-           + publication_year_int
-           + windows
-           + mid_year
-           + regions
-           + d_rank_digit
-           + is_open_access
-           + region_journal
-           + providers
-           + nb_authors
-           + pct_female
-           + pct_esg_1,
-           data = df_final ,
-           binomial(link = "probit")
-          )
-t_1.rrr <- exp(coef(t_1))
-
-t_2 <- glm(target ~ governance
-           + adjusted_model
-           + kyoto 
-           + financial_crisis
-           + publication_year_int
-           + windows
-           + mid_year
-           + regions
-           + d_rank_digit
-           + is_open_access
-           + region_journal
-           + providers
-           + nb_authors
-           + pct_female
-           + pct_esg_1,
-           data = df_final ,
-           binomial(link = "probit")
-          )
-t_2.rrr <- exp(coef(t_2))
-
-list_final = list(t_0, t_1, t_2)
-list_final.rrr = list(t_0.rrr,t_1.rrr,t_2.rrr)
-stargazer(list_final, type = "text", 
-  se = lapply(list_final,
-              se_robust),
-          coef=list_final.rrr,
-          style = "qje",
-         out="TABLES/table_4.txt")
+         out="TABLES/table_2.txt")
 ```
 
 <!-- #region kernel="R" -->
@@ -1909,10 +2086,10 @@ t_0 <- glm(target ~ environmental
            + windows
            #+ mid_year
            + regions
-           + sjr
            + is_open_access
            + region_journal
            + providers
+           + sjr
            + sentiment
            + cluster_w_emb,
            data = df_final ,
@@ -1927,12 +2104,12 @@ t_1 <- glm(target ~ social
            + financial_crisis
            + publication_year_int
            + windows
-           + mid_year
+           #+ mid_year
            + regions
-           + sjr
            + is_open_access
            + region_journal
            + providers
+           + sjr
            + sentiment
            + cluster_w_emb,
            data = df_final ,
@@ -1946,12 +2123,12 @@ t_2 <- glm(target ~ governance
            + financial_crisis
            + publication_year_int
            + windows
-           + mid_year
+           #+ mid_year
            + regions
+           + is_open_access
+           + region_journal
+           + providers
            + sjr
-           + is_open_access
-           + region_journal
-           + providers
            + sentiment
            + cluster_w_emb,
            data = df_final ,
@@ -1959,84 +2136,73 @@ t_2 <- glm(target ~ governance
           )
 t_2.rrr <- exp(coef(t_2))
 
-list_final = list(t_0, t_1, t_2)
-list_final.rrr = list(t_0.rrr,t_1.rrr,t_2.rrr)
+### CNRS
+t_3 <- glm(target ~ environmental
+           + adjusted_model
+           + kyoto 
+           + financial_crisis
+           + publication_year_int
+           + windows
+           #+ mid_year
+           + regions
+           + is_open_access
+           + region_journal
+           + providers
+           + d_rank_digit
+           + sentiment
+           + cluster_w_emb,
+           data = df_final ,
+           binomial(link = "probit")
+          )
+t_3.rrr <- exp(coef(t_3))
+
+
+t_4 <- glm(target ~ social
+           + adjusted_model
+           + kyoto 
+           + financial_crisis
+           + publication_year_int
+           + windows
+           #+ mid_year
+           + regions
+           + is_open_access
+           + region_journal
+           + providers
+           + d_rank_digit
+           + sentiment
+           + cluster_w_emb,
+           data = df_final ,
+           binomial(link = "probit")
+          )
+t_4.rrr <- exp(coef(t_4))
+
+t_5 <- glm(target ~ governance
+           + adjusted_model
+           + kyoto 
+           + financial_crisis
+           + publication_year_int
+           + windows
+           #+ mid_year
+           + regions
+           + is_open_access
+           + region_journal
+           + providers
+           + d_rank_digit
+           + sentiment
+           + cluster_w_emb,
+           data = df_final ,
+           binomial(link = "probit")
+          )
+t_5.rrr <- exp(coef(t_5))
+
+list_final = list(t_0, t_1, t_2,t_3, t_4, t_5)
+list_final.rrr = list(t_0.rrr,t_1.rrr,t_2.rrr,t_3.rrr,t_4.rrr,t_5.rrr)
 stargazer(list_final, type = "text", 
   se = lapply(list_final,
               se_robust),
           coef=list_final.rrr,
           style = "qje",
-         out="TABLES/table_6.txt")
-```
-
-```sos kernel="R"
-###
-t_0 <- glm(target ~ environmental
-           + adjusted_model
-           + kyoto 
-           + financial_crisis
-           + publication_year_int
-           + windows
-           + mid_year
-           + regions
-           + d_rank_digit
-           + is_open_access
-           + region_journal
-           + providers
-           + sentiment
-           + cluster_w_emb,
-           data = df_final ,
-           binomial(link = "probit")
-          )
-t_0.rrr <- exp(coef(t_0))
-
-
-t_1 <- glm(target ~ social
-           + adjusted_model
-           + kyoto 
-           + financial_crisis
-           + publication_year_int
-           + windows
-           + mid_year
-           + regions
-           + d_rank_digit
-           + is_open_access
-           + region_journal
-           + providers
-           + sentiment
-           + cluster_w_emb,
-           data = df_final ,
-           binomial(link = "probit")
-          )
-t_1.rrr <- exp(coef(t_1))
-
-t_2 <- glm(target ~ governance
-           + adjusted_model
-           + kyoto 
-           + financial_crisis
-           + publication_year_int
-           + windows
-           + mid_year
-           + regions
-           + d_rank_digit
-           + is_open_access
-           + region_journal
-           + providers
-           + sentiment
-           + cluster_w_emb,
-           data = df_final ,
-           binomial(link = "probit")
-          )
-t_2.rrr <- exp(coef(t_2))
-
-list_final = list(t_0, t_1, t_2)
-list_final.rrr = list(t_0.rrr,t_1.rrr,t_2.rrr)
-stargazer(list_final, type = "text", 
-  se = lapply(list_final,
-              se_robust),
-          coef=list_final.rrr,
-          style = "qje",
-         out="TABLES/table_5.txt")
+         out="TABLES/table_3.txt")
 ```
 
 <!-- #region kernel="SoS" heading_collapsed="true" -->
@@ -2082,59 +2248,63 @@ Interested in the magnitude of the t-student critical value
 ```sos kernel="R"
 ### Baseline SJR
 t_0 <- glm(adjusted_t_value ~ environmental
-           + adjusted_model
+           + adjusted_model  
            + kyoto 
            + financial_crisis
            + publication_year_int
            + windows
-           + mid_year
+           #+ mid_year
            + regions
-           + sjr
            + is_open_access
-           + region_journal,
+           + region_journal
+           + providers
+           + sjr,
            data = df_final %>% filter(adjusted_t_value < 10),
            family=gaussian(identity))
 
 t_1 <- glm(adjusted_t_value ~ social
-           + adjusted_model
+           + adjusted_model  
            + kyoto 
            + financial_crisis
            + publication_year_int
            + windows
-           + mid_year
+           #+ mid_year
            + regions
-           + sjr
            + is_open_access
-           + region_journal,
+           + region_journal
+           + providers
+           + sjr,
            data = df_final %>% filter(adjusted_t_value < 10),
            family=gaussian(identity))
 
 t_2 <- glm(adjusted_t_value ~ governance
-           + adjusted_model
+           + adjusted_model  
            + kyoto 
            + financial_crisis
            + publication_year_int
            + windows
-           + mid_year
+           #+ mid_year
            + regions
-           + sjr
            + is_open_access
-           + region_journal,
+           + region_journal
+           + providers
+           + sjr,
            data = df_final %>% filter(adjusted_t_value < 10),
            family=gaussian(identity))
 
 ### Econometrics control
 t_3 <- glm(adjusted_t_value ~ environmental
-           + adjusted_model
+           + adjusted_model  
            + kyoto 
            + financial_crisis
            + publication_year_int
            + windows
-           + mid_year
+           #+ mid_year
            + regions
-           + sjr
            + is_open_access
            + region_journal
+           + providers
+           + sjr
            + lag
            + interaction_term
            + quadratic_term,
@@ -2142,16 +2312,17 @@ t_3 <- glm(adjusted_t_value ~ environmental
            family=gaussian(identity))
 
 t_4 <- glm(adjusted_t_value ~ social
-           + adjusted_model
+           + adjusted_model  
            + kyoto 
            + financial_crisis
            + publication_year_int
            + windows
-           + mid_year
+           #+ mid_year
            + regions
-           + sjr
            + is_open_access
            + region_journal
+           + providers
+           + sjr
            + lag
            + interaction_term
            + quadratic_term,
@@ -2186,59 +2357,63 @@ stargazer(list_final, type = "text",
 ```sos kernel="R"
 ### Baseline SJR
 t_0 <- glm(adjusted_t_value ~ environmental
-           + adjusted_model
+           + adjusted_model  
            + kyoto 
            + financial_crisis
            + publication_year_int
            + windows
-           + mid_year
+           #+ mid_year
            + regions
-           + d_rang_digit
            + is_open_access
-           + region_journal,
+           + region_journal
+           + providers
+           + d_rank_digit,
            data = df_final %>% filter(adjusted_t_value < 10),
            family=gaussian(identity))
 
 t_1 <- glm(adjusted_t_value ~ social
-           + adjusted_model
+           + adjusted_model  
            + kyoto 
            + financial_crisis
            + publication_year_int
            + windows
-           + mid_year
+           #+ mid_year
            + regions
-           + d_rang_digit
            + is_open_access
-           + region_journal,
+           + region_journal
+           + providers
+           + d_rank_digit,
            data = df_final %>% filter(adjusted_t_value < 10),
            family=gaussian(identity))
 
 t_2 <- glm(adjusted_t_value ~ governance
-            + adjusted_model
+           + adjusted_model  
            + kyoto 
            + financial_crisis
            + publication_year_int
            + windows
-           + mid_year
+           #+ mid_year
            + regions
-           + d_rang_digit
            + is_open_access
-           + region_journal,
+           + region_journal
+           + providers
+           + d_rank_digit,
            data = df_final %>% filter(adjusted_t_value < 10),
            family=gaussian(identity))
 
 ### Econometrics control
 t_3 <- glm(adjusted_t_value ~ environmental
-            + adjusted_model
+           + adjusted_model  
            + kyoto 
            + financial_crisis
            + publication_year_int
            + windows
-           + mid_year
+           #+ mid_year
            + regions
-           + d_rang_digit
            + is_open_access
            + region_journal
+           + providers
+           + d_rank_digit
            + lag
            + interaction_term
            + quadratic_term,
@@ -2246,16 +2421,17 @@ t_3 <- glm(adjusted_t_value ~ environmental
            family=gaussian(identity))
 
 t_4 <- glm(adjusted_t_value ~ social
-            + adjusted_model
+           + adjusted_model  
            + kyoto 
            + financial_crisis
            + publication_year_int
            + windows
-           + mid_year
+           #+ mid_year
            + regions
-           + d_rang_digit
            + is_open_access
            + region_journal
+           + providers
+           + d_rank_digit
            + lag
            + interaction_term
            + quadratic_term,
@@ -2263,16 +2439,17 @@ t_4 <- glm(adjusted_t_value ~ social
            family=gaussian(identity))
 
 t_5 <- glm(adjusted_t_value ~ governance
-            + adjusted_model
+           + adjusted_model  
            + kyoto 
            + financial_crisis
            + publication_year_int
            + windows
-           + mid_year
+           #+ mid_year
            + regions
-           + d_rang_digit
            + is_open_access
            + region_journal
+           + providers
+           + d_rank_digit
            + lag
            + interaction_term
            + quadratic_term,
@@ -2294,16 +2471,17 @@ Author
 ```sos kernel="R"
 ###
 t_0 <- glm(adjusted_t_value ~ environmental
-           + adjusted_model
+           + adjusted_model  
            + kyoto 
            + financial_crisis
            + publication_year_int
            + windows
-           + mid_year
+           #+ mid_year
            + regions
-           + sjr
            + is_open_access
            + region_journal
+           + providers
+           + sjr
            + nb_authors
            + pct_female
            + pct_esg_1,
@@ -2311,16 +2489,17 @@ t_0 <- glm(adjusted_t_value ~ environmental
            family=gaussian(identity)
           )
 t_1 <- glm(adjusted_t_value ~ social
-           + adjusted_model
+           + adjusted_model  
            + kyoto 
            + financial_crisis
            + publication_year_int
            + windows
-           + mid_year
+           #+ mid_year
            + regions
-           + sjr
            + is_open_access
            + region_journal
+           + providers
+           + sjr
            + nb_authors
            + pct_female
            + pct_esg_1,
@@ -2329,16 +2508,17 @@ t_1 <- glm(adjusted_t_value ~ social
           )
 
 t_2 <- glm(adjusted_t_value ~ governance
-           + adjusted_model
+           + adjusted_model  
            + kyoto 
            + financial_crisis
            + publication_year_int
            + windows
-           + mid_year
+           #+ mid_year
            + regions
-           + sjr
            + is_open_access
            + region_journal
+           + providers
+           + sjr
            + nb_authors
            + pct_female
            + pct_esg_1,
@@ -2356,16 +2536,17 @@ stargazer(list_final, type = "text",
 ```sos kernel="R"
 ###
 t_0 <- glm(adjusted_t_value ~ environmental
-           + adjusted_model
+           + adjusted_model  
            + kyoto 
            + financial_crisis
            + publication_year_int
            + windows
-           + mid_year
+           #+ mid_year
            + regions
-           + d_rang_digit
            + is_open_access
            + region_journal
+           + providers
+           + d_rang_digit
            + nb_authors
            + pct_female
            + pct_esg_1,
@@ -2373,16 +2554,17 @@ t_0 <- glm(adjusted_t_value ~ environmental
            family=gaussian(identity)
           )
 t_1 <- glm(adjusted_t_value ~ social
-           + adjusted_model
+           + adjusted_model  
            + kyoto 
            + financial_crisis
            + publication_year_int
            + windows
-           + mid_year
+           #+ mid_year
            + regions
-           + d_rang_digit
            + is_open_access
            + region_journal
+           + providers
+           + d_rang_digit
            + nb_authors
            + pct_female
            + pct_esg_1,
@@ -2391,16 +2573,17 @@ t_1 <- glm(adjusted_t_value ~ social
           )
 
 t_2 <- glm(adjusted_t_value ~ governance
-           + adjusted_model
+          + adjusted_model  
            + kyoto 
            + financial_crisis
            + publication_year_int
            + windows
-           + mid_year
+           #+ mid_year
            + regions
-           + d_rang_digit
            + is_open_access
            + region_journal
+           + providers
+           + d_rang_digit
            + nb_authors
            + pct_female
            + pct_esg_1,
@@ -2422,32 +2605,34 @@ Abstract
 ```sos kernel="R"
 ###
 t_0 <- glm(adjusted_t_value ~ environmental
-           + adjusted_model
+           + adjusted_model  
            + kyoto 
            + financial_crisis
            + publication_year_int
            + windows
-           + mid_year
+           #+ mid_year
            + regions
-           + sjr
            + is_open_access
            + region_journal
+           + providers
+           + sjr
            + sentiment
            + cluster_w_emb,
            data = df_final %>% filter(adjusted_t_value < 10),
            family=gaussian(identity)
           )
 t_1 <- glm(adjusted_t_value ~ social
-           + adjusted_model
+           + adjusted_model  
            + kyoto 
            + financial_crisis
            + publication_year_int
            + windows
-           + mid_year
+           #+ mid_year
            + regions
-           + sjr
            + is_open_access
            + region_journal
+           + providers
+           + sjr
            + sentiment
            + cluster_w_emb,
            data = df_final %>% filter(adjusted_t_value < 10),
@@ -2455,16 +2640,17 @@ t_1 <- glm(adjusted_t_value ~ social
           )
 
 t_2 <- glm(adjusted_t_value ~ governance
-           + adjusted_model
+           + adjusted_model  
            + kyoto 
            + financial_crisis
            + publication_year_int
            + windows
-           + mid_year
+           #+ mid_year
            + regions
-           + sjr
            + is_open_access
            + region_journal
+           + providers
+           + sjr
            + sentiment
            + cluster_w_emb,
            data = df_final %>% filter(adjusted_t_value < 10),
@@ -2481,32 +2667,34 @@ stargazer(list_final, type = "text",
 ```sos kernel="R"
 ###
 t_0 <- glm(adjusted_t_value ~ environmental
-           + adjusted_model
+           + adjusted_model  
            + kyoto 
            + financial_crisis
            + publication_year_int
            + windows
-           + mid_year
+           #+ mid_year
            + regions
-           + d_rang_digit
            + is_open_access
            + region_journal
+           + providers
+           + d_rang_digit
            + sentiment
            + cluster_w_emb,
            data = df_final %>% filter(adjusted_t_value < 10),
            family=gaussian(identity)
           )
 t_1 <- glm(adjusted_t_value ~ social
-           + adjusted_model
+           + adjusted_model  
            + kyoto 
            + financial_crisis
            + publication_year_int
            + windows
-           + mid_year
+           #+ mid_year
            + regions
-           + d_rang_digit
            + is_open_access
            + region_journal
+           + providers
+           + d_rang_digit
            + sentiment
            + cluster_w_emb,
            data = df_final %>% filter(adjusted_t_value < 10),
@@ -2514,16 +2702,17 @@ t_1 <- glm(adjusted_t_value ~ social
           )
 
 t_2 <- glm(adjusted_t_value ~ governance
-           + adjusted_model
+           + adjusted_model  
            + kyoto 
            + financial_crisis
            + publication_year_int
            + windows
-           + mid_year
+           #+ mid_year
            + regions
-           + d_rang_digit
            + is_open_access
            + region_journal
+           + providers
+           + d_rang_digit
            + sentiment
            + cluster_w_emb,
            data = df_final %>% filter(adjusted_t_value < 10),
