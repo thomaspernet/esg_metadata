@@ -238,6 +238,7 @@ FROM
                 x["rank_digit"].isin(["1"]), "rank_1", "rank_2345"
             ),
             publication_year_int=lambda x: pd.factorize(x["publication_year"])[0],
+            interaction_term = lambda x: x['interaction_term'].str.strip()
         ))
     except:
         pass
@@ -1169,6 +1170,10 @@ pd.concat(
 ```
 
 ```sos kernel="SoS"
+sorted(list(df.loc[lambda x: x['rank_digit'].isin(['5'])]['publication_name'].unique()))
+```
+
+```sos kernel="SoS"
 pd.concat(
     [
         pd.concat(
@@ -1329,6 +1334,10 @@ pd.concat(
     ('paper count','pct_significant'),
     ('paper count','pct_total'),
 ])
+```
+
+```sos kernel="SoS"
+df['interaction_term'].unique()
 ```
 
 <!-- #region kernel="SoS" -->
