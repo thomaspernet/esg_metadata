@@ -1878,6 +1878,18 @@ environmental # social governance
            + region_journal
            + providers
 ```
+
+**Remove categorie**
+
+Removing the categorie reduces the log-likelihood and reduce the AIC criteria (lower value, the better the model)
+
+- adjusted_model:
+    - DIFF IN DIFF
+    - INSTRUMENT
+    - LAG DEPENDENT
+    - RANDOM EFFECT
+- regions
+     - LATIN AMERICA
 <!-- #endregion -->
 
 ```sos kernel="R"
@@ -1981,8 +1993,134 @@ t_5 <- glm(target ~ governance
            data = df_final , binomial(link = "probit"))
 t_5.rrr <- exp(coef(t_5))
 
-list_final = list(t_0, t_1, t_2, t_3, t_4, t_5)
-list_final.rrr = list(t_0.rrr,t_1.rrr ,t_2.rrr,t_3.rrr,t_4.rrr,t_5.rrr)
+#### Remove low observations
+t_6 <- glm(target ~ environmental
+           + adjusted_model  
+           + kyoto 
+           + financial_crisis
+           + publication_year_int
+           + windows
+           #+ mid_year
+           + regions
+           + is_open_access
+           + region_journal
+           + providers
+           + sjr,
+           data = df_final %>% filter(
+    !adjusted_model %in%  c('DIFF IN DIFF', 'INSTRUMENT', 'LAG DEPENDENT', 'RANDOM EFFECT')
+    &
+    !regions %in%  c('LATIN AMERICA')
+),
+           binomial(link = "probit")
+          )
+t_6.rrr <- exp(coef(t_6))
+t_7 <- glm(target ~ social
+           + adjusted_model    
+           + kyoto 
+           + financial_crisis
+           + publication_year_int
+           + windows
+           #+ mid_year
+           + regions
+           + is_open_access
+           + region_journal
+           + providers
+           + sjr,
+           data = df_final %>% filter(
+    !adjusted_model %in%  c('DIFF IN DIFF', 'INSTRUMENT', 'LAG DEPENDENT', 'RANDOM EFFECT')
+    &
+    !regions %in%  c('LATIN AMERICA')
+) ,
+           binomial(link = "probit"))
+t_7.rrr <- exp(coef(t_7))
+t_8 <- glm(target ~ governance
+           + adjusted_model
+           + kyoto 
+           + financial_crisis
+           + publication_year_int
+           + windows
+           #+ mid_year
+           + regions
+           + is_open_access
+           + region_journal
+           + providers
+           + sjr,
+           data = df_final %>% filter(
+    !adjusted_model %in%  c('DIFF IN DIFF', 'INSTRUMENT', 'LAG DEPENDENT', 'RANDOM EFFECT')
+    &
+    !regions %in%  c('LATIN AMERICA')
+) ,
+           binomial(link = "probit"))
+t_8.rrr <- exp(coef(t_8))
+### Econometrics control
+t_9 <- glm(target ~ environmental
+           + adjusted_model  
+           + kyoto 
+           + financial_crisis
+           + publication_year_int
+           + windows
+           #+ mid_year
+           + regions
+           + is_open_access
+           + region_journal
+           + providers
+           + sjr
+           + lag
+           + interaction_term,
+           data = df_final %>% filter(
+    !adjusted_model %in%  c('DIFF IN DIFF', 'INSTRUMENT', 'LAG DEPENDENT', 'RANDOM EFFECT')
+    &
+    !regions %in%  c('LATIN AMERICA')
+) ,
+           binomial(link = "probit")
+          )
+t_9.rrr <- exp(coef(t_9))
+t_10 <- glm(target ~ social
+           + adjusted_model    
+           + kyoto 
+           + financial_crisis
+           + publication_year_int
+           + windows
+           #+ mid_year
+           + regions
+           + is_open_access
+           + region_journal
+           + providers
+           + sjr
+           + lag
+           + interaction_term,
+           data = df_final %>% filter(
+    !adjusted_model %in%  c('DIFF IN DIFF', 'INSTRUMENT', 'LAG DEPENDENT', 'RANDOM EFFECT')
+    &
+    !regions %in%  c('LATIN AMERICA')
+) ,
+           binomial(link = "probit"))
+t_10.rrr <- exp(coef(t_10))
+t_11 <- glm(target ~ governance
+           + adjusted_model
+           + kyoto 
+           + financial_crisis
+           + publication_year_int
+           + windows
+           #+ mid_year
+           + regions
+           + is_open_access
+           + region_journal
+           + providers
+           + sjr
+           + lag
+           + interaction_term,
+           data = df_final %>% filter(
+    !adjusted_model %in%  c('DIFF IN DIFF', 'INSTRUMENT', 'LAG DEPENDENT', 'RANDOM EFFECT')
+    &
+    !regions %in%  c('LATIN AMERICA')
+) ,
+           binomial(link = "probit"))
+t_11.rrr <- exp(coef(t_11))
+
+list_final = list(t_0, t_1, t_2, t_3, t_4, t_5,t_6, t_7, t_8, t_9, t_10, t_11)
+list_final.rrr = list(t_0.rrr,t_1.rrr ,t_2.rrr,t_3.rrr,t_4.rrr,t_5.rrr,
+                     t_6.rrr,t_7.rrr ,t_8.rrr,t_9.rrr,t_10.rrr,t_11.rrr)
 stargazer(list_final, type = "text", 
   se = lapply(list_final,
               se_robust),
@@ -2093,14 +2231,472 @@ t_5 <- glm(target ~ governance
            data = df_final , binomial(link = "probit"))
 t_5.rrr <- exp(coef(t_5))
 
-list_final = list(t_0, t_1, t_2, t_3, t_4, t_5)
-list_final.rrr = list(t_0.rrr,t_1.rrr ,t_2.rrr,t_3.rrr,t_4.rrr,t_5.rrr)
+#### Remove low observations
+t_6 <- glm(target ~ environmental
+           + adjusted_model  
+           + kyoto 
+           + financial_crisis
+           + publication_year_int
+           + windows
+           #+ mid_year
+           + regions
+           + is_open_access
+           + region_journal
+           + providers
+           + d_rank_digit,
+           data = df_final %>% filter(
+    !adjusted_model %in%  c('DIFF IN DIFF', 'INSTRUMENT', 'LAG DEPENDENT', 'RANDOM EFFECT')
+    &
+    !regions %in%  c('LATIN AMERICA')
+),
+           binomial(link = "probit")
+          )
+t_6.rrr <- exp(coef(t_6))
+t_7 <- glm(target ~ social
+           + adjusted_model    
+           + kyoto 
+           + financial_crisis
+           + publication_year_int
+           + windows
+           #+ mid_year
+           + regions
+           + is_open_access
+           + region_journal
+           + providers
+           + d_rank_digit,
+           data = df_final %>% filter(
+    !adjusted_model %in%  c('DIFF IN DIFF', 'INSTRUMENT', 'LAG DEPENDENT', 'RANDOM EFFECT')
+    &
+    !regions %in%  c('LATIN AMERICA')
+) ,
+           binomial(link = "probit"))
+t_7.rrr <- exp(coef(t_7))
+t_8 <- glm(target ~ governance
+           + adjusted_model
+           + kyoto 
+           + financial_crisis
+           + publication_year_int
+           + windows
+           #+ mid_year
+           + regions
+           + is_open_access
+           + region_journal
+           + providers
+           + d_rank_digit,
+           data = df_final %>% filter(
+    !adjusted_model %in%  c('DIFF IN DIFF', 'INSTRUMENT', 'LAG DEPENDENT', 'RANDOM EFFECT')
+    &
+    !regions %in%  c('LATIN AMERICA')
+) ,
+           binomial(link = "probit"))
+t_8.rrr <- exp(coef(t_8))
+### Econometrics control
+t_9 <- glm(target ~ environmental
+           + adjusted_model  
+           + kyoto 
+           + financial_crisis
+           + publication_year_int
+           + windows
+           #+ mid_year
+           + regions
+           + is_open_access
+           + region_journal
+           + providers
+           + d_rank_digit
+           + lag
+           + interaction_term,
+           data = df_final %>% filter(
+    !adjusted_model %in%  c('DIFF IN DIFF', 'INSTRUMENT', 'LAG DEPENDENT', 'RANDOM EFFECT')
+    &
+    !regions %in%  c('LATIN AMERICA')
+) ,
+           binomial(link = "probit")
+          )
+t_9.rrr <- exp(coef(t_9))
+t_10 <- glm(target ~ social
+           + adjusted_model    
+           + kyoto 
+           + financial_crisis
+           + publication_year_int
+           + windows
+           #+ mid_year
+           + regions
+           + is_open_access
+           + region_journal
+           + providers
+           + d_rank_digit
+           + lag
+           + interaction_term,
+           data = df_final %>% filter(
+    !adjusted_model %in%  c('DIFF IN DIFF', 'INSTRUMENT', 'LAG DEPENDENT', 'RANDOM EFFECT')
+    &
+    !regions %in%  c('LATIN AMERICA')
+) ,
+           binomial(link = "probit"))
+t_10.rrr <- exp(coef(t_10))
+t_11 <- glm(target ~ governance
+           + adjusted_model
+           + kyoto 
+           + financial_crisis
+           + publication_year_int
+           + windows
+           #+ mid_year
+           + regions
+           + is_open_access
+           + region_journal
+           + providers
+           + d_rank_digit
+           + lag
+           + interaction_term,
+           data = df_final %>% filter(
+    !adjusted_model %in%  c('DIFF IN DIFF', 'INSTRUMENT', 'LAG DEPENDENT', 'RANDOM EFFECT')
+    &
+    !regions %in%  c('LATIN AMERICA')
+) ,
+           binomial(link = "probit"))
+t_11.rrr <- exp(coef(t_11))
+
+list_final = list(t_0, t_1, t_2, t_3, t_4, t_5,t_6, t_7, t_8, t_9, t_10, t_11)
+list_final.rrr = list(t_0.rrr,t_1.rrr ,t_2.rrr,t_3.rrr,t_4.rrr,t_5.rrr,
+                     t_6.rrr,t_7.rrr ,t_8.rrr,t_9.rrr,t_10.rrr,t_11.rrr)
 stargazer(list_final, type = "text", 
   se = lapply(list_final,
               se_robust),
           coef=list_final.rrr,
           style = "qje",
-         out="TABLES/table_1.txt")
+         out="TABLES/table_1.txt"
+         )
+```
+
+<!-- #region kernel="R" -->
+#### Remove unknonw journals from CNRS
+<!-- #endregion -->
+
+```sos kernel="R"
+### Baseline SJR
+t_0 <- glm(target ~ environmental
+           + adjusted_model  
+           + kyoto 
+           #+ financial_crisis
+           + publication_year_int
+           + windows
+           #+ mid_year
+           + regions
+           + is_open_access
+           + region_journal
+           + providers
+           + sjr,
+           data = df_final %>% filter(!rank_digit %in% c(5) &
+    !regions %in%  c('LATIN AMERICA', 'AFRICA')),
+           binomial(link = "probit")
+          )
+t_0.rrr <- exp(coef(t_0))
+t_1 <- glm(target ~ social
+           + adjusted_model    
+           + kyoto 
+           #+ financial_crisis
+           + publication_year_int
+           + windows
+           #+ mid_year
+           + regions
+           + is_open_access
+           + region_journal
+           + providers
+           + sjr,
+           data = df_final %>% filter(!rank_digit %in% c(5)&
+    !regions %in%  c('LATIN AMERICA', 'AFRICA')) ,
+           binomial(link = "probit"))
+t_1.rrr <- exp(coef(t_1))
+t_2 <- glm(target ~ governance
+           + adjusted_model
+           + kyoto 
+           #+ financial_crisis
+           + publication_year_int
+           + windows
+           #+ mid_year
+           + regions
+           + is_open_access
+           + region_journal
+           + providers
+           + sjr,
+           data = df_final %>% filter(!rank_digit %in% c(5)&
+    !regions %in%  c('LATIN AMERICA', 'AFRICA')) ,
+           binomial(link = "probit"))
+t_2.rrr <- exp(coef(t_2))
+### Econometrics control
+t_3 <- glm(target ~ environmental
+           + adjusted_model  
+           + kyoto 
+           #+ financial_crisis
+           + publication_year_int
+           + windows
+           #+ mid_year
+           + regions
+           + is_open_access
+           + region_journal
+           + providers
+           + sjr
+           + lag
+           + interaction_term
+           + quadratic_term,
+           data = df_final %>% filter(!rank_digit %in% c(5)&
+    !regions %in%  c('LATIN AMERICA', 'AFRICA')) ,
+           binomial(link = "probit")
+          )
+t_3.rrr <- exp(coef(t_3))
+t_4 <- glm(target ~ social
+           + adjusted_model    
+           + kyoto 
+           #+ financial_crisis
+           + publication_year_int
+           + windows
+           #+ mid_year
+           + regions
+           + is_open_access
+           + region_journal
+           + providers
+           + sjr
+           + lag
+           + interaction_term
+           + quadratic_term,
+           data = df_final %>% filter(!rank_digit %in% c(5)&
+    !regions %in%  c('LATIN AMERICA', 'AFRICA')) ,
+           binomial(link = "probit"))
+t_4.rrr <- exp(coef(t_4))
+t_5 <- glm(target ~ governance
+           + adjusted_model
+           + kyoto 
+           #+ financial_crisis
+           + publication_year_int
+           + windows
+           #+ mid_year
+           + regions
+           + is_open_access
+           + region_journal
+           + providers
+           + sjr
+           + lag
+           + interaction_term
+           + quadratic_term,
+           data = df_final %>% filter(!rank_digit %in% c(5)&
+    !regions %in%  c('LATIN AMERICA', 'AFRICA')) , 
+           binomial(link = "probit"))
+t_5.rrr <- exp(coef(t_5))
+
+#### Remove low observations
+t_6 <- glm(target ~ environmental
+           + adjusted_model  
+           + kyoto 
+           #+ financial_crisis
+           + publication_year_int
+           + windows
+           #+ mid_year
+           + regions
+           + is_open_access
+           + region_journal
+           + providers
+           + sjr,
+           data = df_final %>% filter(
+    !adjusted_model %in%  c('DIFF IN DIFF', 'INSTRUMENT', 'LAG DEPENDENT', 'RANDOM EFFECT')
+    &
+    !regions %in%  c('LATIN AMERICA', 'AFRICA')
+               &
+               !rank_digit %in% c(5)
+),
+           binomial(link = "probit")
+          )
+t_6.rrr <- exp(coef(t_6))
+t_7 <- glm(target ~ social
+           + adjusted_model    
+           + kyoto 
+           #+ financial_crisis
+           + publication_year_int
+           + windows
+           #+ mid_year
+           + regions
+           + is_open_access
+           + region_journal
+           + providers
+           + sjr,
+           data = df_final %>% filter(
+    !adjusted_model %in%  c('DIFF IN DIFF', 'INSTRUMENT', 'LAG DEPENDENT', 'RANDOM EFFECT')
+    &
+    !regions %in%  c('LATIN AMERICA', 'AFRICA')
+               &
+               !rank_digit %in% c(5)
+),
+           binomial(link = "probit"))
+t_7.rrr <- exp(coef(t_7))
+t_8 <- glm(target ~ governance
+           + adjusted_model
+           + kyoto 
+           #+ financial_crisis
+           + publication_year_int
+           + windows
+           #+ mid_year
+           + regions
+           + is_open_access
+           + region_journal
+           + providers
+           + sjr,
+           data = df_final %>% filter(
+    !adjusted_model %in%  c('DIFF IN DIFF', 'INSTRUMENT', 'LAG DEPENDENT', 'RANDOM EFFECT')
+    &
+    !regions %in%  c('LATIN AMERICA', 'AFRICA')
+               &
+               !rank_digit %in% c(5)
+),
+           binomial(link = "probit"))
+t_8.rrr <- exp(coef(t_8))
+### Econometrics control
+t_9 <- glm(target ~ environmental
+           + adjusted_model  
+           + kyoto 
+           #+ financial_crisis
+           + publication_year_int
+           + windows
+           #+ mid_year
+           + regions
+           + is_open_access
+           + region_journal
+           + providers
+           + sjr
+           + lag
+           + interaction_term,
+           data = df_final %>% filter(
+    !adjusted_model %in%  c('DIFF IN DIFF', 'INSTRUMENT', 'LAG DEPENDENT', 'RANDOM EFFECT')
+    &
+    !regions %in%  c('LATIN AMERICA', 'AFRICA')
+               &
+               !rank_digit %in% c(5)
+) ,
+           binomial(link = "probit")
+          )
+t_9.rrr <- exp(coef(t_9))
+t_10 <- glm(target ~ social
+           + adjusted_model    
+           + kyoto 
+           #+ financial_crisis
+           + publication_year_int
+           + windows
+           #+ mid_year
+           + regions
+           + is_open_access
+           + region_journal
+           + providers
+           + sjr
+           + lag
+           + interaction_term,
+           data = df_final %>% filter(
+    !adjusted_model %in%  c('DIFF IN DIFF', 'INSTRUMENT', 'LAG DEPENDENT', 'RANDOM EFFECT')
+    &
+    !regions %in%  c('LATIN AMERICA', 'AFRICA')
+               &
+               !rank_digit %in% c(5)
+) ,
+           binomial(link = "probit"))
+t_10.rrr <- exp(coef(t_10))
+t_11 <- glm(target ~ governance
+           + adjusted_model
+           + kyoto 
+           #+ financial_crisis
+           + publication_year_int
+           + windows
+           #+ mid_year
+           + regions
+           + is_open_access
+           + region_journal
+           + providers
+           + sjr
+           + lag
+           + interaction_term,
+           data = df_final %>% filter(
+    !adjusted_model %in%  c('DIFF IN DIFF', 'INSTRUMENT', 'LAG DEPENDENT', 'RANDOM EFFECT')
+    &
+    !regions %in%  c('LATIN AMERICA', 'AFRICA')
+               &
+               !rank_digit %in% c(5)
+) ,
+           binomial(link = "probit"))
+t_11.rrr <- exp(coef(t_11))
+
+list_final = list(t_0, t_1, t_2, t_3, t_4, t_5,t_6, t_7, t_8, t_9, t_10, t_11)
+list_final.rrr = list(t_0.rrr,t_1.rrr ,t_2.rrr,t_3.rrr,t_4.rrr,t_5.rrr,
+                     t_6.rrr,t_7.rrr ,t_8.rrr,t_9.rrr,t_10.rrr,t_11.rrr)
+stargazer(list_final, type = "text", 
+  se = lapply(list_final,
+              se_robust),
+          coef=list_final.rrr,
+          style = "qje"
+         #out="TABLES/table_0.txt"
+         )
+```
+
+<!-- #region kernel="R" -->
+#### Keep unknow journals
+<!-- #endregion -->
+
+```sos kernel="R"
+### Baseline SJR
+t_0 <- glm(target ~ environmental
+           + adjusted_model  
+           + kyoto 
+           #+ financial_crisis
+           + publication_year_int
+           + windows
+           #+ mid_year
+           + regions
+           + is_open_access
+           #+ region_journal
+           + providers
+           + sjr,
+           data = df_final %>% filter(rank_digit %in% c(5) &
+    !regions %in%  c('LATIN AMERICA', 'AFRICA')),
+           binomial(link = "probit")
+          )
+t_0.rrr <- exp(coef(t_0))
+t_1 <- glm(target ~ social
+           + adjusted_model    
+           + kyoto 
+           #+ financial_crisis
+           + publication_year_int
+           + windows
+           #+ mid_year
+           + regions
+           + is_open_access
+           #+ region_journal
+           + providers
+           + sjr,
+           data = df_final %>% filter(rank_digit %in% c(5)&
+    !regions %in%  c('LATIN AMERICA', 'AFRICA')) ,
+           binomial(link = "probit"))
+t_1.rrr <- exp(coef(t_1))
+t_2 <- glm(target ~ governance
+           + adjusted_model
+           + kyoto 
+           #+ financial_crisis
+           + publication_year_int
+           + windows
+           #+ mid_year
+           + regions
+           + is_open_access
+           #+ region_journal
+           + providers
+           + sjr,
+           data = df_final %>% filter(rank_digit %in% c(5)&
+    !regions %in%  c('LATIN AMERICA', 'AFRICA')) ,
+           binomial(link = "probit"))
+t_2.rrr <- exp(coef(t_2))
+
+list_final = list(t_0, t_1, t_2)
+list_final.rrr = list(t_0.rrr,t_1.rrr ,t_2.rrr)
+stargazer(list_final, type = "text", 
+  se = lapply(list_final,
+              se_robust),
+          coef=list_final.rrr,
+          style = "qje"
+         #out="TABLES/table_0.txt"
+         )
 ```
 
 <!-- #region kernel="R" -->
