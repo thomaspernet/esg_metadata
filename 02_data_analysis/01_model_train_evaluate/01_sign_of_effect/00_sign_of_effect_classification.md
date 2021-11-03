@@ -1713,7 +1713,7 @@ df_final <- read_csv(df_path) %>%
 mutate_if(is.character, as.factor) %>%
 
 mutate(
-    adjusted_model = relevel(adjusted_model, ref='OTHER'),
+    adjusted_model = relevel(adjusted_model, ref='POOLED OLS'),
     adjusted_dependent = relevel(adjusted_dependent, ref='OTHER'),
     id_source = as.factor(id_source),
     governance = relevel(as.factor(governance), ref = 'NO'),
@@ -1732,6 +1732,7 @@ mutate(
     cluster_w_emb = relevel(as.factor(cluster_w_emb), ref = 'CLUSTER_1'),
     citation_count_1 = normalit(citation_count),
     providers = relevel(as.factor(providers), ref = 'NOT_MSCI'),
+    rank_digit = relevel(as.factor(rank_digit), ref = '1'),
     d_rank_digit = relevel(as.factor(d_rank_digit), ref = 'rank_2345')
 )
 ```
@@ -1890,6 +1891,8 @@ Removing the categorie reduces the log-likelihood and reduce the AIC criteria (l
     - RANDOM EFFECT
 - regions
      - LATIN AMERICA
+     
+- Faire attention a l'économétrie -> si on controle pas correctement, on trouve un lien (OLS vs fE) -> outil -s rudimentaires
 <!-- #endregion -->
 
 ```sos kernel="R"
@@ -2143,7 +2146,7 @@ t_0 <- glm(target ~ environmental
            + is_open_access
            + region_journal
            + providers
-           + d_rank_digit,
+           + rank_digit,
            data = df_final ,
            binomial(link = "probit")
           )
@@ -2159,7 +2162,7 @@ t_1 <- glm(target ~ social
            + is_open_access
            + region_journal
            + providers
-           + d_rank_digit,
+           + rank_digit,
            data = df_final , binomial(link = "probit"))
 t_1.rrr <- exp(coef(t_1))
 t_2 <- glm(target ~ governance
@@ -2173,7 +2176,7 @@ t_2 <- glm(target ~ governance
            + is_open_access
            + region_journal
            + providers
-           + d_rank_digit,
+           + rank_digit,
            data = df_final , binomial(link = "probit"))
 t_2.rrr <- exp(coef(t_2))
 ### Econometrics control
@@ -2188,7 +2191,7 @@ t_3 <- glm(target ~ environmental
            + is_open_access
            + region_journal
            + providers
-           + d_rank_digit
+           + rank_digit
            + lag
            + interaction_term
            + quadratic_term,
@@ -2207,7 +2210,7 @@ t_4 <- glm(target ~ social
            + is_open_access
            + region_journal
            + providers
-           + d_rank_digit
+           + rank_digit
            + lag
            + interaction_term
            + quadratic_term,
@@ -2224,7 +2227,7 @@ t_5 <- glm(target ~ governance
            + is_open_access
            + region_journal
            + providers
-           + d_rank_digit
+           + rank_digit
            + lag
            + interaction_term
            + quadratic_term,
@@ -2243,7 +2246,7 @@ t_6 <- glm(target ~ environmental
            + is_open_access
            + region_journal
            + providers
-           + d_rank_digit,
+           + rank_digit,
            data = df_final %>% filter(
     !adjusted_model %in%  c('DIFF IN DIFF', 'INSTRUMENT', 'LAG DEPENDENT', 'RANDOM EFFECT')
     &
@@ -2263,7 +2266,7 @@ t_7 <- glm(target ~ social
            + is_open_access
            + region_journal
            + providers
-           + d_rank_digit,
+           + rank_digit,
            data = df_final %>% filter(
     !adjusted_model %in%  c('DIFF IN DIFF', 'INSTRUMENT', 'LAG DEPENDENT', 'RANDOM EFFECT')
     &
@@ -2282,7 +2285,7 @@ t_8 <- glm(target ~ governance
            + is_open_access
            + region_journal
            + providers
-           + d_rank_digit,
+           + rank_digit,
            data = df_final %>% filter(
     !adjusted_model %in%  c('DIFF IN DIFF', 'INSTRUMENT', 'LAG DEPENDENT', 'RANDOM EFFECT')
     &
@@ -2302,7 +2305,7 @@ t_9 <- glm(target ~ environmental
            + is_open_access
            + region_journal
            + providers
-           + d_rank_digit
+           + rank_digit
            + lag
            + interaction_term,
            data = df_final %>% filter(
@@ -2324,7 +2327,7 @@ t_10 <- glm(target ~ social
            + is_open_access
            + region_journal
            + providers
-           + d_rank_digit
+           + rank_digit
            + lag
            + interaction_term,
            data = df_final %>% filter(
@@ -2345,7 +2348,7 @@ t_11 <- glm(target ~ governance
            + is_open_access
            + region_journal
            + providers
-           + d_rank_digit
+           + rank_digit
            + lag
            + interaction_term,
            data = df_final %>% filter(
@@ -2789,7 +2792,7 @@ t_3 <- glm(target ~ environmental
            + is_open_access
            + region_journal
            + providers
-           + d_rank_digit
+           + rank_digit
            + nb_authors
            + pct_female
            + pct_esg_1,
@@ -2810,7 +2813,7 @@ t_4 <- glm(target ~ social
            + is_open_access
            + region_journal
            + providers
-           + d_rank_digit
+           + rank_digit
            + nb_authors
            + pct_female
            + pct_esg_1,
@@ -2830,7 +2833,7 @@ t_5 <- glm(target ~ governance
            + is_open_access
            + region_journal
            + providers
-           + d_rank_digit
+           + rank_digit
            + nb_authors
            + pct_female
            + pct_esg_1,
@@ -2936,7 +2939,7 @@ t_3 <- glm(target ~ environmental
            + is_open_access
            + region_journal
            + providers
-           + d_rank_digit
+           + rank_digit
            + sentiment
            + cluster_w_emb,
            data = df_final ,
@@ -2956,7 +2959,7 @@ t_4 <- glm(target ~ social
            + is_open_access
            + region_journal
            + providers
-           + d_rank_digit
+           + rank_digit
            + sentiment
            + cluster_w_emb,
            data = df_final ,
@@ -2975,7 +2978,7 @@ t_5 <- glm(target ~ governance
            + is_open_access
            + region_journal
            + providers
-           + d_rank_digit
+           + rank_digit
            + sentiment
            + cluster_w_emb,
            data = df_final ,
@@ -2993,7 +2996,7 @@ stargazer(list_final, type = "text",
          out="TABLES/table_3.txt")
 ```
 
-<!-- #region kernel="SoS" heading_collapsed="true" -->
+<!-- #region kernel="SoS" -->
 ## Model OLS: 
 
 $$
@@ -3155,7 +3158,7 @@ t_0 <- glm(adjusted_t_value ~ environmental
            + is_open_access
            + region_journal
            + providers
-           + d_rank_digit,
+           + rank_digit,
            data = df_final %>% filter(adjusted_t_value < 10),
            family=gaussian(identity))
 
@@ -3170,7 +3173,7 @@ t_1 <- glm(adjusted_t_value ~ social
            + is_open_access
            + region_journal
            + providers
-           + d_rank_digit,
+           + rank_digit,
            data = df_final %>% filter(adjusted_t_value < 10),
            family=gaussian(identity))
 
@@ -3185,7 +3188,7 @@ t_2 <- glm(adjusted_t_value ~ governance
            + is_open_access
            + region_journal
            + providers
-           + d_rank_digit,
+           + rank_digit,
            data = df_final %>% filter(adjusted_t_value < 10),
            family=gaussian(identity))
 
@@ -3201,7 +3204,7 @@ t_3 <- glm(adjusted_t_value ~ environmental
            + is_open_access
            + region_journal
            + providers
-           + d_rank_digit
+           + rank_digit
            + lag
            + interaction_term
            + quadratic_term,
@@ -3219,7 +3222,7 @@ t_4 <- glm(adjusted_t_value ~ social
            + is_open_access
            + region_journal
            + providers
-           + d_rank_digit
+           + rank_digit
            + lag
            + interaction_term
            + quadratic_term,
@@ -3237,7 +3240,7 @@ t_5 <- glm(adjusted_t_value ~ governance
            + is_open_access
            + region_journal
            + providers
-           + d_rank_digit
+           + rank_digit
            + lag
            + interaction_term
            + quadratic_term,
@@ -3334,7 +3337,7 @@ t_0 <- glm(adjusted_t_value ~ environmental
            + is_open_access
            + region_journal
            + providers
-           + d_rang_digit
+           + rank_digit
            + nb_authors
            + pct_female
            + pct_esg_1,
@@ -3352,7 +3355,7 @@ t_1 <- glm(adjusted_t_value ~ social
            + is_open_access
            + region_journal
            + providers
-           + d_rang_digit
+           + rank_digit
            + nb_authors
            + pct_female
            + pct_esg_1,
@@ -3371,7 +3374,7 @@ t_2 <- glm(adjusted_t_value ~ governance
            + is_open_access
            + region_journal
            + providers
-           + d_rang_digit
+           + rank_digit
            + nb_authors
            + pct_female
            + pct_esg_1,
@@ -3465,7 +3468,7 @@ t_0 <- glm(adjusted_t_value ~ environmental
            + is_open_access
            + region_journal
            + providers
-           + d_rang_digit
+           + rank_digit
            + sentiment
            + cluster_w_emb,
            data = df_final %>% filter(adjusted_t_value < 10),
@@ -3482,7 +3485,7 @@ t_1 <- glm(adjusted_t_value ~ social
            + is_open_access
            + region_journal
            + providers
-           + d_rang_digit
+           + rank_digit
            + sentiment
            + cluster_w_emb,
            data = df_final %>% filter(adjusted_t_value < 10),
@@ -3500,7 +3503,7 @@ t_2 <- glm(adjusted_t_value ~ governance
            + is_open_access
            + region_journal
            + providers
-           + d_rang_digit
+           + rank_digit
            + sentiment
            + cluster_w_emb,
            data = df_final %>% filter(adjusted_t_value < 10),
