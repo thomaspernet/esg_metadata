@@ -1908,7 +1908,8 @@ t_0 <- glm(target ~ environmental
            + is_open_access
            + region_journal
            + providers
-           + sjr,
+           + sjr
+           + sentiment,
            data = df_final ,
            binomial(link = "probit")
           )
@@ -1924,7 +1925,8 @@ t_1 <- glm(target ~ social
            + is_open_access
            + region_journal
            + providers
-           + sjr,
+           + sjr
+           + sentiment,
            data = df_final , binomial(link = "probit"))
 t_1.rrr <- exp(coef(t_1))
 t_2 <- glm(target ~ governance
@@ -1938,7 +1940,8 @@ t_2 <- glm(target ~ governance
            + is_open_access
            + region_journal
            + providers
-           + sjr,
+           + sjr
+           + sentiment,
            data = df_final , binomial(link = "probit"))
 t_2.rrr <- exp(coef(t_2))
 ### Econometrics control
@@ -1954,6 +1957,7 @@ t_3 <- glm(target ~ environmental
            + region_journal
            + providers
            + sjr
+           + sentiment
            + lag
            + interaction_term
            + quadratic_term,
@@ -1973,6 +1977,7 @@ t_4 <- glm(target ~ social
            + region_journal
            + providers
            + sjr
+           + sentiment
            + lag
            + interaction_term
            + quadratic_term,
@@ -1990,6 +1995,7 @@ t_5 <- glm(target ~ governance
            + region_journal
            + providers
            + sjr
+           + sentiment
            + lag
            + interaction_term
            + quadratic_term,
@@ -2008,7 +2014,8 @@ t_6 <- glm(target ~ environmental
            + is_open_access
            + region_journal
            + providers
-           + sjr,
+           + sjr
+           + sentiment,
            data = df_final %>% filter(
     !adjusted_model %in%  c('DIFF IN DIFF', 'INSTRUMENT', 'LAG DEPENDENT', 'RANDOM EFFECT')
     &
@@ -2028,7 +2035,8 @@ t_7 <- glm(target ~ social
            + is_open_access
            + region_journal
            + providers
-           + sjr,
+           + sjr
+           + sentiment,
            data = df_final %>% filter(
     !adjusted_model %in%  c('DIFF IN DIFF', 'INSTRUMENT', 'LAG DEPENDENT', 'RANDOM EFFECT')
     &
@@ -2047,7 +2055,8 @@ t_8 <- glm(target ~ governance
            + is_open_access
            + region_journal
            + providers
-           + sjr,
+           + sjr
+           + sentiment,
            data = df_final %>% filter(
     !adjusted_model %in%  c('DIFF IN DIFF', 'INSTRUMENT', 'LAG DEPENDENT', 'RANDOM EFFECT')
     &
@@ -2068,6 +2077,7 @@ t_9 <- glm(target ~ environmental
            + region_journal
            + providers
            + sjr
+           + sentiment
            + lag
            + interaction_term,
            data = df_final %>% filter(
@@ -2090,6 +2100,7 @@ t_10 <- glm(target ~ social
            + region_journal
            + providers
            + sjr
+           + sentiment
            + lag
            + interaction_term,
            data = df_final %>% filter(
@@ -2111,6 +2122,7 @@ t_11 <- glm(target ~ governance
            + region_journal
            + providers
            + sjr
+           + sentiment
            + lag
            + interaction_term,
            data = df_final %>% filter(
@@ -2121,9 +2133,11 @@ t_11 <- glm(target ~ governance
            binomial(link = "probit"))
 t_11.rrr <- exp(coef(t_11))
 
-list_final = list(t_0, t_1, t_2, t_3, t_4, t_5,t_6, t_7, t_8, t_9, t_10, t_11)
-list_final.rrr = list(t_0.rrr,t_1.rrr ,t_2.rrr,t_3.rrr,t_4.rrr,t_5.rrr,
-                     t_6.rrr,t_7.rrr ,t_8.rrr,t_9.rrr,t_10.rrr,t_11.rrr)
+list_final = list(t_0, t_1, t_2, t_3, t_4, t_5#,t_6, t_7, t_8, t_9, t_10, t_11
+                 )
+list_final.rrr = list(t_0.rrr,t_1.rrr ,t_2.rrr,t_3.rrr,t_4.rrr,t_5.rrr#,
+                     #t_6.rrr,t_7.rrr ,t_8.rrr,t_9.rrr,t_10.rrr,t_11.rrr
+                     )
 stargazer(list_final, type = "text", 
   se = lapply(list_final,
               se_robust),
@@ -2146,7 +2160,8 @@ t_0 <- glm(target ~ environmental
            + is_open_access
            + region_journal
            + providers
-           + rank_digit,
+           + rank_digit
+           + sentiment,
            data = df_final ,
            binomial(link = "probit")
           )
@@ -2162,7 +2177,8 @@ t_1 <- glm(target ~ social
            + is_open_access
            + region_journal
            + providers
-           + rank_digit,
+           + rank_digit
+           + sentiment,
            data = df_final , binomial(link = "probit"))
 t_1.rrr <- exp(coef(t_1))
 t_2 <- glm(target ~ governance
@@ -2176,7 +2192,8 @@ t_2 <- glm(target ~ governance
            + is_open_access
            + region_journal
            + providers
-           + rank_digit,
+           + rank_digit
+           + sentiment,
            data = df_final , binomial(link = "probit"))
 t_2.rrr <- exp(coef(t_2))
 ### Econometrics control
@@ -2192,6 +2209,7 @@ t_3 <- glm(target ~ environmental
            + region_journal
            + providers
            + rank_digit
+           + sentiment
            + lag
            + interaction_term
            + quadratic_term,
@@ -2211,6 +2229,7 @@ t_4 <- glm(target ~ social
            + region_journal
            + providers
            + rank_digit
+           + sentiment
            + lag
            + interaction_term
            + quadratic_term,
@@ -2228,6 +2247,7 @@ t_5 <- glm(target ~ governance
            + region_journal
            + providers
            + rank_digit
+           + sentiment
            + lag
            + interaction_term
            + quadratic_term,
@@ -2246,7 +2266,8 @@ t_6 <- glm(target ~ environmental
            + is_open_access
            + region_journal
            + providers
-           + rank_digit,
+           + rank_digit
+           + sentiment,
            data = df_final %>% filter(
     !adjusted_model %in%  c('DIFF IN DIFF', 'INSTRUMENT', 'LAG DEPENDENT', 'RANDOM EFFECT')
     &
@@ -2266,7 +2287,8 @@ t_7 <- glm(target ~ social
            + is_open_access
            + region_journal
            + providers
-           + rank_digit,
+           + rank_digit
+           + sentiment,
            data = df_final %>% filter(
     !adjusted_model %in%  c('DIFF IN DIFF', 'INSTRUMENT', 'LAG DEPENDENT', 'RANDOM EFFECT')
     &
@@ -2285,7 +2307,8 @@ t_8 <- glm(target ~ governance
            + is_open_access
            + region_journal
            + providers
-           + rank_digit,
+           + rank_digit
+           + sentiment,
            data = df_final %>% filter(
     !adjusted_model %in%  c('DIFF IN DIFF', 'INSTRUMENT', 'LAG DEPENDENT', 'RANDOM EFFECT')
     &
@@ -2306,6 +2329,7 @@ t_9 <- glm(target ~ environmental
            + region_journal
            + providers
            + rank_digit
+           + sentiment
            + lag
            + interaction_term,
            data = df_final %>% filter(
@@ -2328,6 +2352,7 @@ t_10 <- glm(target ~ social
            + region_journal
            + providers
            + rank_digit
+           + sentiment
            + lag
            + interaction_term,
            data = df_final %>% filter(
@@ -2349,6 +2374,7 @@ t_11 <- glm(target ~ governance
            + region_journal
            + providers
            + rank_digit
+           + sentiment
            + lag
            + interaction_term,
            data = df_final %>% filter(
@@ -2359,9 +2385,11 @@ t_11 <- glm(target ~ governance
            binomial(link = "probit"))
 t_11.rrr <- exp(coef(t_11))
 
-list_final = list(t_0, t_1, t_2, t_3, t_4, t_5,t_6, t_7, t_8, t_9, t_10, t_11)
-list_final.rrr = list(t_0.rrr,t_1.rrr ,t_2.rrr,t_3.rrr,t_4.rrr,t_5.rrr,
-                     t_6.rrr,t_7.rrr ,t_8.rrr,t_9.rrr,t_10.rrr,t_11.rrr)
+list_final = list(t_0, t_1, t_2, t_3, t_4, t_5#,t_6, t_7, t_8, t_9, t_10, t_11
+                 )
+list_final.rrr = list(t_0.rrr,t_1.rrr ,t_2.rrr,t_3.rrr,t_4.rrr,t_5.rrr#,
+                     #t_6.rrr,t_7.rrr ,t_8.rrr,t_9.rrr,t_10.rrr,t_11.rrr
+                     )
 stargazer(list_final, type = "text", 
   se = lapply(list_final,
               se_robust),
@@ -2388,7 +2416,8 @@ t_0 <- glm(target ~ environmental
            + is_open_access
            + region_journal
            + providers
-           + sjr,
+           + sjr
+           + sentiment,
            data = df_final %>% filter(!rank_digit %in% c(5) &
     !regions %in%  c('LATIN AMERICA', 'AFRICA')),
            binomial(link = "probit")
@@ -2405,7 +2434,8 @@ t_1 <- glm(target ~ social
            + is_open_access
            + region_journal
            + providers
-           + sjr,
+           + sjr
+           + sentiment,
            data = df_final %>% filter(!rank_digit %in% c(5)&
     !regions %in%  c('LATIN AMERICA', 'AFRICA')) ,
            binomial(link = "probit"))
@@ -2421,7 +2451,8 @@ t_2 <- glm(target ~ governance
            + is_open_access
            + region_journal
            + providers
-           + sjr,
+           + sjr
+           + sentiment,
            data = df_final %>% filter(!rank_digit %in% c(5)&
     !regions %in%  c('LATIN AMERICA', 'AFRICA')) ,
            binomial(link = "probit"))
@@ -2439,6 +2470,7 @@ t_3 <- glm(target ~ environmental
            + region_journal
            + providers
            + sjr
+           + sentiment
            + lag
            + interaction_term
            + quadratic_term,
@@ -2459,6 +2491,7 @@ t_4 <- glm(target ~ social
            + region_journal
            + providers
            + sjr
+           + sentiment
            + lag
            + interaction_term
            + quadratic_term,
@@ -2478,6 +2511,7 @@ t_5 <- glm(target ~ governance
            + region_journal
            + providers
            + sjr
+           + sentiment
            + lag
            + interaction_term
            + quadratic_term,
@@ -2498,7 +2532,8 @@ t_6 <- glm(target ~ environmental
            + is_open_access
            + region_journal
            + providers
-           + sjr,
+           + sjr
+           + sentiment,
            data = df_final %>% filter(
     !adjusted_model %in%  c('DIFF IN DIFF', 'INSTRUMENT', 'LAG DEPENDENT', 'RANDOM EFFECT')
     &
@@ -2520,7 +2555,8 @@ t_7 <- glm(target ~ social
            + is_open_access
            + region_journal
            + providers
-           + sjr,
+           + sjr
+           + sentiment,
            data = df_final %>% filter(
     !adjusted_model %in%  c('DIFF IN DIFF', 'INSTRUMENT', 'LAG DEPENDENT', 'RANDOM EFFECT')
     &
@@ -2541,7 +2577,8 @@ t_8 <- glm(target ~ governance
            + is_open_access
            + region_journal
            + providers
-           + sjr,
+           + sjr
+           + sentiment,
            data = df_final %>% filter(
     !adjusted_model %in%  c('DIFF IN DIFF', 'INSTRUMENT', 'LAG DEPENDENT', 'RANDOM EFFECT')
     &
@@ -2564,6 +2601,7 @@ t_9 <- glm(target ~ environmental
            + region_journal
            + providers
            + sjr
+           + sentiment
            + lag
            + interaction_term,
            data = df_final %>% filter(
@@ -2588,6 +2626,7 @@ t_10 <- glm(target ~ social
            + region_journal
            + providers
            + sjr
+           + sentiment
            + lag
            + interaction_term,
            data = df_final %>% filter(
@@ -2611,6 +2650,7 @@ t_11 <- glm(target ~ governance
            + region_journal
            + providers
            + sjr
+           + sentiment
            + lag
            + interaction_term,
            data = df_final %>% filter(
@@ -2652,7 +2692,8 @@ t_0 <- glm(target ~ environmental
            + is_open_access
            #+ region_journal
            + providers
-           + sjr,
+           + sjr
+           + sentiment,
            data = df_final %>% filter(rank_digit %in% c(5) &
     !regions %in%  c('LATIN AMERICA', 'AFRICA')),
            binomial(link = "probit")
@@ -2669,7 +2710,8 @@ t_1 <- glm(target ~ social
            + is_open_access
            #+ region_journal
            + providers
-           + sjr,
+           + sjr
+           + sentiment,
            data = df_final %>% filter(rank_digit %in% c(5)&
     !regions %in%  c('LATIN AMERICA', 'AFRICA')) ,
            binomial(link = "probit"))
@@ -2685,7 +2727,8 @@ t_2 <- glm(target ~ governance
            + is_open_access
            #+ region_journal
            + providers
-           + sjr,
+           + sjr
+           + sentiment,
            data = df_final %>% filter(rank_digit %in% c(5)&
     !regions %in%  c('LATIN AMERICA', 'AFRICA')) ,
            binomial(link = "probit"))
@@ -2731,6 +2774,7 @@ t_0 <- glm(target ~ environmental
            + region_journal
            + providers
            + sjr
+           + sentiment
            + nb_authors
            + pct_female
            + pct_esg_1,
@@ -2752,6 +2796,7 @@ t_1 <- glm(target ~ social
            + region_journal
            + providers
            + sjr
+           + sentiment
            + nb_authors
            + pct_female
            + pct_esg_1,
@@ -2772,6 +2817,7 @@ t_2 <- glm(target ~ governance
            + region_journal
            + providers
            + sjr
+           + sentiment
            + nb_authors
            + pct_female
            + pct_esg_1,
@@ -2793,6 +2839,7 @@ t_3 <- glm(target ~ environmental
            + region_journal
            + providers
            + rank_digit
+           + sentiment
            + nb_authors
            + pct_female
            + pct_esg_1,
@@ -2814,6 +2861,7 @@ t_4 <- glm(target ~ social
            + region_journal
            + providers
            + rank_digit
+           + sentiment
            + nb_authors
            + pct_female
            + pct_esg_1,
@@ -2834,6 +2882,7 @@ t_5 <- glm(target ~ governance
            + region_journal
            + providers
            + rank_digit
+           + sentiment
            + nb_authors
            + pct_female
            + pct_esg_1,
@@ -2850,150 +2899,6 @@ stargazer(list_final, type = "text",
           coef=list_final.rrr,
           style = "qje",
          out="TABLES/table_2.txt")
-```
-
-<!-- #region kernel="R" -->
-### Characteristic abstract
-
-**Sentiment**: Overall feeling of the abstract. Positive means the abstract tend to have more words associated with a positive connotation
-
-**cluster_w_emb**: 3 clusters computed using the words in the abstract (embeddings), the number of verbs, noun,s and adjectives but also the size of the abstract. 
-
-The k-mean algorithm clustered the abstract based on the "quality" of it. 
-
-- sentiment
-- cluster
-
-![](https://storage.googleapis.com/memvp-25499.appspot.com/images/image.png76221423-1aa4-4af3-a9e0-3a6b46b0c1f2)
-<!-- #endregion -->
-
-```sos kernel="R"
-###
-t_0 <- glm(target ~ environmental
-           + adjusted_model
-           + kyoto 
-           + financial_crisis
-           + publication_year_int
-           + windows
-           #+ mid_year
-           + regions
-           + is_open_access
-           + region_journal
-           + providers
-           + sjr
-           + sentiment
-           + cluster_w_emb,
-           data = df_final ,
-           binomial(link = "probit")
-          )
-t_0.rrr <- exp(coef(t_0))
-
-
-t_1 <- glm(target ~ social
-           + adjusted_model
-           + kyoto 
-           + financial_crisis
-           + publication_year_int
-           + windows
-           #+ mid_year
-           + regions
-           + is_open_access
-           + region_journal
-           + providers
-           + sjr
-           + sentiment
-           + cluster_w_emb,
-           data = df_final ,
-           binomial(link = "probit")
-          )
-t_1.rrr <- exp(coef(t_1))
-
-t_2 <- glm(target ~ governance
-           + adjusted_model
-           + kyoto 
-           + financial_crisis
-           + publication_year_int
-           + windows
-           #+ mid_year
-           + regions
-           + is_open_access
-           + region_journal
-           + providers
-           + sjr
-           + sentiment
-           + cluster_w_emb,
-           data = df_final ,
-           binomial(link = "probit")
-          )
-t_2.rrr <- exp(coef(t_2))
-
-### CNRS
-t_3 <- glm(target ~ environmental
-           + adjusted_model
-           + kyoto 
-           + financial_crisis
-           + publication_year_int
-           + windows
-           #+ mid_year
-           + regions
-           + is_open_access
-           + region_journal
-           + providers
-           + rank_digit
-           + sentiment
-           + cluster_w_emb,
-           data = df_final ,
-           binomial(link = "probit")
-          )
-t_3.rrr <- exp(coef(t_3))
-
-
-t_4 <- glm(target ~ social
-           + adjusted_model
-           + kyoto 
-           + financial_crisis
-           + publication_year_int
-           + windows
-           #+ mid_year
-           + regions
-           + is_open_access
-           + region_journal
-           + providers
-           + rank_digit
-           + sentiment
-           + cluster_w_emb,
-           data = df_final ,
-           binomial(link = "probit")
-          )
-t_4.rrr <- exp(coef(t_4))
-
-t_5 <- glm(target ~ governance
-           + adjusted_model
-           + kyoto 
-           + financial_crisis
-           + publication_year_int
-           + windows
-           #+ mid_year
-           + regions
-           + is_open_access
-           + region_journal
-           + providers
-           + rank_digit
-           + sentiment
-           + cluster_w_emb,
-           data = df_final ,
-           binomial(link = "probit")
-          )
-t_5.rrr <- exp(coef(t_5))
-
-list_final = list(t_0, t_1, t_2,t_3, t_4, t_5)
-list_final.rrr = list(t_0.rrr,t_1.rrr,t_2.rrr,t_3.rrr,t_4.rrr,t_5.rrr)
-stargazer(list_final, type = "text", 
-  se = lapply(list_final,
-              se_robust),
-          coef=list_final.rrr,
-          style = "qje",
-         out="TABLES/table_3.txt")
 ```
 
 <!-- #region kernel="SoS" -->
