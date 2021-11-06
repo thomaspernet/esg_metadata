@@ -168,8 +168,10 @@ SELECT
  image,
  row_id_google_spreadsheet,
  table_refer,
+ adjusted_model_name,
  adjusted_model,
  adjusted_dependent,
+ independent,
  adjusted_independent,
  social,
  environmental,
@@ -418,6 +420,24 @@ df_author = (
     .line(title = "cumulated number of observations per paper",figsize= (6,6))
     
     #.head(10)
+)
+```
+
+```sos kernel="SoS"
+(
+    df
+    #.loc[lambda x: x['environmental'].isin(['YES'])]
+    .groupby('adjusted_model')['adjusted_model_name']
+    .value_counts()
+)
+```
+
+```sos kernel="SoS"
+(
+    df
+    .loc[lambda x: x['environmental'].isin(['YES'])]
+    .groupby('environmental')['independent']
+    .value_counts()
 )
 ```
 
@@ -1896,15 +1916,18 @@ Removing the categorie reduces the log-likelihood and reduce the AIC criteria (l
 <!-- #endregion -->
 
 ```sos kernel="R"
+
+```
+
+```sos kernel="R"
 ### Baseline SJR
-t_0 <- glm(target ~ environmental
-           + adjusted_model  
+t_0 <- glm(target ~ environmental * kyoto
            + kyoto 
+           + adjusted_model  
            + financial_crisis
-           + publication_year_int
            + windows
-           #+ mid_year
            + regions
+           + publication_year_int
            + is_open_access
            + region_journal
            + providers
@@ -1913,55 +1936,18 @@ t_0 <- glm(target ~ environmental
            + nb_authors
            + pct_female
            + pct_esg_1,
-           data = df_final ,
+           data = df_final,
            binomial(link = "probit")
           )
 t_0.rrr <- exp(coef(t_0))
-t_1 <- glm(target ~ social
-           + adjusted_model    
+
+t_1 <- glm(target ~ environmental * kyoto
            + kyoto 
-           + financial_crisis
-           + publication_year_int
-           + windows
-           #+ mid_year
-           + regions
-           + is_open_access
-           + region_journal
-           + providers
-           + sjr
-           + sentiment
-           + nb_authors
-           + pct_female
-           + pct_esg_1,
-           data = df_final , binomial(link = "probit"))
-t_1.rrr <- exp(coef(t_1))
-t_2 <- glm(target ~ governance
-           + adjusted_model
-           + kyoto 
-           + financial_crisis
-           + publication_year_int
-           + windows
-           #+ mid_year
-           + regions
-           + is_open_access
-           + region_journal
-           + providers
-           + sjr
-           + sentiment
-           + nb_authors
-           + pct_female
-           + pct_esg_1,
-           data = df_final , binomial(link = "probit"))
-t_2.rrr <- exp(coef(t_2))
-### Econometrics control
-t_3 <- glm(target ~ environmental
            + adjusted_model  
-           + kyoto 
            + financial_crisis
-           + publication_year_int
            + windows
-           #+ mid_year
            + regions
+           + publication_year_int
            + is_open_access
            + region_journal
            + providers
@@ -1973,290 +1959,19 @@ t_3 <- glm(target ~ environmental
            + lag
            + interaction_term
            + quadratic_term,
-           data = df_final ,
-           binomial(link = "probit")
-          )
-t_3.rrr <- exp(coef(t_3))
-t_4 <- glm(target ~ social
-           + adjusted_model    
-           + kyoto 
-           + financial_crisis
-           + publication_year_int
-           + windows
-           #+ mid_year
-           + regions
-           + is_open_access
-           + region_journal
-           + providers
-           + sjr
-           + sentiment
-           + nb_authors
-           + pct_female
-           + pct_esg_1
-           + lag
-           + interaction_term
-           + quadratic_term,
-           data = df_final , binomial(link = "probit"))
-t_4.rrr <- exp(coef(t_4))
-t_5 <- glm(target ~ governance
-           + adjusted_model
-           + kyoto 
-           + financial_crisis
-           + publication_year_int
-           + windows
-           #+ mid_year
-           + regions
-           + is_open_access
-           + region_journal
-           + providers
-           + sjr
-           + sentiment
-           + nb_authors
-           + pct_female
-           + pct_esg_1
-           + lag
-           + interaction_term
-           + quadratic_term,
-           data = df_final , binomial(link = "probit"))
-t_5.rrr <- exp(coef(t_5))
-
-
-list_final = list(t_0, t_1, t_2, t_3, t_4, t_5#,t_6, t_7, t_8, t_9, t_10, t_11
-                 )
-list_final.rrr = list(t_0.rrr,t_1.rrr ,t_2.rrr,t_3.rrr,t_4.rrr,t_5.rrr#,
-                     #t_6.rrr,t_7.rrr ,t_8.rrr,t_9.rrr,t_10.rrr,t_11.rrr
-                     )
-stargazer(list_final, type = "text", 
-  se = lapply(list_final,
-              se_robust),
-          coef=list_final.rrr,
-          style = "qje",
-         out="TABLES/table_0.txt"
-         )
-```
-
-```sos kernel="R"
-### Baseline CNRS
-t_0 <- glm(target ~ environmental
-           + adjusted_model  
-           + kyoto 
-           + financial_crisis
-           + publication_year_int
-           + windows
-           #+ mid_year
-           + regions
-           + is_open_access
-           + region_journal
-           + providers
-           + rank_digit
-           + sentiment
-           + nb_authors
-           + pct_female
-           + pct_esg_1,
-           data = df_final ,
-           binomial(link = "probit")
-          )
-t_0.rrr <- exp(coef(t_0))
-t_1 <- glm(target ~ social
-           + adjusted_model    
-           + kyoto 
-           + financial_crisis
-           + publication_year_int
-           + windows
-           #+ mid_year
-           + regions
-           + is_open_access
-           + region_journal
-           + providers
-           + rank_digit
-           + sentiment
-           + nb_authors
-           + pct_female
-           + pct_esg_1,
-           data = df_final , binomial(link = "probit"))
-t_1.rrr <- exp(coef(t_1))
-t_2 <- glm(target ~ governance
-           + adjusted_model
-           + kyoto 
-           + financial_crisis
-           + publication_year_int
-           + windows
-           #+ mid_year
-           + regions
-           + is_open_access
-           + region_journal
-           + providers
-           + rank_digit
-           + sentiment
-           + nb_authors
-           + pct_female
-           + pct_esg_1,
-           data = df_final , binomial(link = "probit"))
-t_2.rrr <- exp(coef(t_2))
-### Econometrics control
-t_3 <- glm(target ~ environmental
-           + adjusted_model  
-           + kyoto 
-           + financial_crisis
-           + publication_year_int
-           + windows
-           #+ mid_year
-           + regions
-           + is_open_access
-           + region_journal
-           + providers
-           + rank_digit
-           + sentiment
-           + lag
-           + interaction_term
-           + quadratic_term,
-           data = df_final ,
-           binomial(link = "probit")
-          )
-t_3.rrr <- exp(coef(t_3))
-t_4 <- glm(target ~ social
-           + adjusted_model    
-           + kyoto 
-           + financial_crisis
-           + publication_year_int
-           + windows
-           #+ mid_year
-           + regions
-           + is_open_access
-           + region_journal
-           + providers
-           + rank_digit
-           + sentiment
-           + lag
-           + interaction_term
-           + quadratic_term,
-           data = df_final , binomial(link = "probit"))
-t_4.rrr <- exp(coef(t_4))
-t_5 <- glm(target ~ governance
-           + adjusted_model
-           + kyoto 
-           + financial_crisis
-           + publication_year_int
-           + windows
-           #+ mid_year
-           + regions
-           + is_open_access
-           + region_journal
-           + providers
-           + rank_digit
-           + sentiment
-           + lag
-           + interaction_term
-           + quadratic_term,
-           data = df_final , binomial(link = "probit"))
-t_5.rrr <- exp(coef(t_5))
-
-
-
-list_final = list(t_0, t_1, t_2, t_3, t_4, t_5#,t_6, t_7, t_8, t_9, t_10, t_11
-                 )
-list_final.rrr = list(t_0.rrr,t_1.rrr ,t_2.rrr,t_3.rrr,t_4.rrr,t_5.rrr#,
-                     #t_6.rrr,t_7.rrr ,t_8.rrr,t_9.rrr,t_10.rrr,t_11.rrr
-                     )
-stargazer(list_final, type = "text", 
-  se = lapply(list_final,
-              se_robust),
-          coef=list_final.rrr,
-          style = "qje",
-         out="TABLES/table_1.txt"
-         )
-```
-
-<!-- #region kernel="R" -->
-### Papers and authors specification
-
-
-In the second tables, we focus on the authors informations:
-
-Baseline variables + 
-
-- nb_authors: Number of authors in the paper
-- pct_female: Percentage of female author
-- pct_esg_1: ESG expertise of the authors (normalized value)
-
-
-<!-- #endregion -->
-
-```sos kernel="R"
-###
-t_0 <- glm(target ~ environmental
-           + adjusted_model
-           + kyoto 
-           + financial_crisis
-           + publication_year_int
-           + windows
-           #+ mid_year
-           + regions
-           + is_open_access
-           + region_journal
-           + providers
-           + sjr
-           + sentiment
-           + nb_authors
-           + pct_female
-           + pct_esg_1,
-           data = df_final ,
-           binomial(link = "probit")
-          )
-t_0.rrr <- exp(coef(t_0))
-
-
-t_1 <- glm(target ~ social
-           + adjusted_model
-           + kyoto 
-           + financial_crisis
-           + publication_year_int
-           + windows
-           #+ mid_year
-           + regions
-           + is_open_access
-           + region_journal
-           + providers
-           + sjr
-           + sentiment
-           + nb_authors
-           + pct_female
-           + pct_esg_1,
-           data = df_final ,
+           data = df_final,
            binomial(link = "probit")
           )
 t_1.rrr <- exp(coef(t_1))
-
-t_2 <- glm(target ~ governance
-           + adjusted_model
-           + kyoto 
-           + financial_crisis
-           + publication_year_int
-           + windows
-           #+ mid_year
-           + regions
-           + is_open_access
-           + region_journal
-           + providers
-           + sjr
-           + sentiment
-           + nb_authors
-           + pct_female
-           + pct_esg_1,
-           data = df_final ,
-           binomial(link = "probit")
-          )
-t_2.rrr <- exp(coef(t_2))
 
 ### CNRS
-t_3 <- glm(target ~ environmental
-           + adjusted_model
+t_2 <- glm(target ~ environmental * kyoto
            + kyoto 
+           + adjusted_model  
            + financial_crisis
-           + publication_year_int
            + windows
-           #+ mid_year
            + regions
+           + publication_year_int
            + is_open_access
            + region_journal
            + providers
@@ -2265,583 +1980,83 @@ t_3 <- glm(target ~ environmental
            + nb_authors
            + pct_female
            + pct_esg_1,
-           data = df_final ,
+           data = df_final,
+           binomial(link = "probit")
+          )
+t_2.rrr <- exp(coef(t_2))
+
+t_3 <- glm(target ~ environmental * kyoto
+           + kyoto 
+           + adjusted_model  
+           + financial_crisis
+           + windows
+           + regions
+           + publication_year_int
+           + is_open_access
+           + region_journal
+           + providers
+           + rank_digit
+           + sentiment
+           + nb_authors
+           + pct_female
+           + pct_esg_1
+           + lag
+           + interaction_term
+           + quadratic_term,
+           data = df_final,
            binomial(link = "probit")
           )
 t_3.rrr <- exp(coef(t_3))
 
-
-t_4 <- glm(target ~ social
-           + adjusted_model
-           + kyoto 
-           + financial_crisis
-           + publication_year_int
-           + windows
-           #+ mid_year
-           + regions
-           + is_open_access
-           + region_journal
-           + providers
-           + rank_digit
-           + sentiment
-           + nb_authors
-           + pct_female
-           + pct_esg_1,
-           data = df_final ,
-           binomial(link = "probit")
-          )
-t_4.rrr <- exp(coef(t_4))
-
-t_5 <- glm(target ~ governance
-           + adjusted_model
-           + kyoto 
-           + financial_crisis
-           + publication_year_int
-           + windows
-           #+ mid_year
-           + regions
-           + is_open_access
-           + region_journal
-           + providers
-           + rank_digit
-           + sentiment
-           + nb_authors
-           + pct_female
-           + pct_esg_1,
-           data = df_final ,
-           binomial(link = "probit")
-          )
-t_5.rrr <- exp(coef(t_5))
-
-list_final = list(t_0, t_1, t_2,t_3, t_4, t_5)
-list_final.rrr = list(t_0.rrr,t_1.rrr,t_2.rrr,t_3.rrr,t_4.rrr,t_5.rrr)
+list_final = list(t_0, t_1, t_2, t_3
+                 )
+list_final.rrr = list(t_0.rrr,t_1.rrr ,t_2.rrr,t_3.rrr
+                     )
 stargazer(list_final, type = "text", 
   se = lapply(list_final,
               se_robust),
           coef=list_final.rrr,
           style = "qje",
-         out="TABLES/table_2.txt")
-```
-
-<!-- #region kernel="SoS" -->
-## Model OLS: 
-
-$$
- \text{T-value}=\mathrm{\beta}_{0} + 
-\mathrm{\beta}_{1}\text { ESG }_{\mathrm{ib}}+ 
-\mathrm{\beta}_{2}\text { Kyoto }_{\mathrm{i}} +
-\mathrm{\beta}_{3}\text { Financial crisis }_{\mathrm{i}} +
-\mathrm{\beta}_{4}\text { Publication year }_{\mathrm{i}} + 
-\mathrm{\beta}_{5}\text { windows }_{\mathrm{i}} +
-\mathrm{\beta}_{6}\text { mid-year }_{\mathrm{i}} +
-\mathrm{\beta}_{7}\text { region }_{\mathrm{ib}}
-+\epsilon _{\mathrm{ib}}
-$$
-
-### Computation t-value
-
-* construct should_t_value   equals to “TO_CHECK” → if test_standard_error   = “TO_CHECK” and adjusted_model  is not PANEL or POOLED (use panel because panel use clustered/robust standard error no direct computation), then check if switch standard error and t-stat, so use column sr has t-stat and compare with critical value. If match critical value, and equals to stars  then OK, else “TO_CHECK”
-* Construct adjusted_standard_error : if test_standard_error  is OK and should_t_value  is NO_NEED_TO_CHECK then use sr , else leave blank
-* Construct **adjusted_t_value**: 
-  * ⚠️ critical value (the raw data has a column for the t_value which is similar, but the variable adjusted_t_value is reconstructed based on known t_value or in case of unknown t_value then from standard error or p-value: 
-    * If test_t_value is equals to TO_CHECK or OK then use t_value ← We use the value reported in the paper, not the one reconstructed
-    * ELSE if test_standard_error is equal to NO_SE and test_p_value is equal to OK then we can compute the critical value using the t-inverse function. 
-      * Ex: round(T.INV(1-X114, I114) where X114 is the p-value, so we want to get the right tail. If p-value is .05, the the right tail is .95.
-    * ELSE beta / standard error 
-    * Note, if critical value cannot be computed, it is because of one of the following reason
-      *  p-value is 0, then cannot compute the critical value
-      * standard error is 0, cannot divide by 0
-      * missing standard error, t-value or p-value
-      
-- Remove 10 outliers -> critical value more than 1K -> high leverage and does not represent the true data
-- Standard error robust
-<!-- #endregion -->
-
-<!-- #region kernel="SoS" -->
-Model 1: No absolute value
-
-Interested in the magnitude of the t-student critical value
-<!-- #endregion -->
-
-```sos kernel="R"
-### Baseline SJR
-t_0 <- glm(adjusted_t_value ~ environmental
-           + adjusted_model  
-           + kyoto 
-           + financial_crisis
-           + publication_year_int
-           + windows
-           #+ mid_year
-           + regions
-           + is_open_access
-           + region_journal
-           + providers
-           + sjr,
-           data = df_final %>% filter(adjusted_t_value < 10),
-           family=gaussian(identity))
-
-t_1 <- glm(adjusted_t_value ~ social
-           + adjusted_model  
-           + kyoto 
-           + financial_crisis
-           + publication_year_int
-           + windows
-           #+ mid_year
-           + regions
-           + is_open_access
-           + region_journal
-           + providers
-           + sjr,
-           data = df_final %>% filter(adjusted_t_value < 10),
-           family=gaussian(identity))
-
-t_2 <- glm(adjusted_t_value ~ governance
-           + adjusted_model  
-           + kyoto 
-           + financial_crisis
-           + publication_year_int
-           + windows
-           #+ mid_year
-           + regions
-           + is_open_access
-           + region_journal
-           + providers
-           + sjr,
-           data = df_final %>% filter(adjusted_t_value < 10),
-           family=gaussian(identity))
-
-### Econometrics control
-t_3 <- glm(adjusted_t_value ~ environmental
-           + adjusted_model  
-           + kyoto 
-           + financial_crisis
-           + publication_year_int
-           + windows
-           #+ mid_year
-           + regions
-           + is_open_access
-           + region_journal
-           + providers
-           + sjr
-           + lag
-           + interaction_term
-           + quadratic_term,
-           data = df_final %>% filter(adjusted_t_value < 10),
-           family=gaussian(identity))
-
-t_4 <- glm(adjusted_t_value ~ social
-           + adjusted_model  
-           + kyoto 
-           + financial_crisis
-           + publication_year_int
-           + windows
-           #+ mid_year
-           + regions
-           + is_open_access
-           + region_journal
-           + providers
-           + sjr
-           + lag
-           + interaction_term
-           + quadratic_term,
-           data = df_final %>% filter(adjusted_t_value < 10),
-           family=gaussian(identity))
-
-t_5 <- glm(adjusted_t_value ~ governance
-           + adjusted_model
-           + kyoto 
-           + financial_crisis
-           + publication_year_int
-           + windows
-           + mid_year
-           + regions
-           + sjr
-           + is_open_access
-           + region_journal
-           + lag
-           + interaction_term
-           + quadratic_term,
-           data = df_final %>% filter(adjusted_t_value < 10),
-           family=gaussian(identity))
+          title = "Effect of environemntal score of ESG on CFP",
+        order = c(1,2,32,4, 9, 5, 6),
+          covariate.labels = c(
+    "Environmental",
+    "Kyoto",
+    "Environmental x Kyoto",
+    "Fixed effect",
+    "Diff in Diff",
+    "Random effect",
+    "GMM",
+    "Instrument",
+    "Lag dependent",
+    "Other",
+    "Financial crisis",
+    "Windows",
+    "Regions Africa",
+    "Regions Europe",
+    "Regions Latin America",
+    "Regions North America",
+    "Publication year",
+    "Open access",
+    "Region journal",
+    "MSCI",
+    "SJR",
+    "CNRS rank 2",
+    "CNRS rank 3",
+    "CNRS rank 4",
+    "CNRS rank 5",
+    "Sentiment",
+    "Nb authors",
+    "Pct female",
+    "ESG score",
+    "Lag",
+    "Interaction term",
+    "Quadratic term"
+),
+         out="TABLES/table_0.txt"
+         )
 
 
-list_final = list(t_0, t_1, t_2, t_3, t_4, t_5)
-stargazer(list_final, type = "text", 
-  se = lapply(list_final,
-              se_robust),
-          style = "qje")
-```
-
-```sos kernel="R"
-### Baseline SJR
-t_0 <- glm(adjusted_t_value ~ environmental
-           + adjusted_model  
-           + kyoto 
-           + financial_crisis
-           + publication_year_int
-           + windows
-           #+ mid_year
-           + regions
-           + is_open_access
-           + region_journal
-           + providers
-           + rank_digit,
-           data = df_final %>% filter(adjusted_t_value < 10),
-           family=gaussian(identity))
-
-t_1 <- glm(adjusted_t_value ~ social
-           + adjusted_model  
-           + kyoto 
-           + financial_crisis
-           + publication_year_int
-           + windows
-           #+ mid_year
-           + regions
-           + is_open_access
-           + region_journal
-           + providers
-           + rank_digit,
-           data = df_final %>% filter(adjusted_t_value < 10),
-           family=gaussian(identity))
-
-t_2 <- glm(adjusted_t_value ~ governance
-           + adjusted_model  
-           + kyoto 
-           + financial_crisis
-           + publication_year_int
-           + windows
-           #+ mid_year
-           + regions
-           + is_open_access
-           + region_journal
-           + providers
-           + rank_digit,
-           data = df_final %>% filter(adjusted_t_value < 10),
-           family=gaussian(identity))
-
-### Econometrics control
-t_3 <- glm(adjusted_t_value ~ environmental
-           + adjusted_model  
-           + kyoto 
-           + financial_crisis
-           + publication_year_int
-           + windows
-           #+ mid_year
-           + regions
-           + is_open_access
-           + region_journal
-           + providers
-           + rank_digit
-           + lag
-           + interaction_term
-           + quadratic_term,
-           data = df_final %>% filter(adjusted_t_value < 10),
-           family=gaussian(identity))
-
-t_4 <- glm(adjusted_t_value ~ social
-           + adjusted_model  
-           + kyoto 
-           + financial_crisis
-           + publication_year_int
-           + windows
-           #+ mid_year
-           + regions
-           + is_open_access
-           + region_journal
-           + providers
-           + rank_digit
-           + lag
-           + interaction_term
-           + quadratic_term,
-           data = df_final %>% filter(adjusted_t_value < 10),
-           family=gaussian(identity))
-
-t_5 <- glm(adjusted_t_value ~ governance
-           + adjusted_model  
-           + kyoto 
-           + financial_crisis
-           + publication_year_int
-           + windows
-           #+ mid_year
-           + regions
-           + is_open_access
-           + region_journal
-           + providers
-           + rank_digit
-           + lag
-           + interaction_term
-           + quadratic_term,
-           data = df_final %>% filter(adjusted_t_value < 10),
-           family=gaussian(identity))
-
-
-list_final = list(t_0, t_1, t_2, t_3, t_4, t_5)
-stargazer(list_final, type = "text", 
-  se = lapply(list_final,
-              se_robust),
-          style = "qje")
-```
-
-<!-- #region kernel="R" -->
-Author
-<!-- #endregion -->
-
-```sos kernel="R"
-###
-t_0 <- glm(adjusted_t_value ~ environmental
-           + adjusted_model  
-           + kyoto 
-           + financial_crisis
-           + publication_year_int
-           + windows
-           #+ mid_year
-           + regions
-           + is_open_access
-           + region_journal
-           + providers
-           + sjr
-           + nb_authors
-           + pct_female
-           + pct_esg_1,
-           data = df_final %>% filter(adjusted_t_value < 10),
-           family=gaussian(identity)
-          )
-t_1 <- glm(adjusted_t_value ~ social
-           + adjusted_model  
-           + kyoto 
-           + financial_crisis
-           + publication_year_int
-           + windows
-           #+ mid_year
-           + regions
-           + is_open_access
-           + region_journal
-           + providers
-           + sjr
-           + nb_authors
-           + pct_female
-           + pct_esg_1,
-           data = df_final %>% filter(adjusted_t_value < 10),
-           family=gaussian(identity)
-          )
-
-t_2 <- glm(adjusted_t_value ~ governance
-           + adjusted_model  
-           + kyoto 
-           + financial_crisis
-           + publication_year_int
-           + windows
-           #+ mid_year
-           + regions
-           + is_open_access
-           + region_journal
-           + providers
-           + sjr
-           + nb_authors
-           + pct_female
-           + pct_esg_1,
-           data = df_final %>% filter(adjusted_t_value < 10),
-           family=gaussian(identity)
-          )
-
-list_final = list(t_0, t_1, t_2)
-stargazer(list_final, type = "text", 
-  se = lapply(list_final,
-              se_robust),
-          style = "qje")
-```
-
-```sos kernel="R"
-###
-t_0 <- glm(adjusted_t_value ~ environmental
-           + adjusted_model  
-           + kyoto 
-           + financial_crisis
-           + publication_year_int
-           + windows
-           #+ mid_year
-           + regions
-           + is_open_access
-           + region_journal
-           + providers
-           + rank_digit
-           + nb_authors
-           + pct_female
-           + pct_esg_1,
-           data = df_final %>% filter(adjusted_t_value < 10),
-           family=gaussian(identity)
-          )
-t_1 <- glm(adjusted_t_value ~ social
-           + adjusted_model  
-           + kyoto 
-           + financial_crisis
-           + publication_year_int
-           + windows
-           #+ mid_year
-           + regions
-           + is_open_access
-           + region_journal
-           + providers
-           + rank_digit
-           + nb_authors
-           + pct_female
-           + pct_esg_1,
-           data = df_final %>% filter(adjusted_t_value < 10),
-           family=gaussian(identity)
-          )
-
-t_2 <- glm(adjusted_t_value ~ governance
-          + adjusted_model  
-           + kyoto 
-           + financial_crisis
-           + publication_year_int
-           + windows
-           #+ mid_year
-           + regions
-           + is_open_access
-           + region_journal
-           + providers
-           + rank_digit
-           + nb_authors
-           + pct_female
-           + pct_esg_1,
-           data = df_final %>% filter(adjusted_t_value < 10),
-           family=gaussian(identity)
-          )
-
-list_final = list(t_0, t_1, t_2)
-stargazer(list_final, type = "text", 
-  se = lapply(list_final,
-              se_robust),
-          style = "qje")
-```
-
-<!-- #region kernel="R" -->
-Abstract
-<!-- #endregion -->
-
-```sos kernel="R"
-###
-t_0 <- glm(adjusted_t_value ~ environmental
-           + adjusted_model  
-           + kyoto 
-           + financial_crisis
-           + publication_year_int
-           + windows
-           #+ mid_year
-           + regions
-           + is_open_access
-           + region_journal
-           + providers
-           + sjr
-           + sentiment
-           + cluster_w_emb,
-           data = df_final %>% filter(adjusted_t_value < 10),
-           family=gaussian(identity)
-          )
-t_1 <- glm(adjusted_t_value ~ social
-           + adjusted_model  
-           + kyoto 
-           + financial_crisis
-           + publication_year_int
-           + windows
-           #+ mid_year
-           + regions
-           + is_open_access
-           + region_journal
-           + providers
-           + sjr
-           + sentiment
-           + cluster_w_emb,
-           data = df_final %>% filter(adjusted_t_value < 10),
-           family=gaussian(identity)
-          )
-
-t_2 <- glm(adjusted_t_value ~ governance
-           + adjusted_model  
-           + kyoto 
-           + financial_crisis
-           + publication_year_int
-           + windows
-           #+ mid_year
-           + regions
-           + is_open_access
-           + region_journal
-           + providers
-           + sjr
-           + sentiment
-           + cluster_w_emb,
-           data = df_final %>% filter(adjusted_t_value < 10),
-           family=gaussian(identity)
-          )
-
-list_final = list(t_0, t_1, t_2)
-stargazer(list_final, type = "text", 
-  se = lapply(list_final,
-              se_robust),
-          style = "qje")
-```
-
-```sos kernel="R"
-###
-t_0 <- glm(adjusted_t_value ~ environmental
-           + adjusted_model  
-           + kyoto 
-           + financial_crisis
-           + publication_year_int
-           + windows
-           #+ mid_year
-           + regions
-           + is_open_access
-           + region_journal
-           + providers
-           + rank_digit
-           + sentiment
-           + cluster_w_emb,
-           data = df_final %>% filter(adjusted_t_value < 10),
-           family=gaussian(identity)
-          )
-t_1 <- glm(adjusted_t_value ~ social
-           + adjusted_model  
-           + kyoto 
-           + financial_crisis
-           + publication_year_int
-           + windows
-           #+ mid_year
-           + regions
-           + is_open_access
-           + region_journal
-           + providers
-           + rank_digit
-           + sentiment
-           + cluster_w_emb,
-           data = df_final %>% filter(adjusted_t_value < 10),
-           family=gaussian(identity)
-          )
-
-t_2 <- glm(adjusted_t_value ~ governance
-           + adjusted_model  
-           + kyoto 
-           + financial_crisis
-           + publication_year_int
-           + windows
-           #+ mid_year
-           + regions
-           + is_open_access
-           + region_journal
-           + providers
-           + rank_digit
-           + sentiment
-           + cluster_w_emb,
-           data = df_final %>% filter(adjusted_t_value < 10),
-           family=gaussian(identity)
-          )
-
-list_final = list(t_0, t_1, t_2)
-stargazer(list_final, type = "text", 
-  se = lapply(list_final,
-              se_robust),
-          style = "qje")
 ```
 
 <!-- #region kernel="SoS" nteract={"transient": {"deleting": false}} -->
