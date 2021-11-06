@@ -1734,7 +1734,7 @@ mutate_if(is.character, as.factor) %>%
 
 mutate(
     adjusted_model = relevel(adjusted_model, ref='POOLED OLS'),
-    adjusted_dependent = relevel(adjusted_dependent, ref='OTHER'),
+    #adjusted_dependent = relevel(adjusted_dependent, ref='OTHER'),
     id_source = as.factor(id_source),
     governance = relevel(as.factor(governance), ref = 'NO'),
     social = relevel(as.factor(social), ref = 'NO'),
@@ -1914,10 +1914,6 @@ Removing the categorie reduces the log-likelihood and reduce the AIC criteria (l
      
 - Faire attention a l'économétrie -> si on controle pas correctement, on trouve un lien (OLS vs fE) -> outil -s rudimentaires
 <!-- #endregion -->
-
-```sos kernel="R"
-
-```
 
 ```sos kernel="R"
 ### Baseline SJR
