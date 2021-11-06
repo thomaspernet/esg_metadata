@@ -138,44 +138,46 @@
 | 15 | image                      | string  | Link row data image                                                                                         |
 | 16 | row_id_google_spreadsheet  | string  | Google spreadsheet link to raw data                                                                         |
 | 17 | table_refer                | string  | table number in the paper                                                                                   |
-| 18 | adjusted_model             | string  | reorganise model variable into smaller group                                                                |
-| 19 | adjusted_dependent         | string  | reorganise dependent variable into smaller groups                                                           |
-| 20 | adjusted_independent       | string  | reorganise independent variable into smaller group                                                          |
-| 21 | social                     | string  | if adjusted_independent in ENVIRONMENTAL AND SOCIAL, SOCIAL, CSP, CSR, ENVIRONMENTAL, SOCIAL and GOVERNANCE |
-| 22 | environmental              | string  | if adjusted_independent in ENVIRONMENTAL, ENVIRONMENTAL AND SOCIAL, ENVIRONMENTAL, SOCIAL and GOVERNANCE    |
-| 23 | governance                 | string  | if adjusted_independent in GOVERNANCE ENVIRONMENTAL, SOCIAL and GOVERNANCE                                  |
-| 24 | lag                        | string  | the table contains lag or not                                                                               |
-| 25 | interaction_term           | string  | the table contains interaction terms or not                                                                 |
-| 26 | quadratic_term             | string  | the table contains quadratic terms or not                                                                   |
-| 27 | n                          | int     | number of observations                                                                                      |
-| 28 | target                     | string  | indicate wheither or not the coefficient is significant. based on stars                                     |
-| 29 | adjusted_standard_error    | float   | reconstructed standard error                                                                                |
-| 30 | adjusted_t_value           | float   | reconstructed t value                                                                                       |
-| 31 | paper_name                 | string  | Paper name                                                                                                  |
-| 32 | first_date_of_observations | int     | first date of observations                                                                                  |
-| 33 | last_date_of_observations  | int     | last date of observations                                                                                   |
-| 34 | csr_20_categories          | string  | csr 20 categories                                                                                           |
-| 35 | kyoto                      | string  | kyoto                                                                                                       |
-| 36 | financial_crisis           | string  | financial crisis                                                                                            |
-| 37 | windows                    | int     | windows                                                                                                     |
-| 38 | mid_year                   | float   | mid year                                                                                                    |
-| 39 | regions                    | string  | regions                                                                                                     |
-| 40 | providers                  | string  | providers                                                                                                   |
-| 41 | publication_year           | int     | publication year                                                                                            |
-| 42 | publication_name           | string  | publication name                                                                                            |
-| 43 | rank_digit                 | string  | rank digit                                                                                                  |
-| 44 | cluster_w_emb              | int     | cluster w emb                                                                                               |
-| 45 | sentiment                  | string  | sentiment                                                                                                   |
-| 46 | lenght                     | int     | lenght                                                                                                      |
-| 47 | adj                        | int     | adj                                                                                                         |
-| 48 | noun                       | int     | noun                                                                                                        |
-| 49 | verb                       | int     | verb                                                                                                        |
-| 50 | size_abstract              | int     | size abstract                                                                                               |
-| 51 | pct_adj                    | float   | pct adj                                                                                                     |
-| 52 | pct_noun                   | float   | pct noun                                                                                                    |
-| 53 | pct_verb                   | float   | pct verb                                                                                                    |
-| 54 | rank                       | int     | rank                                                                                                        |
-| 55 | sjr                        | float   | sjr                                                                                                         |
-| 56 | region_journal             | string  | region journal                                                                                              |
+| 18 | adjusted_model_name        | string  | Model name normalised                                                                                       |
+| 19 | adjusted_model             | string  | reorganise model variable into smaller group                                                                |
+| 20 | adjusted_dependent         | string  | reorganise dependent variable into smaller groups                                                           |
+| 21 | independent                | string  | independent variables                                                                                       |
+| 22 | adjusted_independent       | string  | reorganise independent variable into smaller group                                                          |
+| 23 | social                     | string  | if adjusted_independent in ENVIRONMENTAL AND SOCIAL, SOCIAL, CSP, CSR, ENVIRONMENTAL, SOCIAL and GOVERNANCE |
+| 24 | environmental              | string  | if adjusted_independent in ENVIRONMENTAL, ENVIRONMENTAL AND SOCIAL, ENVIRONMENTAL, SOCIAL and GOVERNANCE    |
+| 25 | governance                 | string  | if adjusted_independent in GOVERNANCE ENVIRONMENTAL, SOCIAL and GOVERNANCE                                  |
+| 26 | lag                        | string  | the table contains lag or not                                                                               |
+| 27 | interaction_term           | string  | the table contains interaction terms or not                                                                 |
+| 28 | quadratic_term             | string  | the table contains quadratic terms or not                                                                   |
+| 29 | n                          | int     | number of observations                                                                                      |
+| 30 | target                     | string  | indicate wheither or not the coefficient is significant. based on stars                                     |
+| 31 | adjusted_standard_error    | float   | reconstructed standard error                                                                                |
+| 32 | adjusted_t_value           | float   | reconstructed t value                                                                                       |
+| 33 | paper_name                 | string  | Paper name                                                                                                  |
+| 34 | first_date_of_observations | int     | first date of observations                                                                                  |
+| 35 | last_date_of_observations  | int     | last date of observations                                                                                   |
+| 36 | csr_20_categories          | string  | csr 20 categories                                                                                           |
+| 37 | kyoto                      | string  | kyoto                                                                                                       |
+| 38 | financial_crisis           | string  | financial crisis                                                                                            |
+| 39 | windows                    | int     | windows                                                                                                     |
+| 40 | mid_year                   | float   | mid year                                                                                                    |
+| 41 | regions                    | string  | regions                                                                                                     |
+| 42 | providers                  | string  | providers                                                                                                   |
+| 43 | publication_year           | int     | publication year                                                                                            |
+| 44 | publication_name           | string  | publication name                                                                                            |
+| 45 | rank_digit                 | string  | rank digit                                                                                                  |
+| 46 | cluster_w_emb              | int     | cluster w emb                                                                                               |
+| 47 | sentiment                  | string  | sentiment                                                                                                   |
+| 48 | lenght                     | int     | lenght                                                                                                      |
+| 49 | adj                        | int     | adj                                                                                                         |
+| 50 | noun                       | int     | noun                                                                                                        |
+| 51 | verb                       | int     | verb                                                                                                        |
+| 52 | size_abstract              | int     | size abstract                                                                                               |
+| 53 | pct_adj                    | float   | pct adj                                                                                                     |
+| 54 | pct_noun                   | float   | pct noun                                                                                                    |
+| 55 | pct_verb                   | float   | pct verb                                                                                                    |
+| 56 | rank                       | int     | rank                                                                                                        |
+| 57 | sjr                        | float   | sjr                                                                                                         |
+| 58 | region_journal             | string  | region journal                                                                                              |
 
     

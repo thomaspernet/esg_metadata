@@ -1713,8 +1713,10 @@ SELECT  id,
  image,
  row_id_google_spreadsheet,
  table_refer,
+ adjusted_model_name,
  adjusted_model,
  adjusted_dependent,
+ independent,
  adjusted_independent,
  social,
  environmental,
@@ -2034,6 +2036,24 @@ df_final.shape
 ```
 
 ```python
+(
+    df_meta_new
+    .loc[lambda x: x['environmental'].isin(['YES'])]
+    .groupby('environmental')['independent']
+    .value_counts()
+)
+```
+
+```python
+(
+    df_meta_new
+    #.loc[lambda x: x['environmental'].isin(['YES'])]
+    .groupby('adjusted_model')['adjusted_model_name']
+    .value_counts()
+)
+```
+
+```python
 input_path = 'df_esg_metaanalysis.csv'
 df_final.to_csv(input_path, index=False)
 # SAVE S3
@@ -2069,6 +2089,8 @@ schema = [
 {'Name': 'row_id_google_spreadsheet', 'Type': 'string', 'Comments': ''},
 {'Name': 'table_refer', 'Type': 'string', 'Comments': ''},
 {'Name': 'adjusted_model', 'Type': 'string', 'Comments': ''},
+    {'Name': 'adjusted_model_name', 'Type': 'string', 'Comments': ''},
+    {'Name': 'independent', 'Type': 'string', 'Comments': ''},
 {'Name': 'adjusted_dependent', 'Type': 'string', 'Comments': ''},
 {'Name': 'adjusted_independent', 'Type': 'string', 'Comments': ''},
 {'Name': 'social', 'Type': 'string', 'Comments': ''},
