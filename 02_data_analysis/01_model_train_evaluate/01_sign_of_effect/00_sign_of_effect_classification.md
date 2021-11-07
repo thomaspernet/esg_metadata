@@ -512,6 +512,99 @@ for v in ['publication_year', "windows", "mid_year", "sjr"]:
 "providers"
 <!-- #endregion -->
 
+```sos kernel="SoS"
+(
+    pd.concat(
+    [
+        pd.concat(
+            [
+                (
+                    df.groupby("publication_name")
+                    .agg({"sjr": "mean"})
+                    .rename(columns={"publication_name": "SJR"})
+                )
+            ],
+            axis=1,
+            keys=["Ranking"],
+        ),
+        pd.concat(
+            [
+                (
+                    df.groupby("publication_name")
+                    .agg({"publication_name": "count"})
+                    .rename(columns={"publication_name": "count"})
+                    .assign(pct=lambda x: x["count"] / np.sum(x["count"]))
+                )
+            ],
+            axis=1,
+            keys=["count raw"],
+        ),
+        pd.concat(
+            [
+                (
+                    df.groupby("publication_name")
+                    .agg({"target": "value_counts"})
+                    .unstack(0)
+                    .rename(columns={"target": "publication_name"})
+                    .droplevel(axis=1, level=0)
+                    .T
+                )
+            ],
+            axis=1,
+            keys=["count"],
+        ),
+         pd.concat(
+            [
+                (
+                    df.groupby("publication_name")
+                    .agg({"id_source": "nunique"})
+                    .rename(columns={"id_source": "count"})
+                    .assign(pct=lambda x: x["count"] / np.sum(x["count"]))
+                )
+            ],
+            axis=1,
+            keys=["count paper raw"],
+        ),
+        pd.concat(
+            [
+                (
+                    df.groupby(["publication_name", "target"])
+                    .agg({"id_source": "nunique"})
+                    .rename(columns={"id_source": "publication_name"})
+                    .unstack(0)
+                    .droplevel(axis=1, level=0)
+                    .T
+                    .assign(
+                        pct_significant=lambda x: x[("SIGNIFICANT")] / x.sum(axis=1)
+                    )
+                )
+            ],
+            axis=1,
+            keys=["paper count"],
+        ),
+    ],
+    axis=1,
+)
+    .sort_values(by = [('Ranking','sjr')], ascending = False)
+    .style
+.format("{0:,.2f}", subset = [
+    ('Ranking','sjr')
+])    
+.format("{:,.2%}", subset = [
+    ('count raw','pct'),
+    ('count paper raw','pct'),
+    ('paper count','pct_significant')
+],na_rep="-")
+.format("{0:,.0f}", subset = [
+    ('count','NOT_SIGNIFICANT'),
+    ('count','SIGNIFICANT'),
+    ('paper count','NOT_SIGNIFICANT'),
+    ('paper count','SIGNIFICANT'),
+    
+],na_rep="-")
+)
+```
+
 <!-- #region kernel="SoS" -->
 #### environmental, social, governance
 <!-- #endregion -->
