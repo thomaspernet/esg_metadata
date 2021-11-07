@@ -1923,10 +1923,10 @@ t_0 <- glm(target ~ environmental * kyoto
            + financial_crisis
            + windows
            + regions
+           + providers
            + publication_year_int
            + is_open_access
            + region_journal
-           + providers
            + sjr
            + sentiment
            + nb_authors
@@ -1943,10 +1943,10 @@ t_1 <- glm(target ~ environmental * kyoto
            + financial_crisis
            + windows
            + regions
+           + providers           
            + publication_year_int
            + is_open_access
            + region_journal
-           + providers
            + sjr
            + sentiment
            + nb_authors
@@ -1967,10 +1967,10 @@ t_2 <- glm(target ~ environmental * kyoto
            + financial_crisis
            + windows
            + regions
+           + providers           
            + publication_year_int
            + is_open_access
            + region_journal
-           + providers
            + rank_digit
            + sentiment
            + nb_authors
@@ -1987,10 +1987,10 @@ t_3 <- glm(target ~ environmental * kyoto
            + financial_crisis
            + windows
            + regions
+           + providers
            + publication_year_int
            + is_open_access
            + region_journal
-           + providers
            + rank_digit
            + sentiment
            + nb_authors
@@ -2032,10 +2032,10 @@ stargazer(list_final, type = "text",
     "Regions Europe",
     "Regions Latin America",
     "Regions North America",
+    "MSCI",          
     "Publication year",
     "Open access",
     "Region journal",
-    "MSCI",
     "SJR",
     "CNRS rank 2",
     "CNRS rank 3",
@@ -2049,7 +2049,8 @@ stargazer(list_final, type = "text",
     "Interaction term",
     "Quadratic term"
 ),
-         out="TABLES/table_0.txt"
+          out="TABLES/table_0.txt"
+          #out="sjt_corr.html"
          )
 
 
