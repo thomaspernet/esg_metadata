@@ -169,11 +169,10 @@ Training the model requires the following steps:
 2. Lowercase first name, split character and convert them to numerical value
 3. Train the model using a vector embedding, Bidirectional LSTM layer and a dense layer to compute the prediction 
 
-<!-- #region heading_collapsed="true" -->
+
 ### Download data
 
 The data comes from the public dataset [USA Names](https://console.cloud.google.com/marketplace/product/social-security-administration/us-names?project=lofty-foundry-302615)
-<!-- #endregion -->
 
 ```python
 project = 'valid-pagoda-132423'
@@ -205,7 +204,6 @@ names_df.shape
 names_df.head()
 ```
 
-<!-- #region heading_collapsed="true" -->
 ### Clean up and pre-process
 
 1. Clean up name ->Lowercase the name.
@@ -218,7 +216,6 @@ For example, the preprocessing step does the following:
 Take the name  "mary", the character "m" is given the number 13, the character "a" is 1, and so one. The 0s are the padding because the matrix should have the same dimension
 
 ![image.png](attachment:477f5f29-e1e5-4a28-85fc-e6effb0eb8b5.png)
-<!-- #endregion -->
 
 ```python
 def preprocess(names_df,column, train=True, to_lower = True):
@@ -262,7 +259,6 @@ names_df = preprocess(names_df, column = 'name', train=True)
 names_df.head()
 ```
 
-<!-- #region heading_collapsed="true" -->
 ### Model Architecture
 
 1. Embedding layer: to “embed” each input character’s encoded number into a dense 256 dimension vector..
@@ -270,7 +266,6 @@ names_df.head()
 3. Final Dense layer: Prediction 0/1 for male/female
 
 Note: Embedding layer enables us to convert each word into a fixed length vector of defined size. The resultant vector is a dense one with having real values instead of just 0’s and 1’s. The fixed length of word vectors helps us to represent words in a better way along with reduced dimensions
-<!-- #endregion -->
 
 ```python
 #!pip install --upgrade tensorflow
@@ -324,11 +319,9 @@ output_array[0].shape
 output_array[0]
 ```
 
-<!-- #region heading_collapsed="true" -->
 ### Training the Model
 
 We’ll use the standard tensorflow.keras training pipeline
-<!-- #endregion -->
 
 ```python
 import numpy as np
@@ -371,6 +364,12 @@ history = model.fit(x=X_train,
 
 # Step 4: Save the model
 model.save('MODELS_AND_DATA/boyorgirl.h5')
+```
+
+```python
+input_model = 'MODELS_AND_DATA/boyorgirl.h5'
+# SAVE S3
+s3.upload_file(input_model, "DATA/ML_MODELS/LSTM_GENDER_CLASSIFIER")
 ```
 
 ```python
