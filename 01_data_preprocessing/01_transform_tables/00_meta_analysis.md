@@ -269,6 +269,7 @@ Note: Embedding layer enables us to convert each word into a fixed length vector
 
 ```python
 #!pip install --upgrade tensorflow
+#!pip install numpy==1.21
 ```
 
 ```python
@@ -786,11 +787,19 @@ economic policy uncertainty*”, after the cleaning process, we end up with the 
 In total, 2094 papers deal with ESG among the 14,443 papers (14%). We will use this information later to construct the ESG expertise score.
 
 ```python
+#!pip install gensim
+```
+
+```python
 list_paper_semantic = pickle.load( open( "MODELS_AND_DATA/list_paper_semantic.pickle", "rb" ))
 ```
 
 ```python
-from gensim.models import Word2Vec
+#nltk.download('stopwords')
+```
+
+```python
+#from gensim.models import Word2Vec
 import nltk
 from nltk.corpus import stopwords
 from scipy.spatial import distance
@@ -882,12 +891,12 @@ The abstract contains relevant information about the quality of the papers, and 
 ```
 
 ```python
-from flair.models import TextClassifier
-from flair.data import Sentence
-import gensim.downloader as api
-import nltk
+#from flair.models import TextClassifier
+#from flair.data import Sentence
+#import gensim.downloader as api
+#import nltk
 
-wv = api.load('word2vec-google-news-300')
+#wv = api.load('word2vec-google-news-300')
 ```
 
 ```python
@@ -1237,7 +1246,7 @@ del wv
 ```python
 # use terminal if cannot allocate memory
 #!sudo yum install java-1.8.0-openjdk -y
-#!pip install tabula-py
+!pip install tabula-py
 ```
 
 ```python
@@ -1256,7 +1265,7 @@ To extract the information, we rely on the [tabula library](https://pypi.org/pro
 After converting the PDF into a Pandas dataframe, we get an extensive list of journals-ranking (see image below)
 
 ```python
-list_tables = tabula.read_pdf('categorisation37_liste_juin_2020-2.pdf', pages='all')
+list_tables = tabula.read_pdf('MODELS_AND_DATA/categorisation37_liste_juin_2020-2.pdf', pages='all')
 list_list_tables= [list_tables[i].values.tolist() for i in range(0, len(list_tables)) if len(list_tables[i])>0]
 df_cnrs = (
     pd.DataFrame([item for sublist in list_list_tables for item in sublist], columns = [
@@ -1449,11 +1458,11 @@ df_authors_journal_full = (
         how="left",
         on=["semantic"],
     )
-    .merge(
-        df_tsne.drop(columns=["abstract"]).rename(columns={"size": "size_abstract"}),
-        how="left",
-        on=["paperId"],
-    )
+    #.merge(
+    #    df_tsne.drop(columns=["abstract"]).rename(columns={"size": "size_abstract"}),
+    #    how="left",
+    #    on=["paperId"],
+    #)
     .assign(publication_name=lambda x: x["publication_name"].str.lower())
     .merge(df_publication_rank)
     .reindex(
@@ -1726,7 +1735,10 @@ SELECT  id,
  n,
  target,
  adjusted_standard_error,
- adjusted_t_value
+ adjusted_t_value,
+ beta,
+ sign,
+ sign_of_effect
 FROM esg.papers_meta_analysis_new
 """
 df_meta_new = s3.run_query(
@@ -1785,10 +1797,15 @@ def create_region(x):
 FILENAME_SPREADSHEET = "CSR Excel File Meta-Analysis - Version 4 -  01.02.2021"
 spreadsheet_id = drive.find_file_id(FILENAME_SPREADSHEET, to_print=False)
 df_meta_old = (
-    drive.download_data_from_spreadsheet(
-    sheetID = spreadsheet_id,
-    sheetName = "Feuil1",
-    to_dataframe = True)
+    pd.read_excel(
+        "MODELS_AND_DATA/CSR Excel File Meta-Analysis - Version 4 -  01.02.2021.xlsx",
+    dtype = {'Nr. ':'string'}
+    )
+    #drive.download_data_from_spreadsheet(
+    #sheetID = spreadsheet_id,
+    #sheetName = "Feuil1",
+    #to_dataframe = True)
+    #.assign(id= lambda x: x['id'].astype(str))
     .reindex(
         columns=[
             "Nr. ",
@@ -1860,11 +1877,19 @@ df_meta_old = (
 ```
 
 ```python
+df_meta_old.dtypes
+```
+
+```python
 df_meta_old.head(1)
 ```
 
 ```python
 df_meta_new.shape
+```
+
+```python
+df_meta_new.head()
 ```
 
 ### Add authors information:
@@ -1998,7 +2023,10 @@ df_final = (
     df_final
     .loc[lambda x: ~x['_merge'].isin(['left_only'])]
     .drop(columns = ['_merge'])
-    .dropna(subset = ['paper_name', 'sentiment', 'environmental'])
+    #.dropna(subset = ['paper_name', 
+                      #'sentiment',
+                      #'environmental'
+    #                 ])
 )
 ```
 
@@ -2050,6 +2078,14 @@ df_final.shape
     .groupby('adjusted_model')['adjusted_model_name']
     .value_counts()
 )
+```
+
+```python
+df_meta_new.shape
+```
+
+```python
+df_final.shape
 ```
 
 ```python
