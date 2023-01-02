@@ -196,22 +196,25 @@ SELECT
  publication_year,
  publication_name,
  rank_digit,
- CASE WHEN cluster_w_emb = 0 THEN 'CLUSTER_0'
-       WHEN cluster_w_emb = 1 THEN 'CLUSTER_1'
-       ELSE 'CLUSTER_2' END AS cluster_w_emb,
- sentiment,
+ --CASE WHEN cluster_w_emb = 0 THEN 'CLUSTER_0'
+ --      WHEN cluster_w_emb = 1 THEN 'CLUSTER_1'
+ --      ELSE 'CLUSTER_2' END AS cluster_w_emb,
+ --sentiment,
  lenght,
- adj,
- noun,
- verb,
- size_abstract,
- pct_adj,
- pct_noun,
- pct_verb,
+ --adj,
+ --noun,
+ --verb,
+--size_abstract,
+ --pct_adj,
+ --pct_noun,
+ --pct_verb,
  rank,
  sjr,
  region_journal,
- weight
+ weight,
+ beta,
+ sign,
+ sign_of_effect
 FROM 
   test 
   LEFT JOIN (
@@ -1800,20 +1803,24 @@ import latex.latex_beautify as lb
 ```
 
 ```sos kernel="SoS"
-#!conda install -c conda-forge r-lmtest -y
+!conda install -c conda-forge r-lmtest -y
 ```
 
 ```sos kernel="R"
 options(warn=-1)
 library(tidyverse)
 library("sandwich")
-library("lmtest")
+#library("lmtest")
 #library(lfe)
 #library(lazyeval)
 #library(nnet)
 library('progress')
 path = "../../../utils/latex/table_golatex.R"
 source(path)
+```
+
+```sos kernel="R"
+
 ```
 
 ```sos kernel="R"
@@ -1824,11 +1831,11 @@ normalit<-function(m){
  }
 df_final <- read_csv(df_path) %>%
 mutate_if(is.character, as.factor) %>%
-
 mutate(
     adjusted_model = relevel(adjusted_model, ref='POOLED OLS'),
     #adjusted_dependent = relevel(adjusted_dependent, ref='OTHER'),
     id_source = as.factor(id_source),
+    sign = relevel(as.factor(sign), ref = 'n'),
     governance = relevel(as.factor(governance), ref = 'NO'),
     social = relevel(as.factor(social), ref = 'NO'),
     environmental =relevel(as.factor(environmental), ref = 'NO'),
@@ -1837,12 +1844,12 @@ mutate(
     target =relevel(as.factor(target), ref = 'NOT_SIGNIFICANT'),
     regions =relevel(as.factor(regions), ref = 'WORLDWIDE'),
     is_open_access =relevel(as.factor(is_open_access), ref = 'NO'),
-    sentiment =relevel(as.factor(sentiment), ref = 'NEGATIVE'),
+    #sentiment =relevel(as.factor(sentiment), ref = 'NEGATIVE'),
     region_journal =relevel(as.factor(region_journal), ref = 'NORTHERN AMERICA'),
     pct_esg_1 = normalit(pct_esg),
     esg_1 =  normalit(esg),
     sjr_1 =  normalit(sjr),
-    cluster_w_emb = relevel(as.factor(cluster_w_emb), ref = 'CLUSTER_1'),
+    #cluster_w_emb = relevel(as.factor(cluster_w_emb), ref = 'CLUSTER_1'),
     citation_count_1 = normalit(citation_count),
     providers = relevel(as.factor(providers), ref = 'NOT_MSCI'),
     rank_digit = relevel(as.factor(rank_digit), ref = '1'),
@@ -1868,6 +1875,27 @@ GLM does not clustered the standard error so, we compute it by hand
 se_robust <- function(x)
   coeftest(x, vcov. = sandwich::sandwich
           )[, 2]
+```
+
+```sos kernel="R"
+summary(glm(beta ~environmental * kyoto
+           + kyoto 
+           + adjusted_model  
+           + financial_crisis
+           + windows
+           + regions
+           + providers
+           + publication_year_int
+           + is_open_access
+           + region_journal
+           + sjr
+           #+ sentiment
+           + nb_authors
+           + pct_female
+           + pct_esg_1,
+           data = df_final,
+           family = "gaussian"
+          ))
 ```
 
 <!-- #region kernel="R" -->
@@ -2147,6 +2175,115 @@ stargazer(list_final, type = "text",
          )
 
 
+```
+
+```sos kernel="R"
+head(df_final) %>% select(environmental)
+```
+
+```sos kernel="R"
+### Baseline SJR
+t_0 <- glm(sign ~ environmental * kyoto
+           + kyoto 
+           + adjusted_model  
+           + financial_crisis
+           + windows
+           + regions
+           + providers
+           + publication_year_int
+           + is_open_access
+           + region_journal
+           + sjr
+           #+ sentiment
+           + nb_authors
+           + pct_female
+           + pct_esg_1,
+           data = df_final,
+           binomial(link = "probit")
+          )
+t_0.rrr <- exp(coef(t_0))
+
+t_1 <- glm(sign ~ environmental * kyoto
+           + kyoto 
+           + adjusted_model  
+           + financial_crisis
+           + windows
+           + regions
+           + providers           
+           + publication_year_int
+           + is_open_access
+           + region_journal
+           + sjr
+           #+ sentiment
+           + nb_authors
+           + pct_female
+           + pct_esg_1
+           + lag
+           + interaction_term
+           + quadratic_term,
+           data = df_final,
+           binomial(link = "probit")
+          )
+t_1.rrr <- exp(coef(t_1))
+
+### CNRS
+t_2 <- glm(sign ~ environmental * kyoto
+           + kyoto 
+           + adjusted_model  
+           + financial_crisis
+           + windows
+           + regions
+           + providers           
+           + publication_year_int
+           + is_open_access
+           + region_journal
+           + rank_digit
+           #+ sentiment
+           + nb_authors
+           + pct_female
+           + pct_esg_1,
+           data = df_final,
+           binomial(link = "probit")
+          )
+t_2.rrr <- exp(coef(t_2))
+
+t_3 <- glm(sign ~ environmental * kyoto
+           + kyoto 
+           + adjusted_model  
+           + financial_crisis
+           + windows
+           + regions
+           + providers
+           + publication_year_int
+           + is_open_access
+           + region_journal
+           + rank_digit
+           #+ sentiment
+           + nb_authors
+           + pct_female
+           + pct_esg_1
+           + lag
+           + interaction_term
+           + quadratic_term,
+           data = df_final,
+           binomial(link = "probit")
+          )
+t_3.rrr <- exp(coef(t_3))
+
+list_final = list(t_0, t_1, t_2, t_3
+                 )
+list_final.rrr = list(t_0.rrr,t_1.rrr ,t_2.rrr,t_3.rrr
+                     )
+stargazer(list_final, type = "text", 
+  #se = lapply(list_final,
+  #            se_robust),
+          coef=list_final.rrr,
+          style = "qje",
+          title = "Effect of environemntal score of ESG on CFP",
+        order = c(1,2,32,4, 9, 5, 6),
+          out="TABLES/table_0.txt"
+          #out="sjt_corr.html"
+         )
 ```
 
 <!-- #region kernel="SoS" nteract={"transient": {"deleting": false}} -->
